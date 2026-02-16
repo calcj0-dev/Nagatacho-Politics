@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>政治家カードゲーム</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- 政党選択画面 -->
+  <div id="party-select-screen" class="screen">
+    <h1>政党を選んでください</h1>
+    <div class="party-buttons">
+      <button class="party-btn" data-party="自民党">自民党</button>
+      <button class="party-btn" data-party="国民民主党">国民民主党</button>
+      <button class="party-btn" data-party="チームみらい">チームみらい</button>
+    </div>
+  </div>
+
+  <!-- 初期カード選択画面 -->
+  <div id="card-select-screen" class="screen hidden">
+    <h1>場に出す政治家を選んでください</h1>
+    <div id="card-select-list" class="card-list"></div>
+  </div>
+
+  <!-- ゲーム画面 -->
+  <div id="game-screen" class="screen hidden">
+    <!-- CPU側 -->
+    <div class="player-area cpu-area">
+      <div class="player-info">
+        <span>【CPU】 <span id="cpu-party">???</span></span>
+        <span>政治資金: <span id="cpu-funds">?億円</span></span>
+        <span>支持率: <span id="cpu-approval">???</span></span>
+      </div>
+      <div id="cpu-field" class="field"></div>
+    </div>
+
+    <!-- ターン情報バー -->
+    <div id="turn-bar">
+      <span id="turn-info">ターン: 1/25　情勢調査まで: あと5ターン</span>
+    </div>
+
+    <!-- プレイヤー側 -->
+    <div class="player-area player-area-self">
+      <div id="player-field" class="field"></div>
+      <div class="player-info">
+        <span>【あなた】 <span id="player-party">???</span></span>
+        <span>政治資金: <span id="player-funds">0億円</span></span>
+        <span>支持率: <span id="player-approval">???</span></span>
+      </div>
+    </div>
+
+    <!-- 手札 -->
+    <div id="hand-area">
+      <div id="player-hand" class="card-list"></div>
+      <button id="end-turn-btn" disabled>ターン終了</button>
+    </div>
+
+    <!-- デバッグ情報 -->
+    <div id="debug-info" class="debug"></div>
+  </div>
+
+  <!-- オーバーレイ群（フェーズ2-3で実装） -->
+  <div id="overlay" class="overlay hidden">
+    <div id="overlay-content" class="overlay-content"></div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

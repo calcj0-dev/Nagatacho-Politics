@@ -1,0 +1,308 @@
+/* ============================================================
+   基本リセット・レイアウト
+   ============================================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Hiragino Sans", "Meiryo", sans-serif;
+  background: #1a1a2e;
+  color: #eee;
+  min-height: 100vh;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ============================================================
+   画面共通
+   ============================================================ */
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin-bottom: 24px;
+  color: #ffd700;
+}
+
+/* ============================================================
+   政党選択画面
+   ============================================================ */
+
+.party-buttons {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.party-btn {
+  padding: 16px 32px;
+  font-size: 1.2rem;
+  border: 2px solid #ffd700;
+  background: #16213e;
+  color: #ffd700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.party-btn:hover {
+  background: #0f3460;
+}
+
+/* ============================================================
+   カード共通
+   ============================================================ */
+
+.card-list {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card {
+  width: 120px;
+  height: 170px;
+  border: 2px solid #555;
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+}
+
+/* 政治家カード */
+.card-politician {
+  border-color: #e94560;
+  background: linear-gradient(135deg, #1a1a2e 0%, #2a1a3e 100%);
+}
+
+/* オプションカード */
+.card-option {
+  border-color: #0f3460;
+  background: linear-gradient(135deg, #1a1a2e 0%, #1a2e3e 100%);
+}
+
+/* 画像あり */
+.card.has-image .card-name {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 4px;
+  font-size: 0.7rem;
+}
+
+.card.has-image .card-desc {
+  display: none;
+}
+
+/* 画像なし（フォールバック） */
+.card.no-image .card-name,
+.card:not(.has-image):not(.no-image) .card-name {
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.card-desc {
+  font-size: 0.65rem;
+  color: #aaa;
+  text-align: center;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+/* ============================================================
+   ゲーム画面
+   ============================================================ */
+
+#game-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+
+/* プレイヤーエリア */
+.player-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.cpu-area {
+  background: rgba(233, 69, 96, 0.1);
+  border: 1px solid rgba(233, 69, 96, 0.3);
+}
+
+.player-area-self {
+  background: rgba(15, 52, 96, 0.2);
+  border: 1px solid rgba(15, 52, 96, 0.4);
+}
+
+.player-info {
+  display: flex;
+  gap: 16px;
+  font-size: 0.9rem;
+  flex-wrap: wrap;
+}
+
+/* 場 */
+.field {
+  display: flex;
+  gap: 12px;
+  min-height: 180px;
+  align-items: flex-start;
+}
+
+.field .card {
+  width: 140px;
+  height: 180px;
+}
+
+/* 能力ボタン */
+.card-abilities {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: auto;
+  width: 100%;
+}
+
+.ability-btn {
+  padding: 4px;
+  font-size: 0.65rem;
+  border: 1px solid #ffd700;
+  background: rgba(255, 215, 0, 0.15);
+  color: #ffd700;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ability-btn:hover:not(:disabled) {
+  background: rgba(255, 215, 0, 0.3);
+}
+
+.ability-btn.disabled,
+.ability-btn:disabled {
+  border-color: #555;
+  color: #555;
+  background: rgba(85, 85, 85, 0.15);
+  cursor: not-allowed;
+}
+
+/* ターン情報バー */
+#turn-bar {
+  text-align: center;
+  padding: 8px;
+  background: #16213e;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #ffd700;
+}
+
+/* 手札エリア */
+#hand-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+#end-turn-btn {
+  padding: 10px 32px;
+  font-size: 1rem;
+  border: 2px solid #ffd700;
+  background: #16213e;
+  color: #ffd700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#end-turn-btn:hover:not(:disabled) {
+  background: #0f3460;
+}
+
+#end-turn-btn:disabled {
+  border-color: #555;
+  color: #555;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   オーバーレイ
+   ============================================================ */
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.overlay-content {
+  background: #16213e;
+  border: 2px solid #ffd700;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  text-align: center;
+}
+
+/* ============================================================
+   デバッグ
+   ============================================================ */
+
+.debug {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #0f0;
+  font-size: 0.7rem;
+  font-family: monospace;
+}
