@@ -575,6 +575,8 @@ function initGame(playerParty, playerInitialCardId) {
   console.log(`  プレイヤー: ${playerParty}, 場: ${initialCard.name}`);
   console.log(`  CPU: ${cpuParty}, 場: ${cpuInitial.name}`);
   logState();
+
+  startPlayerTurn();
 }
 
 // ============================================================
@@ -934,7 +936,6 @@ function renderCardSelect() {
     const el = createCardElement(createCardInstance(card));
     el.addEventListener("click", () => {
       initGame(gameState.player.party, card.id);
-      renderGame();
     });
     container.appendChild(el);
   });
