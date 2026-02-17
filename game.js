@@ -9,7 +9,7 @@ const POLITICIAN_CARDS = [
     name: "S・イシバ",
     gender: "男",
     party: "自民党",
-    image: "assets/politicians/ishiba.png",
+    image: "assets/politicians/jimin/s-ishiba.png",
     type: "politician",
     abilities: [
       {
@@ -31,7 +31,7 @@ const POLITICIAN_CARDS = [
     name: "S・タカイチ",
     gender: "女",
     party: "自民党",
-    image: "assets/politicians/takaichi.png",
+    image: "assets/politicians/jimin/s-takaichi.png",
     type: "politician",
     abilities: [
       {
@@ -53,7 +53,7 @@ const POLITICIAN_CARDS = [
     name: "S・コイズミ",
     gender: "男",
     party: "自民党",
-    image: "assets/politicians/koizumi.png",
+    image: "assets/politicians/jimin/s-koizumi.png",
     type: "politician",
     abilities: [
       {
@@ -75,7 +75,7 @@ const POLITICIAN_CARDS = [
     name: "T・コウノ",
     gender: "男",
     party: "自民党",
-    image: "assets/politicians/kono.png",
+    image: "assets/politicians/jimin/t-kono.png",
     type: "politician",
     abilities: [
       {
@@ -97,7 +97,7 @@ const POLITICIAN_CARDS = [
     name: "Y・スガ",
     gender: "男",
     party: "自民党",
-    image: "assets/politicians/suga.png",
+    image: "assets/politicians/jimin/y-suga.png",
     type: "politician",
     abilities: [
       {
@@ -117,11 +117,11 @@ const POLITICIAN_CARDS = [
 
   // --- 国民民主党 ---
   {
-    id: "tamaki",
+    id: "y-tamaki",
     name: "Y・タマキ",
     gender: "男",
     party: "国民民主党",
-    image: "assets/politicians/tamaki.png",
+    image: "assets/politicians/kokumin/y-tamaki.png",
     type: "politician",
     abilities: [
       {
@@ -139,11 +139,11 @@ const POLITICIAN_CARDS = [
     ]
   },
   {
-    id: "mori",
+    id: "y-mori",
     name: "Y・モリ",
     gender: "男",
     party: "国民民主党",
-    image: "assets/politicians/mori.png",
+    image: "assets/politicians/kokumin/y-mori.png",
     type: "politician",
     abilities: [
       {
@@ -161,11 +161,11 @@ const POLITICIAN_CARDS = [
     ]
   },
   {
-    id: "shinba",
+    id: "k-shinba",
     name: "K・シンバ",
     gender: "男",
     party: "国民民主党",
-    image: "assets/politicians/shinba.png",
+    image: "assets/politicians/kokumin/k-shinba.png",
     type: "politician",
     abilities: [
       {
@@ -183,33 +183,33 @@ const POLITICIAN_CARDS = [
     ]
   },
   {
-    id: "otsuka",
-    name: "K・オオツカ",
-    gender: "男",
+    id: "k-ushida",
+    name: "M・ウシダ",
+    gender: "女",
     party: "国民民主党",
-    image: "assets/politicians/otsuka.png",
+    image: "assets/politicians/kokumin/k-ushida.png",
     type: "politician",
     abilities: [
       {
         name: "日銀理論で論破",
         description: "経済理論で相手を圧倒。相手の支持率-8%、自分の政治資金+7億",
         cost: 5,
-        effect: "otsuka_1"
+        effect: "ushida_1"
       },
       {
         name: "金融緩和論",
         description: "難しい経済政策を語る。支持率+8%、政治資金+4億、ただしランダムで-3%の可能性も",
         cost: 3,
-        effect: "otsuka_2"
+        effect: "ushida_2"
       }
     ]
   },
   {
-    id: "ito",
+    id: "t-ito",
     name: "T・イトウ",
     gender: "女",
     party: "国民民主党",
-    image: "assets/politicians/ito.png",
+    image: "assets/politicians/kokumin/t-ito.png",
     type: "politician",
     abilities: [
       {
@@ -229,112 +229,112 @@ const POLITICIAN_CARDS = [
 
   // --- チームみらい ---
   {
-    id: "mirai_taro",
-    name: "未来太郎",
+    id: "anno",
+    name: "T・アンノ",
     gender: "男",
     party: "チームみらい",
-    image: "assets/politicians/mirai_taro.png",
+    image: "assets/politicians/mirai/t-anno.png",
     type: "politician",
     abilities: [
       {
         name: "ビジョン宣言",
         description: "支持率+6%、場のカードが3枚なら追加+4%",
         cost: 3,
-        effect: "mirai_taro_1"
+        effect: "anno_1"
       },
       {
         name: "マニフェスト",
         description: "支持率+4%",
         cost: 2,
-        effect: "mirai_taro_2"
+        effect: "anno_2"
       }
     ]
   },
   {
-    id: "kibou_hanako",
-    name: "希望花子",
-    gender: "女",
+    id: "takayama",
+    name: "S・タカヤマ",
+    gender: "男",
     party: "チームみらい",
-    image: "assets/politicians/kibou_hanako.png",
+    image: "assets/politicians/mirai/s-takayama.png",
     type: "politician",
     abilities: [
       {
         name: "草の根運動",
         description: "支持率+4%",
         cost: 1,
-        effect: "kibou_hanako_1"
+        effect: "takayama_1"
       },
       {
         name: "SNSバズ",
         description: "支持率+7%",
         cost: 3,
-        effect: "kibou_hanako_2"
+        effect: "takayama_2"
       }
     ]
   },
   {
-    id: "kaikaku_ichiro",
-    name: "改革一郎",
-    gender: "男",
+    id: "muto",
+    name: "K・ムトウ",
+    gender: "女",
     party: "チームみらい",
-    image: "assets/politicians/kaikaku_ichiro.png",
+    image: "assets/politicians/mirai/k-muto.png",
     type: "politician",
     abilities: [
       {
         name: "構造改革",
         description: "相手の支持率-5%、自分の支持率+5%",
         cost: 5,
-        effect: "kaikaku_ichiro_1"
+        effect: "muto_1"
       },
       {
         name: "規制緩和",
         description: "支持率+6%",
         cost: 3,
-        effect: "kaikaku_ichiro_2"
+        effect: "muto_2"
       }
     ]
   },
   {
-    id: "senshin_jiro",
-    name: "先進次郎",
+    id: "suda",
+    name: "E・スダ",
     gender: "男",
     party: "チームみらい",
-    image: "assets/politicians/senshin_jiro.png",
+    image: "assets/politicians/mirai/e-suda.png",
     type: "politician",
     abilities: [
       {
         name: "テクノ政策",
         description: "相手の場からランダムに1枚選び、次の相手のターンで能力使用不可にする",
         cost: 4,
-        effect: "senshin_jiro_1"
+        effect: "suda_1"
       },
       {
         name: "AI推進",
         description: "支持率+5%",
         cost: 3,
-        effect: "senshin_jiro_2"
+        effect: "suda_2"
       }
     ]
   },
   {
-    id: "kyosei_saburo",
-    name: "共生三郎",
+    id: "mineshima",
+    name: "Y・ミネシマ",
     gender: "男",
     party: "チームみらい",
-    image: "assets/politicians/kyosei_saburo.png",
+    image: "assets/politicians/mirai/y-mineshima.png",
     type: "politician",
     abilities: [
       {
         name: "超党派連携",
         description: "自分の全カードの能力コスト-1(自分のそのターンのみ)",
         cost: 3,
-        effect: "kyosei_saburo_1"
+        effect: "mineshima_1"
       },
       {
         name: "多様性推進",
         description: "支持率+4%、相手の支持率-2%",
         cost: 4,
-        effect: "kyosei_saburo_2"
+        effect: "mineshima_2"
       }
     ]
   }
@@ -345,6 +345,7 @@ const OPTION_CARDS = [
     id: "trump_tariff",
     name: "トランプ関税",
     description: "外圧による経済パニック。",
+    effectDescription: "両プレイヤーの政治資金が30%没収される",
     image: "assets/options/trump_tariff.png",
     type: "option",
     effect: "trump_tariff"
@@ -353,6 +354,7 @@ const OPTION_CARDS = [
     id: "kioku_ni_gozaimasen",
     name: "記憶にございません",
     description: "国会答弁の定番フレーズで追及をかわす。",
+    effectDescription: "相手からの支持率低下を一度だけ無効化。ただし効果発動後の自分のターンにドロー不可",
     image: "assets/options/kioku_ni_gozaimasen.png",
     type: "option",
     effect: "kioku_ni_gozaimasen"
@@ -361,6 +363,7 @@ const OPTION_CARDS = [
     id: "kenkin_party",
     name: "政治献金パーティー",
     description: "豪華ホテルの「勉強会」で資金集め。",
+    effectDescription: "政治資金+8億円を即時獲得",
     image: "assets/options/kenkin_party.png",
     type: "option",
     effect: "kenkin_party"
@@ -369,6 +372,7 @@ const OPTION_CARDS = [
     id: "gaitou_enzetsu",
     name: "街頭演説の神対応",
     description: "厳しいヤジをユーモアで返し、聴衆を味方につける。",
+    effectDescription: "支持率+4%。場にカードが2枚以上なら代わりに+8%",
     image: "assets/options/gaitou_enzetsu.png",
     type: "option",
     effect: "gaitou_enzetsu"
@@ -377,6 +381,7 @@ const OPTION_CARDS = [
     id: "drill_hakai",
     name: "ドリル破壊",
     description: "物理的に証拠を消し去る強硬手段。",
+    effectDescription: "次の支持率が下がるイベントを一度だけスキップ。ただし政治資金-5億",
     image: "assets/options/drill_hakai.png",
     type: "option",
     effect: "drill_hakai"
@@ -385,6 +390,7 @@ const OPTION_CARDS = [
     id: "tounai_kaikaku",
     name: "政党内改革",
     description: "旧弊を打破する「トカゲの尻尾切り」か「刷新」か。",
+    effectDescription: "自分の場の政治家カード1枚を捨て札にし、手札から別の政治家カードを場に出す",
     image: "assets/options/tounai_kaikaku.png",
     type: "option",
     effect: "tounai_kaikaku"
@@ -393,6 +399,7 @@ const OPTION_CARDS = [
     id: "toushu_touron",
     name: "党首討論",
     description: "2分割画面で映し出される、言葉の真剣勝負。",
+    effectDescription: "支持率が上がる（状況に応じて効果が変動）",
     image: "assets/options/toushu_touron.png",
     type: "option",
     effect: "toushu_touron"
@@ -401,6 +408,7 @@ const OPTION_CARDS = [
     id: "yukiguni_yukikaki",
     name: "雪国の雪かき",
     description: "演説のため歩道の雪を路上に撒き散らす姿がSNSで炎上。",
+    effectDescription: "相手の支持率-5%",
     image: "assets/options/yukiguni_yukikaki.png",
     type: "option",
     effect: "yukiguni_yukikaki"
@@ -409,6 +417,7 @@ const OPTION_CARDS = [
     id: "kono_hage",
     name: "このハゲェー！！",
     description: "秘書への苛烈な暴言録音がSNSで大拡散。",
+    effectDescription: "相手の支持率-5%。相手の場に女性政治家がいれば更に-7%",
     image: "assets/options/kono_hage.png",
     type: "option",
     effect: "kono_hage"
@@ -417,6 +426,7 @@ const OPTION_CARDS = [
     id: "netenai_jiman",
     name: "寝てない自慢",
     description: "災害の緊急対応で「不眠不休」をアピールし、同情と期待を買う。",
+    effectDescription: "自分の支持率+4%",
     image: "assets/options/netenai_jiman.png",
     type: "option",
     effect: "netenai_jiman"
@@ -425,6 +435,7 @@ const OPTION_CARDS = [
     id: "masukomi_taisaku",
     name: "マスコミ対策",
     description: "記者クラブとの会食や巧妙な情報操作で報道をコントロール。",
+    effectDescription: "次の相手のターンで受ける支持率減少を無効化",
     image: "assets/options/masukomi_taisaku.png",
     type: "option",
     effect: "masukomi_taisaku"
@@ -433,6 +444,7 @@ const OPTION_CARDS = [
     id: "ouen_enzetsu",
     name: "応援演説",
     description: "「党の顔」がマイクを握り、新たな人材を呼び込む。",
+    effectDescription: "自分の山札から政治家カードをランダムで1枚手札に加える",
     image: "assets/options/ouen_enzetsu.png",
     type: "option",
     effect: "ouen_enzetsu"
@@ -441,6 +453,7 @@ const OPTION_CARDS = [
     id: "kinkyuu_yoron",
     name: "緊急世論調査",
     description: "リアルタイムの支持率を分析し、戦術を修正する。",
+    effectDescription: "即座に自分の支持率を確認できる",
     image: "assets/options/kinkyuu_yoron.png",
     type: "option",
     effect: "kinkyuu_yoron"
@@ -449,6 +462,7 @@ const OPTION_CARDS = [
     id: "giinkaikan_furin",
     name: "議員会館不倫",
     description: "議員宿舎での密会がスクープされ、政界に激震。",
+    effectDescription: "相手の支持率-8%。ただし自分も巻き添えで-3%",
     image: "assets/options/giinkaikan_furin.png",
     type: "option",
     effect: "giinkaikan_furin"
@@ -745,7 +759,7 @@ const ABILITY_EFFECTS = {
     msgs.push("自分の場の全カードの次ターンコスト-2億！");
     return msgs;
   },
-  otsuka_1(self, opponent) {
+  ushida_1(self, opponent) {
     const msgs = [];
     const m1 = changeApproval(opponent, -8);
     if (m1) msgs.push(m1);
@@ -753,7 +767,7 @@ const ABILITY_EFFECTS = {
     msgs.push("政治資金+7億円を獲得！");
     return msgs;
   },
-  otsuka_2(self, opponent) {
+  ushida_2(self, opponent) {
     const msgs = [];
     const m1 = changeApproval(self, 8);
     if (m1) msgs.push(m1);
@@ -1273,7 +1287,10 @@ function useOptionCard(handIndex) {
   if (!card || card.type !== "option") return;
   if (p.usedOptionThisTurn) return;
 
-  showConfirmDialog(card.name, card.name, card.description, 0, () => {
+  const desc = card.effectDescription
+    ? `${card.description}\n【効果】${card.effectDescription}`
+    : card.description;
+  showConfirmDialog(card.name, card.name, desc, 0, () => {
     p.hand.splice(handIndex, 1);
     p.discard.push(card);
     p.usedOptionThisTurn = true;
@@ -1311,7 +1328,7 @@ function showConfirmDialog(_cardName, abilityName, description, cost, onConfirm)
   const costText = cost > 0 ? `コスト: ${cost}億円` : "コスト: 無料";
   showOverlay(`
     <h2>「${abilityName}」を使用しますか？</h2>
-    <p class="overlay-desc">${description}</p>
+    <p class="overlay-desc">${description.replace(/\n/g, '<br>')}</p>
     <p class="overlay-cost">${costText}</p>
     <div class="overlay-buttons">
       <button id="confirm-yes" class="overlay-btn btn-confirm">使用する</button>
