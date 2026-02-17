@@ -100,13 +100,13 @@ h1 {
 /* 政治家カード */
 .card-politician {
   border-color: #e94560;
-  background: linear-gradient(135deg, #1a1a2e 0%, #2a1a3e 100%);
+  background-image: linear-gradient(135deg, #1a1a2e 0%, #2a1a3e 100%);
 }
 
 /* オプションカード */
 .card-option {
   border-color: #0f3460;
-  background: linear-gradient(135deg, #1a1a2e 0%, #1a2e3e 100%);
+  background-image: linear-gradient(135deg, #1a1a2e 0%, #1a2e3e 100%);
 }
 
 /* 画像あり */
