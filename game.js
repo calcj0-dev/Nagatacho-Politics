@@ -5,7 +5,7 @@
 const POLITICIAN_CARDS = [
   // --- 自民党 ---
   {
-    id: "ishiba",
+    id: "s-ishiba",
     name: "S・イシバ",
     gender: "男",
     party: "自民党",
@@ -27,7 +27,7 @@ const POLITICIAN_CARDS = [
     ]
   },
   {
-    id: "takaichi",
+    id: "s-takaichi",
     name: "S・タカイチ",
     gender: "女",
     party: "自民党",
@@ -49,7 +49,7 @@ const POLITICIAN_CARDS = [
     ]
   },
   {
-    id: "koizumi",
+    id: "s-koizumi",
     name: "S・コイズミ",
     gender: "男",
     party: "自民党",
@@ -71,7 +71,7 @@ const POLITICIAN_CARDS = [
     ]
   },
   {
-    id: "kono",
+    id: "t-kono",
     name: "T・コウノ",
     gender: "男",
     party: "自民党",
@@ -93,7 +93,7 @@ const POLITICIAN_CARDS = [
     ]
   },
   {
-    id: "suga",
+    id: "y-suga",
     name: "Y・スガ",
     gender: "男",
     party: "自民党",
@@ -229,7 +229,7 @@ const POLITICIAN_CARDS = [
 
   // --- チームみらい ---
   {
-    id: "anno",
+    id: "t-anno",
     name: "T・アンノ",
     gender: "男",
     party: "チームみらい",
@@ -251,7 +251,7 @@ const POLITICIAN_CARDS = [
     ]
   },
   {
-    id: "takayama",
+    id: "s-takayama",
     name: "S・タカヤマ",
     gender: "男",
     party: "チームみらい",
@@ -273,7 +273,7 @@ const POLITICIAN_CARDS = [
     ]
   },
   {
-    id: "muto",
+    id: "k-muto",
     name: "K・ムトウ",
     gender: "女",
     party: "チームみらい",
@@ -295,7 +295,7 @@ const POLITICIAN_CARDS = [
     ]
   },
   {
-    id: "suda",
+    id: "e-suda",
     name: "E・スダ",
     gender: "男",
     party: "チームみらい",
@@ -317,7 +317,7 @@ const POLITICIAN_CARDS = [
     ]
   },
   {
-    id: "mineshima",
+    id: "y-mineshima",
     name: "Y・ミネシマ",
     gender: "男",
     party: "チームみらい",
