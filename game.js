@@ -1422,6 +1422,128 @@ function showFinishOverlay(result) {
   });
 }
 
+// カード拡大表示
+function showCardZoom(card, context, index) {
+  const existing = document.querySelector(".card-zoom-overlay");
+  if (existing) existing.remove();
+
+  const overlay = document.createElement("div");
+  overlay.className = "card-zoom-overlay";
+
+  const container = document.createElement("div");
+  container.className = "card-zoom-container";
+
+  // カード画像
+  const imageDiv = document.createElement("div");
+  imageDiv.className = "card-zoom-image";
+  const img = new Image();
+  img.src = card.image;
+  img.onload = () => {
+    imageDiv.style.backgroundImage = `url(${card.image})`;
+  };
+  img.onerror = () => {
+    imageDiv.classList.add("no-image");
+    imageDiv.textContent = card.name;
+  };
+  container.appendChild(imageDiv);
+
+  // カード情報（画像なしフォールバック用 & オプションカードの説明）
+  if (card.type === "option") {
+    const info = document.createElement("div");
+    info.className = "card-zoom-info";
+    const nameEl = document.createElement("div");
+    nameEl.className = "card-zoom-name";
+    nameEl.textContent = card.name;
+    info.appendChild(nameEl);
+    const descEl = document.createElement("div");
+    descEl.className = "card-zoom-desc";
+    descEl.textContent = card.description;
+    info.appendChild(descEl);
+    if (card.effectDescription) {
+      const effectEl = document.createElement("div");
+      effectEl.className = "card-zoom-desc";
+      effectEl.textContent = `【効果】${card.effectDescription}`;
+      effectEl.style.marginTop = "4px";
+      effectEl.style.color = "#ffd700";
+      info.appendChild(effectEl);
+    }
+    container.appendChild(info);
+  }
+
+  // アクションボタン
+  const actions = document.createElement("div");
+  actions.className = "card-zoom-actions";
+
+  if (context === "field") {
+    // 場の政治家カード → 能力ボタン表示
+    const p = gameState.player;
+    const costReduction = p.nextTurnBonuses.costReduction || 0;
+    card.abilities.forEach((ability, aIdx) => {
+      const btn = document.createElement("button");
+      btn.className = "ability-btn";
+      const effectiveCost = Math.max(0, ability.cost - costReduction);
+      btn.textContent = `${ability.name}（${effectiveCost}億）`;
+      const isUsed = p.usedAbilities[card.instanceId];
+      const cantAfford = p.funds < effectiveCost;
+      const isDisabled = card.disabled;
+      if (isUsed || cantAfford || isDisabled) {
+        btn.disabled = true;
+      }
+      btn.addEventListener("click", () => {
+        overlay.remove();
+        useAbility(index, aIdx);
+      });
+      actions.appendChild(btn);
+    });
+  } else if (context === "hand-politician") {
+    // 手札の政治家カード → 場に出すボタン
+    const p = gameState.player;
+    const btn = document.createElement("button");
+    btn.className = "zoom-action-btn";
+    btn.textContent = "場に出す";
+    if (p.placedThisTurn || p.field.length >= 3) {
+      btn.disabled = true;
+    }
+    btn.addEventListener("click", () => {
+      overlay.remove();
+      playCardToField(index);
+    });
+    actions.appendChild(btn);
+  } else if (context === "hand-option") {
+    // 手札のオプションカード → 使用ボタン
+    const p = gameState.player;
+    const btn = document.createElement("button");
+    btn.className = "zoom-action-btn";
+    btn.textContent = "使用する";
+    if (p.usedOptionThisTurn) {
+      btn.disabled = true;
+    }
+    btn.addEventListener("click", () => {
+      overlay.remove();
+      useOptionCard(index);
+    });
+    actions.appendChild(btn);
+  }
+
+  container.appendChild(actions);
+
+  // 閉じるボタン
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "card-zoom-close";
+  closeBtn.textContent = "閉じる";
+  closeBtn.addEventListener("click", () => overlay.remove());
+  container.appendChild(closeBtn);
+
+  overlay.appendChild(container);
+
+  // 背景クリックで閉じる
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) overlay.remove();
+  });
+
+  document.body.appendChild(overlay);
+}
+
 // 手札超過時の捨て札選択UI
 function showDiscardUI(count, onComplete) {
   let remaining = count;
@@ -1515,30 +1637,13 @@ function renderFieldCards(containerId, cards, isPlayer) {
   container.innerHTML = "";
   cards.forEach((card, idx) => {
     const el = createCardElement(card);
-    if (isPlayer && gameState.currentPlayer === "player") {
-      const abilities = document.createElement("div");
-      abilities.className = "card-abilities";
-      const costReduction = gameState.player.nextTurnBonuses.costReduction || 0;
-      card.abilities.forEach((ability, aIdx) => {
-        const btn = document.createElement("button");
-        btn.className = "ability-btn";
-        const effectiveCost = Math.max(0, ability.cost - costReduction);
-        btn.textContent = `${ability.name}(${effectiveCost}億)`;
-        const isUsed = gameState.player.usedAbilities[card.instanceId];
-        const cantAfford = gameState.player.funds < effectiveCost;
-        const isDisabled = card.disabled;
-        if (isUsed || cantAfford || isDisabled) {
-          btn.disabled = true;
-          btn.classList.add("disabled");
-        }
-        btn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          useAbility(idx, aIdx);
-        });
-        abilities.appendChild(btn);
-      });
-      el.appendChild(abilities);
-    }
+    el.addEventListener("click", () => {
+      if (isPlayer && gameState.currentPlayer === "player") {
+        showCardZoom(card, "field", idx);
+      } else {
+        showCardZoom(card, "view");
+      }
+    });
     container.appendChild(el);
   });
 }
@@ -1551,9 +1656,9 @@ function renderHand() {
     el.addEventListener("click", () => {
       if (gameState.currentPlayer !== "player") return;
       if (card.type === "politician") {
-        playCardToField(idx);
+        showCardZoom(card, "hand-politician", idx);
       } else {
-        useOptionCard(idx);
+        showCardZoom(card, "hand-option", idx);
       }
     });
     container.appendChild(el);
