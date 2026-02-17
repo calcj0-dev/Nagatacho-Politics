@@ -191,37 +191,23 @@ h1 {
   height: 155px;
 }
 
-/* 能力ボタン */
-.card-abilities {
+/* 小さいカード上の能力サマリー */
+.card-ability-summary {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  right: 2px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-top: auto;
-  width: 100%;
+  gap: 1px;
 }
 
-.ability-btn {
-  padding: 4px;
-  font-size: 0.65rem;
+.card-ability-line {
+  font-size: 0.5rem;
   font-weight: bold;
-  border: 1px solid #000;
-  background: rgba(0, 0, 0, 0.7);
-  color: #fff;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.ability-btn:hover:not(:disabled) {
-  background: rgba(0, 0, 0, 0.85);
-}
-
-.ability-btn.disabled,
-.ability-btn:disabled {
-  border-color: #555;
-  color: #555;
-  background: rgba(85, 85, 85, 0.15);
-  cursor: not-allowed;
+  color: #333;
+  text-align: center;
+  line-height: 1.2;
 }
 
 /* ターン情報バー */
@@ -502,27 +488,45 @@ h1 {
   width: 260px;
 }
 
-.card-zoom-actions .ability-btn {
-  padding: 10px 16px;
-  font-size: 0.85rem;
-  font-weight: bold;
-  border: 2px solid #000;
-  background: rgba(0, 0, 0, 0.8);
-  color: #fff;
+/* 拡大カードの能力アイテム */
+.zoom-ability-item {
+  padding: 10px 14px;
+  border: 2px solid #ffd700;
+  background: rgba(0, 0, 0, 0.75);
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.15s;
 }
 
-.card-zoom-actions .ability-btn:hover:not(:disabled) {
-  background: rgba(0, 0, 0, 0.95);
+.zoom-ability-item:hover:not(.inactive) {
+  background: rgba(0, 0, 0, 0.9);
 }
 
-.card-zoom-actions .ability-btn:disabled {
+.zoom-ability-item.inactive {
   border-color: #555;
-  color: #555;
-  background: rgba(85, 85, 85, 0.15);
   cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.zoom-ability-name {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #ffd700;
+  margin-bottom: 4px;
+}
+
+.zoom-ability-item.inactive .zoom-ability-name {
+  color: #777;
+}
+
+.zoom-ability-desc {
+  font-size: 0.75rem;
+  color: #ccc;
+  line-height: 1.4;
+}
+
+.zoom-ability-item.inactive .zoom-ability-desc {
+  color: #666;
 }
 
 .card-zoom-actions .zoom-action-btn {

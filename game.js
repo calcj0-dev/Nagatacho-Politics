@@ -1475,25 +1475,36 @@ function showCardZoom(card, context, index) {
   actions.className = "card-zoom-actions";
 
   if (context === "field") {
-    // 場の政治家カード → 能力ボタン表示
+    // 場の政治家カード → 能力名+コスト+効果を表示、クリックでダイアログ
     const p = gameState.player;
     const costReduction = p.nextTurnBonuses.costReduction || 0;
     card.abilities.forEach((ability, aIdx) => {
-      const btn = document.createElement("button");
-      btn.className = "ability-btn";
-      const effectiveCost = Math.max(0, ability.cost - costReduction);
-      btn.textContent = `${ability.name}（${effectiveCost}億）`;
+      const abilityItem = document.createElement("div");
+      abilityItem.className = "zoom-ability-item";
       const isUsed = p.usedAbilities[card.instanceId];
+      const effectiveCost = Math.max(0, ability.cost - costReduction);
       const cantAfford = p.funds < effectiveCost;
       const isDisabled = card.disabled;
-      if (isUsed || cantAfford || isDisabled) {
-        btn.disabled = true;
+      const inactive = isUsed || cantAfford || isDisabled;
+      if (inactive) abilityItem.classList.add("inactive");
+
+      const nameRow = document.createElement("div");
+      nameRow.className = "zoom-ability-name";
+      nameRow.textContent = `${ability.name}（${effectiveCost}億）`;
+      abilityItem.appendChild(nameRow);
+
+      const descRow = document.createElement("div");
+      descRow.className = "zoom-ability-desc";
+      descRow.textContent = ability.description;
+      abilityItem.appendChild(descRow);
+
+      if (!inactive) {
+        abilityItem.addEventListener("click", () => {
+          overlay.remove();
+          useAbility(index, aIdx);
+        });
       }
-      btn.addEventListener("click", () => {
-        overlay.remove();
-        useAbility(index, aIdx);
-      });
-      actions.appendChild(btn);
+      actions.appendChild(abilityItem);
     });
   } else if (context === "hand-politician") {
     // 手札の政治家カード → 場に出すボタン
@@ -1637,6 +1648,20 @@ function renderFieldCards(containerId, cards, isPlayer) {
   container.innerHTML = "";
   cards.forEach((card, idx) => {
     const el = createCardElement(card);
+    // 小さいカード上に能力名+コストを表示
+    if (card.type === "politician" && card.abilities) {
+      const abilitySummary = document.createElement("div");
+      abilitySummary.className = "card-ability-summary";
+      const costReduction = isPlayer ? (gameState.player.nextTurnBonuses.costReduction || 0) : 0;
+      card.abilities.forEach(ability => {
+        const line = document.createElement("div");
+        line.className = "card-ability-line";
+        const effectiveCost = Math.max(0, ability.cost - costReduction);
+        line.textContent = `${ability.name}(${effectiveCost}億)`;
+        abilitySummary.appendChild(line);
+      });
+      el.appendChild(abilitySummary);
+    }
     el.addEventListener("click", () => {
       if (isPlayer && gameState.currentPlayer === "player") {
         showCardZoom(card, "field", idx);
