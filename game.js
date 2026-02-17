@@ -1445,68 +1445,63 @@ function showCardZoom(card, context, index) {
     imageDiv.classList.add("no-image");
     imageDiv.textContent = card.name;
   };
-  container.appendChild(imageDiv);
 
-  // カード情報（画像なしフォールバック用 & オプションカードの説明）
-  if (card.type === "option") {
-    const info = document.createElement("div");
-    info.className = "card-zoom-info";
-    const nameEl = document.createElement("div");
-    nameEl.className = "card-zoom-name";
-    nameEl.textContent = card.name;
-    info.appendChild(nameEl);
-    const descEl = document.createElement("div");
-    descEl.className = "card-zoom-desc";
-    descEl.textContent = card.description;
-    info.appendChild(descEl);
-    if (card.effectDescription) {
-      const effectEl = document.createElement("div");
-      effectEl.className = "card-zoom-desc";
-      effectEl.textContent = `【効果】${card.effectDescription}`;
-      effectEl.style.marginTop = "4px";
-      effectEl.style.color = "#ffd700";
-      info.appendChild(effectEl);
-    }
-    container.appendChild(info);
-  }
+  // 政治家カード: 画像上に白半透明枠で能力を配置
+  if (card.type === "politician" && card.abilities) {
+    const abilityOverlay = document.createElement("div");
+    abilityOverlay.className = "zoom-ability-overlay";
 
-  // アクションボタン
-  const actions = document.createElement("div");
-  actions.className = "card-zoom-actions";
-
-  if (context === "field") {
-    // 場の政治家カード → 能力名+コスト+効果を表示、クリックでダイアログ
+    const isFieldPlayer = context === "field";
     const p = gameState.player;
-    const costReduction = p.nextTurnBonuses.costReduction || 0;
+    const costReduction = isFieldPlayer ? (p.nextTurnBonuses.costReduction || 0) : 0;
+
     card.abilities.forEach((ability, aIdx) => {
-      const abilityItem = document.createElement("div");
-      abilityItem.className = "zoom-ability-item";
-      const isUsed = p.usedAbilities[card.instanceId];
+      const item = document.createElement("div");
+      item.className = "zoom-ability-item";
       const effectiveCost = Math.max(0, ability.cost - costReduction);
-      const cantAfford = p.funds < effectiveCost;
-      const isDisabled = card.disabled;
-      const inactive = isUsed || cantAfford || isDisabled;
-      if (inactive) abilityItem.classList.add("inactive");
+
+      // 無効判定（場のプレイヤーカードのみ）
+      let inactive = false;
+      if (isFieldPlayer) {
+        const isUsed = p.usedAbilities[card.instanceId];
+        const cantAfford = p.funds < effectiveCost;
+        const isDisabled = card.disabled;
+        inactive = isUsed || cantAfford || isDisabled;
+        if (inactive) item.classList.add("inactive");
+      }
 
       const nameRow = document.createElement("div");
       nameRow.className = "zoom-ability-name";
       nameRow.textContent = `${ability.name}（${effectiveCost}億）`;
-      abilityItem.appendChild(nameRow);
+      item.appendChild(nameRow);
 
       const descRow = document.createElement("div");
       descRow.className = "zoom-ability-desc";
       descRow.textContent = ability.description;
-      abilityItem.appendChild(descRow);
+      item.appendChild(descRow);
 
-      if (!inactive) {
-        abilityItem.addEventListener("click", () => {
+      // 場のプレイヤーカード: クリックで確認ダイアログ
+      if (isFieldPlayer && !inactive) {
+        item.addEventListener("click", (e) => {
+          e.stopPropagation();
           overlay.remove();
           useAbility(index, aIdx);
         });
       }
-      actions.appendChild(abilityItem);
+
+      abilityOverlay.appendChild(item);
     });
-  } else if (context === "hand-politician") {
+
+    imageDiv.appendChild(abilityOverlay);
+  }
+
+  container.appendChild(imageDiv);
+
+  // アクションボタン（画像の下に配置）
+  const actions = document.createElement("div");
+  actions.className = "card-zoom-actions";
+
+  if (context === "hand-politician") {
     // 手札の政治家カード → 場に出すボタン
     const p = gameState.player;
     const btn = document.createElement("button");
@@ -1536,7 +1531,9 @@ function showCardZoom(card, context, index) {
     actions.appendChild(btn);
   }
 
-  container.appendChild(actions);
+  if (actions.children.length > 0) {
+    container.appendChild(actions);
+  }
 
   // 閉じるボタン
   const closeBtn = document.createElement("button");
