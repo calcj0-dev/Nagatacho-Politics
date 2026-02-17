@@ -75,8 +75,8 @@ h1 {
 }
 
 .card {
-  width: 120px;
-  height: 170px;
+  width: 150px;
+  height: 210px;
   border: 2px solid #555;
   border-radius: 8px;
   padding: 8px;
@@ -110,6 +110,10 @@ h1 {
 }
 
 /* 画像あり */
+.card.has-image {
+  background-image: none;
+}
+
 .card.has-image .card-name {
   position: absolute;
   bottom: 0;
@@ -184,13 +188,13 @@ h1 {
 .field {
   display: flex;
   gap: 12px;
-  min-height: 180px;
+  min-height: 240px;
   align-items: flex-start;
 }
 
 .field .card {
-  width: 140px;
-  height: 180px;
+  width: 170px;
+  height: 235px;
 }
 
 /* 能力ボタン */
