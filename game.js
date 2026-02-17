@@ -580,6 +580,466 @@ function initGame(playerParty, playerInitialCardId) {
 }
 
 // ============================================================
+// 効果処理
+// ============================================================
+
+// 支持率変更（クランプ付き）- 変動メッセージを返す
+function changeApproval(player, amount) {
+  const before = player.approval;
+  player.approval = clamp(player.approval + amount, 0, 100);
+  const after = player.approval;
+  const who = player === gameState.player ? "あなた" : "相手";
+  if (after > before) return `${who}の支持率が上がった！`;
+  if (after < before) return `${who}の支持率が下がった…`;
+  return null;
+}
+
+// 資金変更
+function changeFunds(player, amount) {
+  player.funds = Math.max(0, player.funds + amount);
+}
+
+// 自分/相手を取得
+function getSelfAndOpponent(executor) {
+  if (executor === "player") return { self: gameState.player, opponent: gameState.cpu };
+  return { self: gameState.cpu, opponent: gameState.player };
+}
+
+// 能力効果マップ
+const ABILITY_EFFECTS = {
+  // --- 自民党 ---
+  ishiba_1(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, -5);
+    if (m1) msgs.push(m1);
+    changeFunds(self, 7);
+    msgs.push("政治資金+7億円を獲得！");
+    return msgs;
+  },
+  ishiba_2(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(opponent, -8);
+    if (m1) msgs.push(m1);
+    opponent.nextTurnBonuses.costReduction -= 1; // コスト増加 = マイナスの軽減
+    msgs.push("相手の次ターンの能力コスト+1億！");
+    return msgs;
+  },
+  takaichi_1(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 8);
+    if (m1) msgs.push(m1);
+    return msgs;
+  },
+  takaichi_2(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 12);
+    if (m1) msgs.push(m1);
+    opponent.nextTurnBonuses.attackMultiplier = 1.5;
+    msgs.push("次のターン、相手の攻撃効果が1.5倍に…");
+    return msgs;
+  },
+  koizumi_1(self, opponent) {
+    const msgs = [];
+    if (Math.random() < 0.5) {
+      const m1 = changeApproval(self, 15);
+      if (m1) msgs.push(m1);
+    } else {
+      const m1 = changeApproval(self, -10);
+      if (m1) msgs.push(m1);
+    }
+    return msgs;
+  },
+  koizumi_2(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(opponent, -5);
+    if (m1) msgs.push(m1);
+    const m2 = changeApproval(self, -3);
+    if (m2) msgs.push(m2);
+    changeFunds(self, 6);
+    msgs.push("政治資金+6億円を獲得！");
+    return msgs;
+  },
+  kono_1(self, opponent) {
+    const msgs = [];
+    self.shields.push("block_attack");
+    const m1 = changeApproval(self, -3);
+    if (m1) msgs.push(m1);
+    msgs.push("相手の次の攻撃を無効化！");
+    return msgs;
+  },
+  kono_2(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 9);
+    if (m1) msgs.push(m1);
+    self.nextTurnBonuses.fundBonus += 3;
+    msgs.push("次のターンの資金収入+3億！");
+    return msgs;
+  },
+  suga_1(self, opponent) {
+    const msgs = [];
+    let bonus = 0;
+    if (self.field.length <= 1) bonus = 4;
+    const m1 = changeApproval(self, 8 + bonus);
+    if (m1) msgs.push(m1);
+    return msgs;
+  },
+  suga_2(self, opponent) {
+    const msgs = [];
+    opponent.nextTurnBonuses.attackReduction += 4;
+    changeFunds(self, 4);
+    msgs.push("相手の次の攻撃-4%！");
+    msgs.push("政治資金+4億円を獲得！");
+    return msgs;
+  },
+
+  // --- 国民民主党 ---
+  tamaki_1(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, -8);
+    if (m1) msgs.push(m1);
+    changeFunds(self, 10);
+    msgs.push("政治資金+10億円を獲得！");
+    opponent.nextTurnBonuses.immuneTurns = 2;
+    self.shields.push("immune");
+    self.shields.push("immune");
+    msgs.push("次の2ターン、相手の攻撃を無効化！");
+    return msgs;
+  },
+  tamaki_2(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 10);
+    if (m1) msgs.push(m1);
+    changeFunds(self, 5);
+    msgs.push("政治資金+5億円を獲得！");
+    return msgs;
+  },
+  mori_1(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 9);
+    if (m1) msgs.push(m1);
+    self.nextTurnBonuses.costReduction += 1;
+    msgs.push("次のターンの能力コスト-1億！");
+    return msgs;
+  },
+  mori_2(self, opponent) {
+    const msgs = [];
+    let bonus = 0;
+    if (self.field.length <= 2) bonus = 5;
+    const m1 = changeApproval(self, 7 + bonus);
+    if (m1) msgs.push(m1);
+    return msgs;
+  },
+  shinba_1(self, opponent) {
+    const msgs = [];
+    changeFunds(self, 8);
+    msgs.push("政治資金+8億円を獲得！");
+    self.nextTurnBonuses.defenseBonus = 50;
+    msgs.push("次のターンの防御効果+50%！");
+    return msgs;
+  },
+  shinba_2(self, opponent) {
+    const msgs = [];
+    self.nextTurnBonuses.costReduction += 2;
+    const m1 = changeApproval(self, 6);
+    if (m1) msgs.push(m1);
+    msgs.push("自分の場の全カードの次ターンコスト-2億！");
+    return msgs;
+  },
+  otsuka_1(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(opponent, -8);
+    if (m1) msgs.push(m1);
+    changeFunds(self, 7);
+    msgs.push("政治資金+7億円を獲得！");
+    return msgs;
+  },
+  otsuka_2(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 8);
+    if (m1) msgs.push(m1);
+    changeFunds(self, 4);
+    msgs.push("政治資金+4億円を獲得！");
+    if (Math.random() < 0.3) {
+      const m2 = changeApproval(self, -3);
+      if (m2) msgs.push(m2);
+    }
+    return msgs;
+  },
+  ito_1(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 10);
+    if (m1) msgs.push(m1);
+    self.nextTurnBonuses.approvalBonus = 4;
+    msgs.push("次のターンにも支持率+4%の追加効果！");
+    return msgs;
+  },
+  ito_2(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 9);
+    if (m1) msgs.push(m1);
+    const m2 = changeApproval(opponent, -3);
+    if (m2) msgs.push(m2);
+    return msgs;
+  },
+
+  // --- チームみらい ---
+  mirai_taro_1(self, opponent) {
+    const msgs = [];
+    let bonus = 0;
+    if (self.field.length >= 3) bonus = 4;
+    const m1 = changeApproval(self, 6 + bonus);
+    if (m1) msgs.push(m1);
+    return msgs;
+  },
+  mirai_taro_2(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 4);
+    if (m1) msgs.push(m1);
+    return msgs;
+  },
+  kibou_hanako_1(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 4);
+    if (m1) msgs.push(m1);
+    return msgs;
+  },
+  kibou_hanako_2(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 7);
+    if (m1) msgs.push(m1);
+    return msgs;
+  },
+  kaikaku_ichiro_1(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(opponent, -5);
+    if (m1) msgs.push(m1);
+    const m2 = changeApproval(self, 5);
+    if (m2) msgs.push(m2);
+    return msgs;
+  },
+  kaikaku_ichiro_2(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 6);
+    if (m1) msgs.push(m1);
+    return msgs;
+  },
+  senshin_jiro_1(self, opponent) {
+    const msgs = [];
+    if (opponent.field.length > 0) {
+      const target = opponent.field[Math.floor(Math.random() * opponent.field.length)];
+      target.disabled = true;
+      msgs.push(`${target.name}の能力を次ターン封印！`);
+    } else {
+      msgs.push("相手の場にカードがなく空振り…");
+    }
+    return msgs;
+  },
+  senshin_jiro_2(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 5);
+    if (m1) msgs.push(m1);
+    return msgs;
+  },
+  kyosei_saburo_1(self, opponent) {
+    const msgs = [];
+    // このターンのみコスト-1 は即座にフラグを立てる（既に処理済みのカードには影響しない）
+    self.nextTurnBonuses.costReduction += 1;
+    msgs.push("このターン、全カードの能力コスト-1億！");
+    return msgs;
+  },
+  kyosei_saburo_2(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 4);
+    if (m1) msgs.push(m1);
+    const m2 = changeApproval(opponent, -2);
+    if (m2) msgs.push(m2);
+    return msgs;
+  }
+};
+
+// オプション効果マップ
+const OPTION_EFFECTS = {
+  trump_tariff(self, opponent) {
+    const msgs = [];
+    const selfLoss = Math.floor(self.funds * 0.3);
+    const oppLoss = Math.floor(opponent.funds * 0.3);
+    changeFunds(self, -selfLoss);
+    changeFunds(opponent, -oppLoss);
+    msgs.push(`両者の政治資金が没収された！（自分-${selfLoss}億、相手-${oppLoss}億）`);
+    return msgs;
+  },
+  kioku_ni_gozaimasen(self, opponent) {
+    const msgs = [];
+    self.shields.push("block_approval_down");
+    self.skipNextDraw = true;
+    msgs.push("相手からの支持率低下を一度だけ無効化！");
+    msgs.push("ただし次のターンはドロー不可…");
+    return msgs;
+  },
+  kenkin_party(self, opponent) {
+    const msgs = [];
+    changeFunds(self, 8);
+    msgs.push("政治資金+8億円を獲得！");
+    return msgs;
+  },
+  gaitou_enzetsu(self, opponent) {
+    const msgs = [];
+    const bonus = self.field.length >= 2 ? 8 : 4;
+    const m1 = changeApproval(self, bonus);
+    if (m1) msgs.push(m1);
+    return msgs;
+  },
+  drill_hakai(self, opponent) {
+    const msgs = [];
+    self.shields.push("block_approval_down");
+    changeFunds(self, -5);
+    msgs.push("次の支持率低下を一度だけスキップ！");
+    msgs.push("政治資金-5億円…");
+    return msgs;
+  },
+  tounai_kaikaku(self, opponent) {
+    const msgs = [];
+    // 場にカードがなければ空振り
+    if (self.field.length === 0) {
+      msgs.push("場にカードがなく空振り…");
+      return msgs;
+    }
+    // 手札に政治家カードがなければ使用不可（空振り）
+    const politicianInHand = self.hand.find(c => c.type === "politician");
+    if (!politicianInHand) {
+      msgs.push("手札に政治家カードがなく空振り…");
+      return msgs;
+    }
+    // ランダムに場から1枚捨て、手札から政治家を場に出す
+    const removeIdx = Math.floor(Math.random() * self.field.length);
+    const removed = self.field.splice(removeIdx, 1)[0];
+    self.discard.push(removed);
+    const addIdx = self.hand.findIndex(c => c.type === "politician");
+    const added = self.hand.splice(addIdx, 1)[0];
+    self.field.push(added);
+    msgs.push(`${removed.name}を捨て、${added.name}を場に出した！`);
+    return msgs;
+  },
+  toushu_touron(self, opponent) {
+    const msgs = [];
+    // 内部処理で判定、結果は「上がった」のみ表示
+    const bonus = self.approval < opponent.approval ? 10 : 4;
+    const m1 = changeApproval(self, bonus);
+    if (m1) msgs.push(m1);
+    return msgs;
+  },
+  yukiguni_yukikaki(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(opponent, -5);
+    if (m1) msgs.push(m1);
+    return msgs;
+  },
+  kono_hage(self, opponent) {
+    const msgs = [];
+    let extra = 0;
+    const hasFemale = opponent.field.some(c => c.gender === "女");
+    if (hasFemale) extra = -7;
+    const m1 = changeApproval(opponent, -5 + extra);
+    if (m1) msgs.push(m1);
+    if (hasFemale) msgs.push("相手の場に女性政治家がいたため追加効果！");
+    return msgs;
+  },
+  netenai_jiman(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 4);
+    if (m1) msgs.push(m1);
+    return msgs;
+  },
+  masukomi_taisaku(self, opponent) {
+    const msgs = [];
+    self.shields.push("block_approval_down");
+    msgs.push("次の相手のターンで受ける支持率減少を無効化！");
+    return msgs;
+  },
+  ouen_enzetsu(self, opponent) {
+    const msgs = [];
+    const politicianIdx = self.deck.findIndex(c => c.type === "politician");
+    if (politicianIdx >= 0) {
+      const drawn = self.deck.splice(politicianIdx, 1)[0];
+      self.hand.push(drawn);
+      msgs.push(`${drawn.name}を手札に加えた！`);
+    } else {
+      msgs.push("山札に政治家カードがなく空振り…");
+    }
+    return msgs;
+  },
+  kinkyuu_yoron(self, opponent) {
+    const msgs = [];
+    msgs.push(`あなたの現在の支持率: ${self.approval}%`);
+    return msgs;
+  },
+  giinkaikan_furin(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(opponent, -8);
+    if (m1) msgs.push(m1);
+    const m2 = changeApproval(self, -3);
+    if (m2) msgs.push(m2);
+    return msgs;
+  }
+};
+
+// 攻撃系の支持率低下にシールド/防御ボーナスを適用
+function applyDefenses(target, amount) {
+  if (amount >= 0) return amount; // 上昇は防御不要
+
+  // シールドチェック（block_approval_down）
+  const shieldIdx = target.shields.indexOf("block_approval_down");
+  if (shieldIdx >= 0) {
+    target.shields.splice(shieldIdx, 1);
+    console.log("  シールド発動: 支持率低下を無効化");
+    return 0;
+  }
+
+  // block_attack シールド
+  const blockIdx = target.shields.indexOf("block_attack");
+  if (blockIdx >= 0) {
+    target.shields.splice(blockIdx, 1);
+    console.log("  シールド発動: 攻撃を無効化");
+    return 0;
+  }
+
+  // immune シールド
+  const immuneIdx = target.shields.indexOf("immune");
+  if (immuneIdx >= 0) {
+    target.shields.splice(immuneIdx, 1);
+    console.log("  シールド発動: 免疫で無効化");
+    return 0;
+  }
+
+  // 防御ボーナス
+  if (target.nextTurnBonuses.defenseBonus > 0) {
+    const reduction = Math.floor(Math.abs(amount) * target.nextTurnBonuses.defenseBonus / 100);
+    console.log(`  防御ボーナス: ${reduction}%軽減`);
+    return amount + reduction;
+  }
+
+  // 攻撃軽減
+  if (target.nextTurnBonuses.attackReduction > 0) {
+    const red = target.nextTurnBonuses.attackReduction;
+    target.nextTurnBonuses.attackReduction = 0;
+    return amount + red;
+  }
+
+  return amount;
+}
+
+// 効果を実行して結果メッセージを返す
+function executeEffect(effectId, executor) {
+  const { self, opponent } = getSelfAndOpponent(executor);
+  const effectFn = ABILITY_EFFECTS[effectId] || OPTION_EFFECTS[effectId];
+  if (!effectFn) {
+    console.log(`効果未定義: ${effectId}`);
+    return ["（効果未定義）"];
+  }
+  return effectFn(self, opponent);
+}
+
+// ============================================================
 // ターンループ
 // ============================================================
 
@@ -591,6 +1051,15 @@ function startPlayerTurn() {
   p.placedThisTurn = false;
   p.usedAbilities = {};
   p.usedOptionThisTurn = false;
+
+  // disabled解除（前ターンで封印されたカードを復帰）
+  p.field.forEach(c => { c.disabled = false; });
+
+  // 次ターンボーナスの支持率ボーナスを適用
+  if (p.nextTurnBonuses.approvalBonus) {
+    changeApproval(p, p.nextTurnBonuses.approvalBonus);
+    p.nextTurnBonuses.approvalBonus = 0;
+  }
 
   // ① 資金フェーズ
   const bonus = p.nextTurnBonuses.fundBonus;
@@ -622,6 +1091,12 @@ function startCpuTurn() {
   c.placedThisTurn = false;
   c.usedAbilities = {};
   c.usedOptionThisTurn = false;
+  c.field.forEach(card => { card.disabled = false; });
+
+  if (c.nextTurnBonuses.approvalBonus) {
+    changeApproval(c, c.nextTurnBonuses.approvalBonus);
+    c.nextTurnBonuses.approvalBonus = 0;
+  }
 
   // ① 資金フェーズ
   const bonus = c.nextTurnBonuses.fundBonus;
@@ -656,28 +1131,31 @@ function cpuEndPhase() {
     console.log(`  CPU手札超過: ${discarded.name}を捨てた`);
   }
 
+  // 防御ボーナスリセット
+  c.nextTurnBonuses.defenseBonus = 0;
+
   endTurn();
 }
 
 function endPlayerTurn() {
   const p = gameState.player;
+  setMainPhaseUI(false);
+
+  // 防御ボーナスリセット
+  p.nextTurnBonuses.defenseBonus = 0;
 
   // ④ エンドフェーズ: 手札上限チェック
   if (p.hand.length > 7) {
-    // 手札超過 → 捨て札選択UI表示（フェーズ2で実装、今は自動で末尾を捨てる）
-    while (p.hand.length > 7) {
-      const discarded = p.hand.pop();
-      p.discard.push(discarded);
-      console.log(`  手札超過: ${discarded.name}を捨てた（暫定自動処理）`);
-    }
+    showDiscardUI(p.hand.length - 7, () => {
+      endTurn();
+    });
+  } else {
+    endTurn();
   }
-
-  setMainPhaseUI(false);
-  endTurn();
 }
 
 function endTurn() {
-  // 勝敗判定（フェーズ3で本実装）
+  // 勝敗判定
   const result = checkWinCondition();
   if (result) {
     gameState.phase = "finished";
@@ -688,30 +1166,37 @@ function endTurn() {
 
   if (gameState.currentPlayer === "player") {
     // プレイヤーのターン終了 → CPUのターン
+    renderGame();
     startCpuTurn();
   } else {
     // CPUのターン終了 → 情勢調査チェック → 次ターン
     if (gameState.turn % 5 === 0) {
       console.log(`[情勢調査] ターン${gameState.turn}: プレイヤー${gameState.player.approval}% / CPU${gameState.cpu.approval}%`);
-      showSurveyOverlay();
-    }
-
-    // 25ターン到達チェック
-    if (gameState.turn >= 25) {
-      gameState.phase = "finished";
-      const result25 = gameState.player.approval > gameState.cpu.approval ? "プレイヤーの勝利"
-        : gameState.player.approval < gameState.cpu.approval ? "CPUの勝利"
-        : "引き分け";
-      console.log(`[25ターン終了] ${result25} (${gameState.player.approval}% vs ${gameState.cpu.approval}%)`);
-      renderGame();
+      showSurveyOverlay(() => {
+        advanceToNextTurn();
+      });
       return;
     }
 
-    gameState.turn++;
-    startPlayerTurn();
+    advanceToNextTurn();
+  }
+}
+
+function advanceToNextTurn() {
+  // 25ターン到達チェック
+  if (gameState.turn >= 25) {
+    gameState.phase = "finished";
+    const result25 = gameState.player.approval > gameState.cpu.approval ? "プレイヤーの勝利"
+      : gameState.player.approval < gameState.cpu.approval ? "CPUの勝利"
+      : "引き分け";
+    console.log(`[25ターン終了] ${result25} (${gameState.player.approval}% vs ${gameState.cpu.approval}%)`);
+    showFinishOverlay(result25);
+    return;
   }
 
+  gameState.turn++;
   logState();
+  startPlayerTurn();
 }
 
 function checkWinCondition() {
@@ -736,18 +1221,9 @@ function playCardToField(handIndex) {
   const p = gameState.player;
   const card = p.hand[handIndex];
 
-  if (!card || card.type !== "politician") {
-    console.log("政治家カードではありません");
-    return false;
-  }
-  if (p.placedThisTurn) {
-    console.log("このターンは既にカードを場に出しました");
-    return false;
-  }
-  if (p.field.length >= 3) {
-    console.log("場が上限（3枚）です");
-    return false;
-  }
+  if (!card || card.type !== "politician") return false;
+  if (p.placedThisTurn) return false;
+  if (p.field.length >= 3) return false;
 
   p.hand.splice(handIndex, 1);
   p.field.push(card);
@@ -757,52 +1233,217 @@ function playCardToField(handIndex) {
   return true;
 }
 
-// 能力発動（スタブ）
+// 能力発動: 確認ダイアログ → 実行 → 結果表示
 function useAbility(fieldIndex, abilityIndex) {
   const p = gameState.player;
   const card = p.field[fieldIndex];
 
-  if (!card) return false;
-  if (p.usedAbilities[card.instanceId]) {
-    console.log(`${card.name}は既に能力を使用済みです`);
-    return false;
-  }
+  if (!card) return;
+  if (card.disabled) return;
+  if (p.usedAbilities[card.instanceId]) return;
 
   const ability = card.abilities[abilityIndex];
-  if (p.funds < ability.cost) {
-    console.log(`資金不足: ${ability.name}（コスト${ability.cost}億 / 所持${p.funds}億）`);
-    return false;
-  }
+  const effectiveCost = Math.max(0, ability.cost - (p.nextTurnBonuses.costReduction || 0));
+  if (p.funds < effectiveCost) return;
 
-  p.funds -= ability.cost;
-  p.usedAbilities[card.instanceId] = true;
-  console.log(`[能力発動] ${card.name}: ${ability.name}（コスト${ability.cost}億）`);
-  // 効果はフェーズ2以降で実装
-  console.log(`  → 効果: ${ability.description}（未実装）`);
-  renderGame();
-  return true;
+  // 確認ダイアログ表示
+  showConfirmDialog(card.name, ability.name, ability.description, effectiveCost, () => {
+    p.funds -= effectiveCost;
+    p.usedAbilities[card.instanceId] = true;
+    console.log(`[能力発動] ${card.name}: ${ability.name}（コスト${effectiveCost}億）`);
+    const msgs = executeEffect(ability.effect, "player");
+    showResultOverlay(`「${ability.name}」発動！`, msgs, () => {
+      // 勝敗即時判定
+      const result = checkWinCondition();
+      if (result) {
+        gameState.phase = "finished";
+        showFinishOverlay(result);
+        return;
+      }
+      renderGame();
+    });
+  });
 }
 
-// オプションカード使用（スタブ）
+// オプションカード使用: 確認ダイアログ → 実行 → 結果表示
 function useOptionCard(handIndex) {
   const p = gameState.player;
   const card = p.hand[handIndex];
 
-  if (!card || card.type !== "option") {
-    console.log("オプションカードではありません");
-    return false;
-  }
-  if (p.usedOptionThisTurn) {
-    console.log("このターンは既にオプションカードを使用しました");
-    return false;
+  if (!card || card.type !== "option") return;
+  if (p.usedOptionThisTurn) return;
+
+  showConfirmDialog(card.name, card.name, card.description, 0, () => {
+    p.hand.splice(handIndex, 1);
+    p.discard.push(card);
+    p.usedOptionThisTurn = true;
+    console.log(`[オプション使用] ${card.name}`);
+    const msgs = executeEffect(card.effect, "player");
+    showResultOverlay(`「${card.name}」使用！`, msgs, () => {
+      const result = checkWinCondition();
+      if (result) {
+        gameState.phase = "finished";
+        showFinishOverlay(result);
+        return;
+      }
+      renderGame();
+    });
+  });
+}
+
+// ============================================================
+// オーバーレイUI
+// ============================================================
+
+function showOverlay(html) {
+  const overlay = document.getElementById("overlay");
+  const content = document.getElementById("overlay-content");
+  content.innerHTML = html;
+  overlay.classList.remove("hidden");
+}
+
+function hideOverlay() {
+  document.getElementById("overlay").classList.add("hidden");
+}
+
+// 確認ダイアログ
+function showConfirmDialog(_cardName, abilityName, description, cost, onConfirm) {
+  const costText = cost > 0 ? `コスト: ${cost}億円` : "コスト: 無料";
+  showOverlay(`
+    <h2>「${abilityName}」を使用しますか？</h2>
+    <p class="overlay-desc">${description}</p>
+    <p class="overlay-cost">${costText}</p>
+    <div class="overlay-buttons">
+      <button id="confirm-yes" class="overlay-btn btn-confirm">使用する</button>
+      <button id="confirm-no" class="overlay-btn btn-cancel">やめる</button>
+    </div>
+  `);
+  document.getElementById("confirm-yes").addEventListener("click", () => {
+    hideOverlay();
+    onConfirm();
+  });
+  document.getElementById("confirm-no").addEventListener("click", () => {
+    hideOverlay();
+  });
+}
+
+// 効果結果表示
+function showResultOverlay(title, messages, onClose) {
+  const msgHtml = messages.map(m => `<p class="result-msg">${m}</p>`).join("");
+  showOverlay(`
+    <h2>${title}</h2>
+    ${msgHtml}
+    <div class="overlay-buttons">
+      <button id="result-ok" class="overlay-btn btn-confirm">OK</button>
+    </div>
+  `);
+  document.getElementById("result-ok").addEventListener("click", () => {
+    hideOverlay();
+    onClose();
+  });
+}
+
+// 情勢調査オーバーレイ
+function showSurveyOverlay(onClose) {
+  const pa = gameState.player.approval;
+  const ca = gameState.cpu.approval;
+  showOverlay(`
+    <h2>情勢調査結果</h2>
+    <div class="survey-bar">
+      <div class="survey-row">
+        <span>あなた:</span>
+        <div class="bar-container"><div class="bar bar-player" style="width:${pa}%"></div></div>
+        <span>${pa}%</span>
+      </div>
+      <div class="survey-row">
+        <span>CPU:</span>
+        <div class="bar-container"><div class="bar bar-cpu" style="width:${ca}%"></div></div>
+        <span>${ca}%</span>
+      </div>
+    </div>
+    <div class="overlay-buttons">
+      <button id="survey-ok" class="overlay-btn btn-confirm">続ける</button>
+    </div>
+  `);
+  document.getElementById("survey-ok").addEventListener("click", () => {
+    hideOverlay();
+    if (onClose) onClose();
+  });
+}
+
+// 終了画面オーバーレイ
+function showFinishOverlay(result) {
+  const pa = gameState.player.approval;
+  const ca = gameState.cpu.approval;
+  let title, subtitle;
+
+  if (result.includes("プレイヤーの勝利")) {
+    title = "総理大臣就任！";
+    subtitle = result;
+  } else if (result.includes("CPUの勝利")) {
+    title = "政党解散…";
+    subtitle = result;
+  } else {
+    title = "引き分け";
+    subtitle = "両者互角の戦いでした";
   }
 
-  p.hand.splice(handIndex, 1);
-  p.discard.push(card);
-  p.usedOptionThisTurn = true;
-  console.log(`[オプション使用] ${card.name}: ${card.description}（未実装）`);
-  renderGame();
-  return true;
+  showOverlay(`
+    <h2>${title}</h2>
+    <p>${subtitle}</p>
+    <p>あなた: ${pa}% / CPU: ${ca}%</p>
+    <div class="overlay-buttons">
+      <button id="finish-retry" class="overlay-btn btn-confirm">もう一度遊ぶ</button>
+    </div>
+  `);
+  document.getElementById("finish-retry").addEventListener("click", () => {
+    hideOverlay();
+    gameState.phase = "party_select";
+    gameState.player = createPlayerState();
+    gameState.cpu = createPlayerState();
+    renderGame();
+  });
+}
+
+// 手札超過時の捨て札選択UI
+function showDiscardUI(count, onComplete) {
+  let remaining = count;
+
+  function renderDiscardOverlay() {
+    const cards = gameState.player.hand;
+    const cardsHtml = cards.map((card, idx) => {
+      const typeClass = card.type === "politician" ? "card-politician" : "card-option";
+      return `<div class="discard-card ${typeClass}" data-idx="${idx}">
+        <div class="card-name">${card.name}</div>
+      </div>`;
+    }).join("");
+
+    showOverlay(`
+      <h2>手札が上限を超えています</h2>
+      <p>捨てるカードを選んでください（あと${remaining}枚）</p>
+      <div class="discard-list">${cardsHtml}</div>
+    `);
+
+    document.querySelectorAll(".discard-card").forEach(el => {
+      el.addEventListener("click", () => {
+        const idx = parseInt(el.dataset.idx);
+        const discarded = gameState.player.hand.splice(idx, 1)[0];
+        gameState.player.discard.push(discarded);
+        console.log(`  手札超過: ${discarded.name}を捨てた`);
+        remaining--;
+
+        if (remaining <= 0) {
+          hideOverlay();
+          renderGame();
+          onComplete();
+        } else {
+          renderDiscardOverlay();
+        }
+      });
+    });
+  }
+
+  renderDiscardOverlay();
 }
 
 // ============================================================
@@ -828,8 +1469,9 @@ function renderGame() {
   showScreen("game-screen");
 
   // ターン情報
+  const turnsUntilSurvey = 5 - (gameState.turn % 5 || 5);
   document.getElementById("turn-info").textContent =
-    `ターン: ${gameState.turn}/25　情勢調査まで: あと${5 - (gameState.turn % 5 || 5)}ターン`;
+    `ターン: ${gameState.turn}/25　情勢調査まで: あと${turnsUntilSurvey}ターン`;
 
   // CPU情報
   document.getElementById("cpu-party").textContent = gameState.cpu.party || "???";
@@ -846,9 +1488,9 @@ function renderGame() {
   // 手札
   renderHand();
 
-  // デバッグ情報（コンソール用）
+  // デバッグ情報
   document.getElementById("debug-info").textContent =
-    `[DEBUG] P支持率:${gameState.player.approval}% C支持率:${gameState.cpu.approval}% P山札:${gameState.player.deck.length} C山札:${gameState.cpu.deck.length}`;
+    `[DEBUG] P支持率:${gameState.player.approval}% C支持率:${gameState.cpu.approval}% P資金:${gameState.player.funds}億 P手札:${gameState.player.hand.length} P山札:${gameState.player.deck.length} C山札:${gameState.cpu.deck.length}`;
 }
 
 function renderFieldCards(containerId, cards, isPlayer) {
@@ -857,20 +1499,25 @@ function renderFieldCards(containerId, cards, isPlayer) {
   cards.forEach((card, idx) => {
     const el = createCardElement(card);
     if (isPlayer && gameState.currentPlayer === "player") {
-      // 能力ボタンを追加
       const abilities = document.createElement("div");
       abilities.className = "card-abilities";
+      const costReduction = gameState.player.nextTurnBonuses.costReduction || 0;
       card.abilities.forEach((ability, aIdx) => {
         const btn = document.createElement("button");
         btn.className = "ability-btn";
-        btn.textContent = `${ability.name}(${ability.cost}億)`;
+        const effectiveCost = Math.max(0, ability.cost - costReduction);
+        btn.textContent = `${ability.name}(${effectiveCost}億)`;
         const isUsed = gameState.player.usedAbilities[card.instanceId];
-        const cantAfford = gameState.player.funds < ability.cost;
-        if (isUsed || cantAfford) {
+        const cantAfford = gameState.player.funds < effectiveCost;
+        const isDisabled = card.disabled;
+        if (isUsed || cantAfford || isDisabled) {
           btn.disabled = true;
           btn.classList.add("disabled");
         }
-        btn.addEventListener("click", () => useAbility(idx, aIdx));
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          useAbility(idx, aIdx);
+        });
         abilities.appendChild(btn);
       });
       el.appendChild(abilities);
@@ -912,7 +1559,6 @@ function createCardElement(card) {
     el.classList.add("no-image");
   };
 
-  // テキスト表示（画像がない場合のフォールバック、および画像がある場合のラベル）
   const nameLabel = document.createElement("div");
   nameLabel.className = "card-name";
   nameLabel.textContent = card.name;
@@ -948,11 +1594,6 @@ function setMainPhaseUI(enabled) {
   }
 }
 
-function showSurveyOverlay() {
-  // フェーズ3で本実装。今はコンソール出力のみ。
-  console.log("（情勢調査オーバーレイ - 未実装）");
-}
-
 // ============================================================
 // デバッグ用
 // ============================================================
@@ -979,12 +1620,10 @@ function selectParty(party) {
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
-  // 政党選択ボタン
   document.querySelectorAll(".party-btn").forEach(btn => {
     btn.addEventListener("click", () => selectParty(btn.dataset.party));
   });
 
-  // ターン終了ボタン
   document.getElementById("end-turn-btn").addEventListener("click", () => {
     if (gameState.currentPlayer === "player") {
       endPlayerTurn();
