@@ -14,13 +14,15 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "一口でおにぎり",
-        description: "自分の支持率-5%。おにぎりの産地が注目され、地方団体からの献金で政治資金+7億円を即時獲得",
+        effectText: "支持率-5%、政治資金+7億",
+        description: "おにぎりの産地が注目され、地方団体からの献金",
         cost: 0,
         effect: "ishiba_1"
       },
       {
         name: "ゲル顔で威嚇",
-        description: "独特の表情で相手を威圧。相手の支持率-8%、さらに相手の次ターンの能力コスト+1億",
+        effectText: "相手の支持率-8%、次の相手のターンの能力コスト+1億",
+        description: "独特の表情で相手を威圧",
         cost: 4,
         effect: "ishiba_2"
       }
@@ -36,13 +38,15 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "早苗ネーム連呼",
-        description: "自分の名前を連呼して存在感アピール。支持率+8%、政治資金-2億",
+        effectText: "支持率+8%、政治資金-2億",
+        description: "自分の名前を連呼して存在感アピール",
         cost: 2,
         effect: "takaichi_1"
       },
       {
         name: "靖国参拝決行",
-        description: "支持率+12%、ただし次のターン相手の攻撃効果が1.5倍になる",
+        effectText: "支持率+12%、次の相手のターンの攻撃効果1.5倍",
+        description: "保守層に強烈アピール、反発も招く",
         cost: 5,
         effect: "takaichi_2"
       }
@@ -58,13 +62,15 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "セクシー発言",
-        description: "「気候変動はセクシーに」などの迷言で物議。ランダムで支持率+15%か-10%",
+        effectText: "支持率+15% or -10%",
+        description: "「気候変動はセクシーに」などの迷言で物議",
         cost: 1,
         effect: "koizumi_1"
       },
       {
         name: "レジ袋有料化",
-        description: "環境アピールだが不評。相手の支持率-5%、自分も-3%だが政治資金+6億",
+        effectText: "相手の支持率-5%、自分の支持率-3%、政治資金+6億",
+        description: "環境アピールだが不評",
         cost: 2,
         effect: "koizumi_2"
       }
@@ -80,13 +86,15 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "Twitterブロック祭り",
-        description: "批判者を片っ端からブロック。相手の次の攻撃を無効化するが、自分の支持率-3%",
+        effectText: "次の相手のターンの攻撃を無効化、支持率-3%",
+        description: "批判者を片っ端からブロック",
         cost: 2,
         effect: "kono_1"
       },
       {
         name: "ハンコ廃止！",
-        description: "デジタル化推進で支持率+9%、次のターンの資金収入+3億",
+        effectText: "支持率+9%、次の自分のターンの資金収入+3億",
+        description: "デジタル化推進で支持獲得",
         cost: 4,
         effect: "kono_2"
       }
@@ -102,13 +110,15 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "ガースーです",
-        description: "独特の自己紹介で親しみアピール。支持率+8%、さらに場にカードが1枚以下なら追加+4%",
+        effectText: "支持率+8%（場が1枚以下なら追加+4%）",
+        description: "独特の自己紹介で親しみアピール",
         cost: 3,
         effect: "suga_1"
       },
       {
         name: "パンケーキ会食",
-        description: "メディアと懐柔策。相手の次の攻撃-4%、政治資金+4億",
+        effectText: "次の相手のターンの攻撃-4%、政治資金+4億",
+        description: "メディアと懐柔策",
         cost: 2,
         effect: "suga_2"
       }
@@ -126,13 +136,15 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "文春砲サバイバル",
-        description: "不倫疑惑報道を乗り越える。自分の支持率-8%だが、政治資金+10億獲得＆次の2ターン相手の攻撃無効",
+        effectText: "支持率-8%、政治資金+10億",
+        description: "不倫疑惑報道を乗り越える",
         cost: 0,
         effect: "tamaki_1"
       },
       {
         name: "手取りを増やす！",
-        description: "国民の手取りアップを訴求。支持率+10%、政治資金+5億",
+        effectText: "支持率+10%、政治資金+5億",
+        description: "国民の手取りアップを訴求",
         cost: 4,
         effect: "tamaki_2"
       }
@@ -148,13 +160,15 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "若手のフットワーク",
-        description: "身軽に動いて支持獲得。支持率+9%、次のターンの能力コストが全て-1億",
+        effectText: "支持率+9%、次の自分のターンの能力コスト全て-1億",
+        description: "身軽に動いて支持獲得",
         cost: 3,
         effect: "mori_1"
       },
       {
         name: "次世代の星",
-        description: "若手ならではのフレッシュさ。支持率+7%、さらに場のカードが2枚以下なら追加+5%",
+        effectText: "支持率+7%（場が2枚以下なら追加+5%）",
+        description: "若手ならではのフレッシュさ",
         cost: 3,
         effect: "mori_2"
       }
@@ -170,13 +184,15 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "静岡茶で一服",
-        description: "お茶を飲んで一息。政治資金+8億、次のターンの防御効果+50%",
+        effectText: "政治資金+8億、次の相手のターンの攻撃を50%軽減",
+        description: "お茶を飲んで一息",
         cost: 2,
         effect: "shinba_1"
       },
       {
         name: "国対の調整力",
-        description: "水面下の調整で場を整える。自分の場の全カードの次ターンコスト-2億、支持率+6%",
+        effectText: "自分の場の全カードの次の自分のターンのコスト-2億、支持率+6%",
+        description: "水面下の調整で場を整える",
         cost: 4,
         effect: "shinba_2"
       }
@@ -192,13 +208,15 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "日銀理論で論破",
-        description: "経済理論で相手を圧倒。相手の支持率-8%、自分の政治資金+7億",
+        effectText: "相手の支持率-8%、政治資金+7億",
+        description: "経済理論で相手を圧倒",
         cost: 5,
         effect: "ushida_1"
       },
       {
         name: "金融緩和論",
-        description: "難しい経済政策を語る。支持率+8%、政治資金+4億、ただしランダムで-3%の可能性も",
+        effectText: "支持率+8% or -3%、政治資金+4億",
+        description: "難しい経済政策を語る",
         cost: 3,
         effect: "ushida_2"
       }
@@ -214,13 +232,15 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "元アナの美声",
-        description: "元アナウンサーの滑舌と声で訴求力UP。支持率+10%、次のターンも+4%の追加効果",
+        effectText: "支持率+10%、次の自分のターン開始時に+4%",
+        description: "元アナウンサーの滑舌と声で訴求力UP",
         cost: 4,
         effect: "ito_1"
       },
       {
         name: "ママ目線の追及",
-        description: "子育て世代の代弁で共感を得る。支持率+9%、相手の支持率-3%",
+        effectText: "支持率+9%、相手の支持率-3%",
+        description: "子育て世代の代弁で共感",
         cost: 4,
         effect: "ito_2"
       }
@@ -238,13 +258,15 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "ビジョン宣言",
-        description: "支持率+6%、場のカードが3枚なら追加+4%",
+        effectText: "支持率+6%（場が3枚なら追加+4%）",
+        description: "理想的なビジョンを力強く訴える",
         cost: 3,
         effect: "anno_1"
       },
       {
         name: "マニフェスト",
-        description: "支持率+4%",
+        effectText: "支持率+4%",
+        description: "公約を発表して共感を集める",
         cost: 2,
         effect: "anno_2"
       }
@@ -260,13 +282,15 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "草の根運動",
-        description: "支持率+4%",
+        effectText: "支持率+4%",
+        description: "地道な草の根活動で支持を広げる",
         cost: 1,
         effect: "takayama_1"
       },
       {
         name: "SNSバズ",
-        description: "支持率+7%",
+        effectText: "支持率+7%",
+        description: "SNSで話題を作りバズらせる",
         cost: 3,
         effect: "takayama_2"
       }
@@ -282,13 +306,15 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "構造改革",
-        description: "相手の支持率-5%、自分の支持率+5%",
+        effectText: "相手の支持率-5%、支持率+5%",
+        description: "既存システムを大胆に改革",
         cost: 5,
         effect: "muto_1"
       },
       {
         name: "規制緩和",
-        description: "支持率+6%",
+        effectText: "支持率+6%",
+        description: "規制緩和で経済活性化を訴える",
         cost: 3,
         effect: "muto_2"
       }
@@ -304,13 +330,15 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "テクノ政策",
-        description: "相手の場からランダムに1枚選び、次の相手のターンで能力使用不可にする",
+        effectText: "相手の場のランダム1枚を次の相手のターンで使用不可",
+        description: "先進技術で相手の動きを妨害",
         cost: 4,
         effect: "suda_1"
       },
       {
         name: "AI推進",
-        description: "支持率+5%",
+        effectText: "支持率+5%",
+        description: "AI活用で社会の効率化を訴える",
         cost: 3,
         effect: "suda_2"
       }
@@ -326,13 +354,15 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "超党派連携",
-        description: "自分の全カードの能力コスト-1(自分のそのターンのみ)",
+        effectText: "自分の全カードの能力コスト-1（自分のそのターンのみ）",
+        description: "超党派で協力して政策を実現",
         cost: 3,
         effect: "mineshima_1"
       },
       {
         name: "多様性推進",
-        description: "支持率+4%、相手の支持率-2%",
+        effectText: "支持率+4%、相手の支持率-2%",
+        description: "多様性を推進し共感を獲得",
         cost: 4,
         effect: "mineshima_2"
       }
@@ -497,7 +527,7 @@ function createPlayerState() {
   return {
     party: null,
     approval: 30,
-    funds: 3,
+    funds: 0,
     hand: [],
     field: [],
     deck: [],
@@ -797,7 +827,7 @@ const ABILITY_EFFECTS = {
   },
 
   // --- チームみらい ---
-  mirai_taro_1(self, opponent) {
+  anno_1(self, opponent) {
     const msgs = [];
     let bonus = 0;
     if (self.field.length >= 3) bonus = 4;
@@ -805,25 +835,25 @@ const ABILITY_EFFECTS = {
     if (m1) msgs.push(m1);
     return msgs;
   },
-  mirai_taro_2(self, opponent) {
+  anno_2(self, opponent) {
     const msgs = [];
     const m1 = changeApproval(self, 4);
     if (m1) msgs.push(m1);
     return msgs;
   },
-  kibou_hanako_1(self, opponent) {
+  takayama_1(self, opponent) {
     const msgs = [];
     const m1 = changeApproval(self, 4);
     if (m1) msgs.push(m1);
     return msgs;
   },
-  kibou_hanako_2(self, opponent) {
+  takayama_2(self, opponent) {
     const msgs = [];
     const m1 = changeApproval(self, 7);
     if (m1) msgs.push(m1);
     return msgs;
   },
-  kaikaku_ichiro_1(self, opponent) {
+  muto_1(self, opponent) {
     const msgs = [];
     const m1 = changeApproval(opponent, -5);
     if (m1) msgs.push(m1);
@@ -831,13 +861,13 @@ const ABILITY_EFFECTS = {
     if (m2) msgs.push(m2);
     return msgs;
   },
-  kaikaku_ichiro_2(self, opponent) {
+  muto_2(self, opponent) {
     const msgs = [];
     const m1 = changeApproval(self, 6);
     if (m1) msgs.push(m1);
     return msgs;
   },
-  senshin_jiro_1(self, opponent) {
+  suda_1(self, opponent) {
     const msgs = [];
     if (opponent.field.length > 0) {
       const target = opponent.field[Math.floor(Math.random() * opponent.field.length)];
@@ -848,20 +878,20 @@ const ABILITY_EFFECTS = {
     }
     return msgs;
   },
-  senshin_jiro_2(self, opponent) {
+  suda_2(self, opponent) {
     const msgs = [];
     const m1 = changeApproval(self, 5);
     if (m1) msgs.push(m1);
     return msgs;
   },
-  kyosei_saburo_1(self, opponent) {
+  mineshima_1(self, opponent) {
     const msgs = [];
     // このターンのみコスト-1 は即座にフラグを立てる（既に処理済みのカードには影響しない）
     self.nextTurnBonuses.costReduction += 1;
     msgs.push("このターン、全カードの能力コスト-1億！");
     return msgs;
   },
-  kyosei_saburo_2(self, opponent) {
+  mineshima_2(self, opponent) {
     const msgs = [];
     const m1 = changeApproval(self, 4);
     if (m1) msgs.push(m1);
@@ -1261,7 +1291,7 @@ function useAbility(fieldIndex, abilityIndex) {
   if (p.funds < effectiveCost) return;
 
   // 確認ダイアログ表示
-  showConfirmDialog(card.name, ability.name, ability.description, effectiveCost, () => {
+  showConfirmDialog(card.name, ability.name, ability.effectText || "", ability.description || "", effectiveCost, () => {
     p.funds -= effectiveCost;
     p.usedAbilities[card.instanceId] = true;
     console.log(`[能力発動] ${card.name}: ${ability.name}（コスト${effectiveCost}億）`);
@@ -1287,10 +1317,9 @@ function useOptionCard(handIndex) {
   if (!card || card.type !== "option") return;
   if (p.usedOptionThisTurn) return;
 
-  const desc = card.effectDescription
-    ? `${card.description}\n【効果】${card.effectDescription}`
-    : card.description;
-  showConfirmDialog(card.name, card.name, desc, 0, () => {
+  const effectText = card.effectDescription || "";
+  const desc = card.description || "";
+  showConfirmDialog(card.name, card.name, effectText, desc, 0, () => {
     p.hand.splice(handIndex, 1);
     p.discard.push(card);
     p.usedOptionThisTurn = true;
@@ -1324,11 +1353,14 @@ function hideOverlay() {
 }
 
 // 確認ダイアログ
-function showConfirmDialog(_cardName, abilityName, description, cost, onConfirm) {
+function showConfirmDialog(_cardName, abilityName, effectText, description, cost, onConfirm) {
   const costText = cost > 0 ? `コスト: ${cost}億円` : "コスト: 無料";
+  const effectHtml = effectText ? `<p class="overlay-effect">${effectText}</p>` : "";
+  const descHtml = description ? `<p class="overlay-desc">${description.replace(/\n/g, '<br>')}</p>` : "";
   showOverlay(`
     <h2>「${abilityName}」を使用しますか？</h2>
-    <p class="overlay-desc">${description.replace(/\n/g, '<br>')}</p>
+    ${effectHtml}
+    ${descHtml}
     <p class="overlay-cost">${costText}</p>
     <div class="overlay-buttons">
       <button id="confirm-yes" class="overlay-btn btn-confirm">使用する</button>
@@ -1474,6 +1506,13 @@ function showCardZoom(card, context, index) {
       nameRow.className = "zoom-ability-name";
       nameRow.textContent = `${ability.name}（${effectiveCost}億）`;
       item.appendChild(nameRow);
+
+      if (ability.effectText) {
+        const effectRow = document.createElement("div");
+        effectRow.className = "zoom-ability-effect";
+        effectRow.textContent = ability.effectText;
+        item.appendChild(effectRow);
+      }
 
       const descRow = document.createElement("div");
       descRow.className = "zoom-ability-desc";
