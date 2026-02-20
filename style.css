@@ -192,15 +192,15 @@ h1 {
   height: 155px;
 }
 
-/* 小さいカード上の能力サマリー（画像上に白半透明枠・縦幅1/3） */
+/* 小さいカード上の能力サマリー（画像上に白半透明枠） */
 .card-ability-summary {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 30%;
-  background: rgba(255, 255, 255, 0.85);
-  border-radius: 0 0 6px 6px;
+  bottom: 4px;
+  left: 4px;
+  right: 4px;
+  height: 40%;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 4px;
   padding: 3px 4px;
   display: flex;
   flex-direction: column;
@@ -495,16 +495,16 @@ h1 {
   line-height: 1.4;
 }
 
-/* 拡大カード画像上の白半透明枠（縦幅1/3） */
+/* 拡大カード画像上の白半透明枠 */
 .zoom-ability-overlay {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 30%;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  height: 40%;
   background: rgba(255, 255, 255, 0.85);
-  border-radius: 0 0 10px 10px;
-  padding: 8px 10px;
+  border-radius: 8px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
   justify-content: center;
