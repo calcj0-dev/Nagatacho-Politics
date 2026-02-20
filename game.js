@@ -1514,11 +1514,6 @@ function showCardZoom(card, context, index) {
         item.appendChild(effectRow);
       }
 
-      const descRow = document.createElement("div");
-      descRow.className = "zoom-ability-desc";
-      descRow.textContent = ability.description;
-      item.appendChild(descRow);
-
       // 場のプレイヤーカード: クリックで確認ダイアログ
       if (isFieldPlayer && !inactive) {
         item.addEventListener("click", (e) => {
