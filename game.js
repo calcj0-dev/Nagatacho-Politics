@@ -1714,6 +1714,18 @@ function renderHand() {
   container.innerHTML = "";
   gameState.player.hand.forEach((card, idx) => {
     const el = createCardElement(card);
+    // 手札の政治家カードにも能力サマリーを表示
+    if (card.type === "politician" && card.abilities) {
+      const abilitySummary = document.createElement("div");
+      abilitySummary.className = "card-ability-summary";
+      card.abilities.forEach(ability => {
+        const line = document.createElement("div");
+        line.className = "card-ability-line";
+        line.textContent = `${ability.name}(${ability.cost}億)`;
+        abilitySummary.appendChild(line);
+      });
+      el.appendChild(abilitySummary);
+    }
     el.addEventListener("click", () => {
       if (gameState.currentPlayer !== "player") return;
       if (card.type === "politician") {
