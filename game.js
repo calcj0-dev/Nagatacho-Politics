@@ -537,9 +537,10 @@ function createPlayerState() {
     usedOptionThisTurn: false,
     skipNextDraw: false,
     shields: [],             // 無効化系効果
+    currentTurnCostReduction: 0, // このターンのみ有効なコスト軽減（ターン開始時にnextTurnBonusesから転写）
     nextTurnBonuses: {
       fundBonus: 0,
-      costReduction: 0,
+      costReduction: 0,      // 次ターン開始時にcurrentTurnCostReductionへ転写してリセット
       defenseBonus: 0,
       attackMultiplier: 1,
       attackReduction: 0,
@@ -672,6 +673,8 @@ const ABILITY_EFFECTS = {
     const msgs = [];
     const m1 = changeApproval(self, 8);
     if (m1) msgs.push(m1);
+    changeFunds(self, -2);
+    msgs.push("政治資金-2億円…");
     return msgs;
   },
   takaichi_2(self, opponent) {
@@ -886,8 +889,8 @@ const ABILITY_EFFECTS = {
   },
   mineshima_1(self, opponent) {
     const msgs = [];
-    // このターンのみコスト-1 は即座にフラグを立てる（既に処理済みのカードには影響しない）
-    self.nextTurnBonuses.costReduction += 1;
+    // currentTurnCostReductionに直接加算（nextTurnBonusesではなく今すぐ有効にする）
+    self.currentTurnCostReduction = (self.currentTurnCostReduction || 0) + 1;
     msgs.push("このターン、全カードの能力コスト-1億！");
     return msgs;
   },
@@ -1105,6 +1108,10 @@ function startPlayerTurn() {
     p.nextTurnBonuses.approvalBonus = 0;
   }
 
+  // 次ターンボーナスのコスト軽減を転写してリセット（これで永久蓄積を防ぐ）
+  p.currentTurnCostReduction = p.nextTurnBonuses.costReduction;
+  p.nextTurnBonuses.costReduction = 0;
+
   // ① 資金フェーズ
   const bonus = p.nextTurnBonuses.fundBonus;
   p.funds += 3 + bonus;
@@ -1142,6 +1149,10 @@ function startCpuTurn() {
     c.nextTurnBonuses.approvalBonus = 0;
   }
 
+  // 次ターンボーナスのコスト軽減を転写してリセット
+  c.currentTurnCostReduction = c.nextTurnBonuses.costReduction;
+  c.nextTurnBonuses.costReduction = 0;
+
   // ① 資金フェーズ
   const bonus = c.nextTurnBonuses.fundBonus;
   c.funds += 3 + bonus;
@@ -1157,11 +1168,116 @@ function startCpuTurn() {
     console.log(`  CPUドロー: ${drawn.name}`);
   }
 
-  // ③ メインフェーズ: CPU自動行動（フェーズ3で実装、今はパス）
-  console.log("  CPU: パス（AI未実装）");
+  // ③ メインフェーズ: CPU自動行動
+  renderGame();
+  setTimeout(() => {
+    const cpuMsgs = doCpuMainPhase();
 
-  // ④ エンドフェーズ
-  cpuEndPhase();
+    const result = checkWinCondition();
+    if (result) {
+      gameState.phase = "finished";
+      renderGame();
+      const displayMsgs = cpuMsgs.length > 0 ? cpuMsgs : ["CPUはパスしました"];
+      showResultOverlay("CPUのターン", displayMsgs, () => showFinishOverlay(result));
+      return;
+    }
+
+    if (cpuMsgs.length > 0) {
+      showResultOverlay("CPUのターン", cpuMsgs, () => cpuEndPhase());
+    } else {
+      cpuEndPhase();
+    }
+  }, 600);
+}
+
+// CPUのメインフェーズ行動: 行動内容のメッセージ配列を返す
+function doCpuMainPhase() {
+  const c = gameState.cpu;
+  const msgs = [];
+
+  // 1. 手札に政治家カードがあり、場が3枚未満なら場に出す
+  if (!c.placedThisTurn && c.field.length < 3) {
+    const idx = c.hand.findIndex(card => card.type === "politician");
+    if (idx >= 0) {
+      const card = c.hand.splice(idx, 1)[0];
+      c.field.push(card);
+      c.placedThisTurn = true;
+      msgs.push(`${card.name}を場に出した！`);
+      console.log(`  CPU: ${card.name}を場に出した`);
+    }
+  }
+
+  // 2. 場のカードの能力を発動（資金が足りるなら、コスト低い順に）
+  const costReduction = c.currentTurnCostReduction || 0;
+
+  // 各カードの最適な能力を事前選択
+  const abilityActions = [];
+  for (const card of c.field) {
+    if (c.usedAbilities[card.instanceId] || card.disabled) continue;
+    const costs = card.abilities.map(a => Math.max(0, a.cost - costReduction));
+    const afford0 = c.funds >= costs[0];
+    const afford1 = c.funds >= costs[1];
+
+    let chosen = -1;
+    if (afford0 && afford1) {
+      // 両方使えるなら高コスト（より強力）を選択
+      chosen = costs[1] >= costs[0] ? 1 : 0;
+    } else if (afford1) {
+      chosen = 1;
+    } else if (afford0) {
+      chosen = 0;
+    }
+
+    if (chosen >= 0) {
+      abilityActions.push({ card, abilityIdx: chosen, cost: costs[chosen] });
+    }
+  }
+
+  // コスト低い順にソートして発動
+  abilityActions.sort((a, b) => a.cost - b.cost);
+
+  for (const action of abilityActions) {
+    if (c.usedAbilities[action.card.instanceId]) continue;
+    const cr = c.currentTurnCostReduction || 0;
+    let abilityIdx = action.abilityIdx;
+    let effectiveCost = Math.max(0, action.card.abilities[abilityIdx].cost - cr);
+
+    // 選んだ能力が資金不足なら、もう一方を試す
+    if (c.funds < effectiveCost) {
+      const altIdx = 1 - abilityIdx;
+      const altCost = Math.max(0, action.card.abilities[altIdx].cost - cr);
+      if (c.funds >= altCost) {
+        abilityIdx = altIdx;
+        effectiveCost = altCost;
+      } else {
+        continue;
+      }
+    }
+
+    c.funds -= effectiveCost;
+    c.usedAbilities[action.card.instanceId] = true;
+    const ability = action.card.abilities[abilityIdx];
+    const effectMsgs = executeEffect(ability.effect, "cpu");
+    msgs.push(`${action.card.name}「${ability.name}」を使用！`);
+    msgs.push(...effectMsgs);
+    console.log(`  CPU: ${action.card.name}「${ability.name}」（コスト${effectiveCost}億）`);
+  }
+
+  // 3. 手札にオプションカードがあれば使用
+  if (!c.usedOptionThisTurn) {
+    const optionIdx = c.hand.findIndex(card => card.type === "option");
+    if (optionIdx >= 0) {
+      const card = c.hand.splice(optionIdx, 1)[0];
+      c.discard.push(card);
+      c.usedOptionThisTurn = true;
+      const effectMsgs = executeEffect(card.effect, "cpu");
+      msgs.push(`${card.name}を使用！`);
+      msgs.push(...effectMsgs);
+      console.log(`  CPU: ${card.name}を使用`);
+    }
+  }
+
+  return msgs;
 }
 
 function cpuEndPhase() {
@@ -1205,6 +1321,7 @@ function endTurn() {
     gameState.phase = "finished";
     console.log(`[ゲーム終了] ${result}`);
     renderGame();
+    showFinishOverlay(result);
     return;
   }
 
@@ -1287,7 +1404,7 @@ function useAbility(fieldIndex, abilityIndex) {
   if (p.usedAbilities[card.instanceId]) return;
 
   const ability = card.abilities[abilityIndex];
-  const effectiveCost = Math.max(0, ability.cost - (p.nextTurnBonuses.costReduction || 0));
+  const effectiveCost = Math.max(0, ability.cost - (p.currentTurnCostReduction || 0));
   if (p.funds < effectiveCost) return;
 
   // 確認ダイアログ表示
@@ -1485,7 +1602,7 @@ function showCardZoom(card, context, index) {
 
     const isFieldPlayer = context === "field";
     const p = gameState.player;
-    const costReduction = isFieldPlayer ? (p.nextTurnBonuses.costReduction || 0) : 0;
+    const costReduction = isFieldPlayer ? (p.currentTurnCostReduction || 0) : 0;
 
     card.abilities.forEach((ability, aIdx) => {
       const item = document.createElement("div");
@@ -1651,8 +1768,9 @@ function renderGame() {
 
   // ターン情報
   const turnsUntilSurvey = 5 - (gameState.turn % 5 || 5);
+  const turnOwner = gameState.currentPlayer === "player" ? "【あなたのターン】" : "【CPUのターン…】";
   document.getElementById("turn-info").textContent =
-    `ターン: ${gameState.turn}/25　情勢調査まで: あと${turnsUntilSurvey}ターン`;
+    `ターン: ${gameState.turn}/25　情勢調査まで: あと${turnsUntilSurvey}ターン　${turnOwner}`;
 
   // CPU情報
   document.getElementById("cpu-party").textContent = gameState.cpu.party || "???";
@@ -1683,7 +1801,7 @@ function renderFieldCards(containerId, cards, isPlayer) {
     if (card.type === "politician" && card.abilities) {
       const abilitySummary = document.createElement("div");
       abilitySummary.className = "card-ability-summary";
-      const costReduction = isPlayer ? (gameState.player.nextTurnBonuses.costReduction || 0) : 0;
+      const costReduction = isPlayer ? (gameState.player.currentTurnCostReduction || 0) : 0;
       card.abilities.forEach(ability => {
         const line = document.createElement("div");
         line.className = "card-ability-line";
