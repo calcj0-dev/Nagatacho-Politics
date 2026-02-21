@@ -1792,7 +1792,7 @@ function renderGame() {
 
   // CPU情報
   document.getElementById("cpu-party").textContent = gameState.cpu.party || "???";
-  document.getElementById("cpu-funds").textContent = "?億円";
+  document.getElementById("cpu-funds").textContent = `${gameState.cpu.funds}億円`;
   document.getElementById("cpu-approval").textContent = "???";
   renderFieldCards("cpu-field", gameState.cpu.field, false, gameState.cpu.deck.length);
 
