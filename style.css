@@ -269,12 +269,20 @@ h1 {
   flex-wrap: wrap;
 }
 
+/* 場＋山札の行 */
+.field-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
 /* 場 */
 .field {
   display: flex;
   gap: 12px;
   min-height: 170px;
   align-items: flex-start;
+  flex: 1;
 }
 
 .field .card {
@@ -282,13 +290,13 @@ h1 {
   height: 155px;
 }
 
-/* 山札スロット */
+/* 山札スロット（field-rowの右端、枠外） */
 .deck-slot {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .deck-card-back {

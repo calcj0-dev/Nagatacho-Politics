@@ -1810,13 +1810,15 @@ function renderGame() {
   document.getElementById("cpu-party").textContent = gameState.cpu.party || "???";
   document.getElementById("cpu-funds").innerHTML = fundsToHtml(gameState.cpu.funds);
   document.getElementById("cpu-approval").textContent = "???";
-  renderFieldCards("cpu-field", gameState.cpu.field, false, gameState.cpu.deck.length);
+  renderFieldCards("cpu-field", gameState.cpu.field, false);
+  renderDeckSlot("cpu-deck", gameState.cpu.deck.length);
 
   // プレイヤー情報
   document.getElementById("player-party").textContent = gameState.player.party || "???";
   document.getElementById("player-funds").innerHTML = fundsToHtml(gameState.player.funds);
   document.getElementById("player-approval").textContent = "???";
-  renderFieldCards("player-field", gameState.player.field, true, gameState.player.deck.length);
+  renderFieldCards("player-field", gameState.player.field, true);
+  renderDeckSlot("player-deck", gameState.player.deck.length);
 
   // CPU手札（裏向き）
   renderCpuHand();
@@ -1829,7 +1831,21 @@ function renderGame() {
     `[DEBUG] P支持率:${gameState.player.approval}% C支持率:${gameState.cpu.approval}% P資金:${gameState.player.funds}億 P手札:${gameState.player.hand.length} P山札:${gameState.player.deck.length} C山札:${gameState.cpu.deck.length}`;
 }
 
-function renderFieldCards(containerId, cards, isPlayer, deckCount) {
+function renderDeckSlot(slotId, deckCount) {
+  const slot = document.getElementById(slotId);
+  if (!slot) return;
+  slot.innerHTML = "";
+  const back = document.createElement("div");
+  back.className = "deck-card-back";
+  back.textContent = deckCount > 0 ? "🂠" : "";
+  const countEl = document.createElement("div");
+  countEl.className = "deck-count";
+  countEl.textContent = `${deckCount}枚`;
+  slot.appendChild(back);
+  slot.appendChild(countEl);
+}
+
+function renderFieldCards(containerId, cards, isPlayer) {
   const container = document.getElementById(containerId);
   container.innerHTML = "";
   cards.forEach((card, idx) => {
@@ -1858,21 +1874,6 @@ function renderFieldCards(containerId, cards, isPlayer, deckCount) {
     container.appendChild(el);
   });
 
-  // 山札スロット（フィールド右端）
-  const deckSlot = document.createElement("div");
-  deckSlot.className = "deck-slot";
-
-  const deckBack = document.createElement("div");
-  deckBack.className = "deck-card-back";
-  deckBack.textContent = deckCount > 0 ? "🂠" : "";
-
-  const deckCountEl = document.createElement("div");
-  deckCountEl.className = "deck-count";
-  deckCountEl.textContent = `${deckCount}枚`;
-
-  deckSlot.appendChild(deckBack);
-  deckSlot.appendChild(deckCountEl);
-  container.appendChild(deckSlot);
 }
 
 function renderCpuHand() {
