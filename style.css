@@ -264,9 +264,21 @@ h1 {
 
 .player-info {
   display: flex;
-  gap: 16px;
+  flex-direction: column;
+  gap: 4px;
   font-size: 0.9rem;
+}
+
+.player-info-row1 {
+  display: flex;
+  gap: 16px;
+}
+
+.player-info-funds {
+  display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
 }
 
 /* 場＋山札の行 */
