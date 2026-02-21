@@ -21,7 +21,7 @@ const POLITICIAN_CARDS = [
       },
       {
         name: "ゲル顔で威嚇",
-        effectText: "相手の支持率-8%、次の相手のターンの能力コスト+1億",
+        effectText: "相手の支持率-8%、【次ターン】相手の能力コスト+1億",
         description: "独特の表情で相手を威圧",
         cost: 4,
         effect: "ishiba_2"
@@ -45,7 +45,7 @@ const POLITICIAN_CARDS = [
       },
       {
         name: "靖国参拝決行",
-        effectText: "支持率+12%、次の相手のターンの攻撃効果1.5倍",
+        effectText: "支持率+12%、【次ターン】相手の攻撃効果×1.5",
         description: "保守層に強烈アピール、反発も招く",
         cost: 5,
         effect: "takaichi_2"
@@ -86,14 +86,14 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "Twitterブロック祭り",
-        effectText: "次の相手のターンの攻撃を無効化、支持率-3%",
+        effectText: "【次ターン】相手の攻撃を無効化、支持率-3%、政治資金+2億",
         description: "批判者を片っ端からブロック",
         cost: 2,
         effect: "kono_1"
       },
       {
         name: "ハンコ廃止！",
-        effectText: "支持率+9%、次の自分のターンの資金収入+3億",
+        effectText: "支持率+9%、【次ターン】自分の資金収入+3億",
         description: "デジタル化推進で支持獲得",
         cost: 4,
         effect: "kono_2"
@@ -117,7 +117,7 @@ const POLITICIAN_CARDS = [
       },
       {
         name: "パンケーキ会食",
-        effectText: "次の相手のターンの攻撃-4%、政治資金+4億",
+        effectText: "政治資金+4億、【次ターン】相手の攻撃-4%",
         description: "メディアと懐柔策",
         cost: 2,
         effect: "suga_2"
@@ -138,7 +138,7 @@ const POLITICIAN_CARDS = [
         name: "文春砲サバイバル",
         effectText: "支持率-8%、政治資金+10億",
         description: "不倫疑惑報道を乗り越える",
-        cost: 0,
+        cost: 2,
         effect: "tamaki_1"
       },
       {
@@ -160,7 +160,7 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "若手のフットワーク",
-        effectText: "支持率+9%、次の自分のターンの能力コスト全て-1億",
+        effectText: "支持率+9%、【次ターン】自分の能力コスト全て-1億",
         description: "身軽に動いて支持獲得",
         cost: 3,
         effect: "mori_1"
@@ -184,14 +184,14 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "静岡茶で一服",
-        effectText: "政治資金+8億、次の相手のターンの攻撃を50%軽減",
+        effectText: "政治資金+6億、【次ターン】相手の攻撃を50%軽減",
         description: "お茶を飲んで一息",
         cost: 2,
         effect: "shinba_1"
       },
       {
         name: "国対の調整力",
-        effectText: "自分の場の全カードの次の自分のターンのコスト-2億、支持率+6%",
+        effectText: "支持率+6%、【次ターン】自分の場の全カードのコスト-2億",
         description: "水面下の調整で場を整える",
         cost: 4,
         effect: "shinba_2"
@@ -232,7 +232,7 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "元アナの美声",
-        effectText: "支持率+10%、次の自分のターン開始時に+4%",
+        effectText: "支持率+10%、【次ターン開始】自分の支持率+2%",
         description: "元アナウンサーの滑舌と声で訴求力UP",
         cost: 4,
         effect: "ito_1"
@@ -265,7 +265,7 @@ const POLITICIAN_CARDS = [
       },
       {
         name: "マニフェスト",
-        effectText: "支持率+4%",
+        effectText: "支持率+5%",
         description: "公約を発表して共感を集める",
         cost: 2,
         effect: "anno_2"
@@ -354,9 +354,9 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "超党派連携",
-        effectText: "自分の全カードの能力コスト-1（自分のそのターンのみ）",
+        effectText: "このターンのみ、自分の全カードの能力コスト-1億",
         description: "超党派で協力して政策を実現",
-        cost: 3,
+        cost: 2,
         effect: "mineshima_1"
       },
       {
@@ -681,8 +681,9 @@ const ABILITY_EFFECTS = {
     const msgs = [];
     const m1 = changeApproval(self, 12);
     if (m1) msgs.push(m1);
+    // 【フェーズ4】攻撃ダメージ計算時に attackMultiplier を適用予定
     opponent.nextTurnBonuses.attackMultiplier = 1.5;
-    msgs.push("次のターン、相手の攻撃効果が1.5倍に…");
+    msgs.push("【次ターン】相手の攻撃効果×1.5！");
     return msgs;
   },
   koizumi_1(self, opponent) {
@@ -708,10 +709,13 @@ const ABILITY_EFFECTS = {
   },
   kono_1(self, opponent) {
     const msgs = [];
+    // 【フェーズ4】applyDefenses() 統合後に block_attack シールドが機能予定
     self.shields.push("block_attack");
     const m1 = changeApproval(self, -3);
     if (m1) msgs.push(m1);
-    msgs.push("相手の次の攻撃を無効化！");
+    changeFunds(self, 2);
+    msgs.push("政治資金+2億円を獲得！");
+    msgs.push("【次ターン】相手の攻撃を無効化！");
     return msgs;
   },
   kono_2(self, opponent) {
@@ -732,10 +736,11 @@ const ABILITY_EFFECTS = {
   },
   suga_2(self, opponent) {
     const msgs = [];
-    opponent.nextTurnBonuses.attackReduction += 4;
+    // 【フェーズ4】applyDefenses() 統合後に attackReduction が機能予定（自分が受けるダメージを軽減）
+    self.nextTurnBonuses.attackReduction += 4;
     changeFunds(self, 4);
-    msgs.push("相手の次の攻撃-4%！");
     msgs.push("政治資金+4億円を獲得！");
+    msgs.push("【次ターン】相手の攻撃-4%！");
     return msgs;
   },
 
@@ -746,10 +751,6 @@ const ABILITY_EFFECTS = {
     if (m1) msgs.push(m1);
     changeFunds(self, 10);
     msgs.push("政治資金+10億円を獲得！");
-    opponent.nextTurnBonuses.immuneTurns = 2;
-    self.shields.push("immune");
-    self.shields.push("immune");
-    msgs.push("次の2ターン、相手の攻撃を無効化！");
     return msgs;
   },
   tamaki_2(self, opponent) {
@@ -778,10 +779,11 @@ const ABILITY_EFFECTS = {
   },
   shinba_1(self, opponent) {
     const msgs = [];
-    changeFunds(self, 8);
-    msgs.push("政治資金+8億円を獲得！");
+    changeFunds(self, 6);
+    msgs.push("政治資金+6億円を獲得！");
+    // 【フェーズ4】applyDefenses() 統合後に defenseBonus が機能予定
     self.nextTurnBonuses.defenseBonus = 50;
-    msgs.push("次のターンの防御効果+50%！");
+    msgs.push("【次ターン】相手の攻撃を50%軽減！");
     return msgs;
   },
   shinba_2(self, opponent) {
@@ -816,8 +818,8 @@ const ABILITY_EFFECTS = {
     const msgs = [];
     const m1 = changeApproval(self, 10);
     if (m1) msgs.push(m1);
-    self.nextTurnBonuses.approvalBonus = 4;
-    msgs.push("次のターンにも支持率+4%の追加効果！");
+    self.nextTurnBonuses.approvalBonus = 2;
+    msgs.push("【次ターン開始】自分の支持率+2%！");
     return msgs;
   },
   ito_2(self, opponent) {
@@ -840,7 +842,7 @@ const ABILITY_EFFECTS = {
   },
   anno_2(self, opponent) {
     const msgs = [];
-    const m1 = changeApproval(self, 4);
+    const m1 = changeApproval(self, 5);
     if (m1) msgs.push(m1);
     return msgs;
   },
