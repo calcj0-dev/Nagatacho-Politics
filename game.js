@@ -1172,7 +1172,16 @@ function startCpuTurn() {
 
   // ③ メインフェーズ: CPU自動行動
   renderGame();
+
+  // 「CPU思考中...」バナーを表示
+  const thinkingBanner = document.createElement("div");
+  thinkingBanner.id = "cpu-thinking";
+  thinkingBanner.textContent = "CPU 思考中...";
+  document.body.appendChild(thinkingBanner);
+
   setTimeout(() => {
+    thinkingBanner.remove();
+
     const cpuMsgs = doCpuMainPhase();
 
     const result = checkWinCondition();
@@ -1189,7 +1198,7 @@ function startCpuTurn() {
     } else {
       cpuEndPhase();
     }
-  }, 600);
+  }, 900);
 }
 
 // CPUのメインフェーズ行動: 行動内容のメッセージ配列を返す
@@ -1520,12 +1529,12 @@ function showSurveyOverlay(onClose) {
     <div class="survey-bar">
       <div class="survey-row">
         <span>あなた:</span>
-        <div class="bar-container"><div class="bar bar-player" style="width:${pa}%"></div></div>
+        <div class="bar-container"><div class="bar bar-player" style="width:0%"></div></div>
         <span>${pa}%</span>
       </div>
       <div class="survey-row">
         <span>CPU:</span>
-        <div class="bar-container"><div class="bar bar-cpu" style="width:${ca}%"></div></div>
+        <div class="bar-container"><div class="bar bar-cpu" style="width:0%"></div></div>
         <span>${ca}%</span>
       </div>
     </div>
@@ -1533,6 +1542,13 @@ function showSurveyOverlay(onClose) {
       <button id="survey-ok" class="overlay-btn btn-confirm">続ける</button>
     </div>
   `);
+  // バーを0%から実値へアニメーション
+  setTimeout(() => {
+    const barPlayer = document.querySelector(".bar-player");
+    const barCpu = document.querySelector(".bar-cpu");
+    if (barPlayer) barPlayer.style.width = `${pa}%`;
+    if (barCpu) barCpu.style.width = `${ca}%`;
+  }, 50);
   document.getElementById("survey-ok").addEventListener("click", () => {
     hideOverlay();
     if (onClose) onClose();

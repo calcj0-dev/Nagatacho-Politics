@@ -19,6 +19,22 @@ body {
   display: none !important;
 }
 
+#cpu-thinking {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.85);
+  color: #ffd700;
+  padding: 16px 36px;
+  border-radius: 8px;
+  border: 1px solid #ffd700;
+  font-size: 1.1rem;
+  letter-spacing: 0.1em;
+  z-index: 300;
+  pointer-events: none;
+}
+
 /* ============================================================
    画面共通
    ============================================================ */
@@ -61,6 +77,23 @@ h1 {
 
 .party-btn:hover {
   background: #0f3460;
+}
+
+.party-btn-name {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.party-btn-catch {
+  font-size: 0.75rem;
+  color: #ccc;
+  margin-bottom: 4px;
+}
+
+.party-btn-members {
+  font-size: 0.65rem;
+  color: #999;
 }
 
 /* ============================================================
@@ -381,7 +414,7 @@ h1 {
 .bar {
   height: 100%;
   border-radius: 4px;
-  transition: width 0.5s ease;
+  transition: width 0.8s ease;
 }
 
 .bar-player {
