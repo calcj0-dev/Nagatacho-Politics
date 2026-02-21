@@ -19,6 +19,32 @@ body {
   display: none !important;
 }
 
+/* 💰 資金表示 */
+.funds-big {
+  position: relative;
+  display: inline-block;
+  font-size: 1.4em;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.funds-num {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -48%);
+  font-size: 0.32em;
+  font-weight: bold;
+  color: #3a2000;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.funds-zero {
+  color: #666;
+  font-size: 0.9em;
+}
+
 #cpu-thinking {
   position: fixed;
   top: 50%;

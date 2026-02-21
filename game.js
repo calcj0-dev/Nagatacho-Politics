@@ -1482,14 +1482,14 @@ function hideOverlay() {
 
 // 確認ダイアログ
 function showConfirmDialog(_cardName, abilityName, effectText, description, cost, onConfirm) {
-  const costText = cost > 0 ? `コスト: ${cost}億円` : "コスト: 無料";
+  const costHtml = cost > 0 ? `コスト: ${fundsToHtml(cost)}` : "コスト: 無料";
   const effectHtml = effectText ? `<p class="overlay-effect">${effectText}</p>` : "";
   const descHtml = description ? `<p class="overlay-desc">${description.replace(/\n/g, '<br>')}</p>` : "";
   showOverlay(`
     <h2>「${abilityName}」を使用しますか？</h2>
     ${effectHtml}
     ${descHtml}
-    <p class="overlay-cost">${costText}</p>
+    <p class="overlay-cost">${costHtml}</p>
     <div class="overlay-buttons">
       <button id="confirm-yes" class="overlay-btn btn-confirm">使用する</button>
       <button id="confirm-no" class="overlay-btn btn-cancel">やめる</button>
@@ -1639,7 +1639,7 @@ function showCardZoom(card, context, index) {
 
       const nameRow = document.createElement("div");
       nameRow.className = "zoom-ability-name";
-      nameRow.textContent = `${ability.name}（${effectiveCost}億）`;
+      nameRow.innerHTML = `${ability.name}（${fundsToHtml(effectiveCost)}）`;
       item.appendChild(nameRow);
 
       if (ability.effectText) {
@@ -1771,6 +1771,22 @@ function showScreen(screenId) {
   document.getElementById(screenId).classList.remove("hidden");
 }
 
+// 政治資金を💰絵文字で表現するヘルパー
+// 10億ごとに大きな💰(内側に"10")、1億ごとに💰
+function fundsToHtml(amount) {
+  if (amount <= 0) return '<span class="funds-zero">—</span>';
+  const groups = Math.floor(amount / 10);
+  const singles = amount % 10;
+  let html = '';
+  for (let i = 0; i < groups; i++) {
+    html += '<span class="funds-big">💰<span class="funds-num">10</span></span>';
+  }
+  for (let i = 0; i < singles; i++) {
+    html += '💰';
+  }
+  return html;
+}
+
 function renderGame() {
   if (gameState.phase === "party_select") {
     showScreen("party-select-screen");
@@ -1792,13 +1808,13 @@ function renderGame() {
 
   // CPU情報
   document.getElementById("cpu-party").textContent = gameState.cpu.party || "???";
-  document.getElementById("cpu-funds").textContent = `${gameState.cpu.funds}億円`;
+  document.getElementById("cpu-funds").innerHTML = fundsToHtml(gameState.cpu.funds);
   document.getElementById("cpu-approval").textContent = "???";
   renderFieldCards("cpu-field", gameState.cpu.field, false, gameState.cpu.deck.length);
 
   // プレイヤー情報
   document.getElementById("player-party").textContent = gameState.player.party || "???";
-  document.getElementById("player-funds").textContent = `${gameState.player.funds}億円`;
+  document.getElementById("player-funds").innerHTML = fundsToHtml(gameState.player.funds);
   document.getElementById("player-approval").textContent = "???";
   renderFieldCards("player-field", gameState.player.field, true, gameState.player.deck.length);
 
@@ -1827,7 +1843,7 @@ function renderFieldCards(containerId, cards, isPlayer, deckCount) {
         const line = document.createElement("div");
         line.className = "card-ability-line";
         const effectiveCost = Math.max(0, ability.cost - costReduction);
-        line.textContent = `${ability.name}(${effectiveCost}億)`;
+        line.innerHTML = `${ability.name}(${fundsToHtml(effectiveCost)})`;
         abilitySummary.appendChild(line);
       });
       el.appendChild(abilitySummary);
@@ -1883,7 +1899,7 @@ function renderHand() {
       card.abilities.forEach(ability => {
         const line = document.createElement("div");
         line.className = "card-ability-line";
-        line.textContent = `${ability.name}(${ability.cost}億)`;
+        line.innerHTML = `${ability.name}(${fundsToHtml(ability.cost)})`;
         abilitySummary.appendChild(line);
       });
       el.appendChild(abilitySummary);
