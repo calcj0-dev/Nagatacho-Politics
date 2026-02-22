@@ -1184,22 +1184,22 @@ function startCpuTurn() {
 }
 
 // CPUアクションバナーを表示して onDone を呼ぶ（ノンブロッキング）
-function showCpuActionBanner(lines, onDone) {
-  let banner = document.getElementById("cpu-action-banner");
+// isPlayer=true → 青系(プレイヤー) / false → 橙系(CPU)
+function showActionBanner(lines, isPlayer, onDone) {
+  let banner = document.getElementById("action-banner");
   if (!banner) {
     banner = document.createElement("div");
-    banner.id = "cpu-action-banner";
+    banner.id = "action-banner";
     document.body.appendChild(banner);
   }
+  banner.className = isPlayer ? "banner-player" : "banner-cpu";
   banner.innerHTML = lines.map(l => `<div>${l}</div>`).join("");
-  banner.classList.remove("cpu-banner-fade");
   banner.style.opacity = "1";
   banner.style.display = "block";
   setTimeout(() => {
-    banner.classList.add("cpu-banner-fade");
+    banner.style.opacity = "0";
     setTimeout(() => {
       banner.style.display = "none";
-      banner.classList.remove("cpu-banner-fade");
       onDone();
     }, 400);
   }, 1100);
@@ -1216,7 +1216,7 @@ function cpuPhasePlace() {
       c.placedThisTurn = true;
       console.log(`  CPU: ${card.name}を場に出した`);
       renderGame();
-      showCpuActionBanner([`${card.name} を場に出した！`], () => cpuPhaseAbilities());
+      showActionBanner([`${card.name} を場に出した！`], false, () => cpuPhaseAbilities());
       return;
     }
   }
@@ -1274,8 +1274,9 @@ function cpuExecuteNextAbility(abilityActions, idx) {
     const effectMsgs = executeEffect(ability.effect, "cpu");
     console.log(`  CPU: ${action.card.name}「${ability.name}」（コスト${effectiveCost}億）`);
     renderGame();
-    showCpuActionBanner(
+    showActionBanner(
       [`${action.card.name}「${ability.name}」を発動！`, ...effectMsgs],
+      false,
       () => cpuExecuteNextAbility(abilityActions, idx + 1)
     );
     return;
@@ -1295,8 +1296,9 @@ function cpuPhaseOption() {
       const effectMsgs = executeEffect(card.effect, "cpu");
       console.log(`  CPU: ${card.name}を使用`);
       renderGame();
-      showCpuActionBanner(
+      showActionBanner(
         [`${card.name} を使用！`, ...effectMsgs],
+        false,
         () => cpuCheckWinAndEnd()
       );
       return;
@@ -1450,15 +1452,14 @@ function useAbility(fieldIndex, abilityIndex) {
     p.usedAbilities[card.instanceId] = true;
     console.log(`[能力発動] ${card.name}: ${ability.name}（コスト${effectiveCost}億）`);
     const msgs = executeEffect(ability.effect, "player");
-    showResultOverlay(`「${ability.name}」発動！`, msgs, () => {
-      // 勝敗即時判定
+    renderGame();
+    showActionBanner([`「${ability.name}」発動！`, ...msgs], true, () => {
       const result = checkWinCondition();
       if (result) {
         gameState.phase = "finished";
         showFinishOverlay(result);
         return;
       }
-      renderGame();
     });
   });
 }
@@ -1479,14 +1480,14 @@ function useOptionCard(handIndex) {
     p.usedOptionThisTurn = true;
     console.log(`[オプション使用] ${card.name}`);
     const msgs = executeEffect(card.effect, "player");
-    showResultOverlay(`「${card.name}」使用！`, msgs, () => {
+    renderGame();
+    showActionBanner([`「${card.name}」使用！`, ...msgs], true, () => {
       const result = checkWinCondition();
       if (result) {
         gameState.phase = "finished";
         showFinishOverlay(result);
         return;
       }
-      renderGame();
     });
   });
 }

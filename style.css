@@ -61,14 +61,12 @@ body {
   pointer-events: none;
 }
 
-/* CPUアクションバナー（各行動を1つずつ表示） */
-#cpu-action-banner {
+/* アクションバナー共通（プレイヤー/CPU） */
+#action-banner {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(10, 10, 40, 0.94);
-  border: 2px solid #f0a020;
   border-radius: 10px;
   padding: 14px 28px;
   color: #fff;
@@ -83,8 +81,16 @@ body {
   transition: opacity 0.4s ease;
 }
 
-#cpu-action-banner.cpu-banner-fade {
-  opacity: 0;
+/* プレイヤーアクション: 青系 */
+#action-banner.banner-player {
+  background: rgba(10, 30, 70, 0.95);
+  border: 2px solid #4aabf0;
+}
+
+/* CPUアクション: 橙系 */
+#action-banner.banner-cpu {
+  background: rgba(10, 10, 40, 0.95);
+  border: 2px solid #f0a020;
 }
 
 /* ============================================================
