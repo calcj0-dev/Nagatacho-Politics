@@ -1151,7 +1151,6 @@ function startCpuTurn() {
     c.nextTurnBonuses.approvalBonus = 0;
   }
 
-  // 次ターンボーナスのコスト軽減を転写してリセット
   c.currentTurnCostReduction = c.nextTurnBonuses.costReduction;
   c.nextTurnBonuses.costReduction = 0;
 
@@ -1170,10 +1169,9 @@ function startCpuTurn() {
     console.log(`  CPUドロー: ${drawn.name}`);
   }
 
-  // ③ メインフェーズ: CPU自動行動
   renderGame();
 
-  // 「CPU思考中...」バナーを表示
+  // 「CPU思考中...」バナー → メインフェーズへ
   const thinkingBanner = document.createElement("div");
   thinkingBanner.id = "cpu-thinking";
   thinkingBanner.textContent = "CPU 思考中...";
@@ -1181,79 +1179,85 @@ function startCpuTurn() {
 
   setTimeout(() => {
     thinkingBanner.remove();
-
-    const cpuMsgs = doCpuMainPhase();
-
-    const result = checkWinCondition();
-    if (result) {
-      gameState.phase = "finished";
-      renderGame();
-      const displayMsgs = cpuMsgs.length > 0 ? cpuMsgs : ["CPUはパスしました"];
-      showResultOverlay("CPUのターン", displayMsgs, () => showFinishOverlay(result));
-      return;
-    }
-
-    if (cpuMsgs.length > 0) {
-      showResultOverlay("CPUのターン", cpuMsgs, () => cpuEndPhase());
-    } else {
-      cpuEndPhase();
-    }
+    cpuPhasePlace();
   }, 900);
 }
 
-// CPUのメインフェーズ行動: 行動内容のメッセージ配列を返す
-function doCpuMainPhase() {
-  const c = gameState.cpu;
-  const msgs = [];
+// CPUアクションバナーを表示して onDone を呼ぶ（ノンブロッキング）
+function showCpuActionBanner(lines, onDone) {
+  let banner = document.getElementById("cpu-action-banner");
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = "cpu-action-banner";
+    document.body.appendChild(banner);
+  }
+  banner.innerHTML = lines.map(l => `<div>${l}</div>`).join("");
+  banner.classList.remove("cpu-banner-fade");
+  banner.style.opacity = "1";
+  banner.style.display = "block";
+  setTimeout(() => {
+    banner.classList.add("cpu-banner-fade");
+    setTimeout(() => {
+      banner.style.display = "none";
+      banner.classList.remove("cpu-banner-fade");
+      onDone();
+    }, 400);
+  }, 1100);
+}
 
-  // 1. 手札に政治家カードがあり、場が3枚未満なら場に出す
+// フェーズ1: 政治家カードを場に出す
+function cpuPhasePlace() {
+  const c = gameState.cpu;
   if (!c.placedThisTurn && c.field.length < 3) {
     const idx = c.hand.findIndex(card => card.type === "politician");
     if (idx >= 0) {
       const card = c.hand.splice(idx, 1)[0];
       c.field.push(card);
       c.placedThisTurn = true;
-      msgs.push(`${card.name}を場に出した！`);
       console.log(`  CPU: ${card.name}を場に出した`);
+      renderGame();
+      showCpuActionBanner([`${card.name} を場に出した！`], () => cpuPhaseAbilities());
+      return;
     }
   }
+  cpuPhaseAbilities();
+}
 
-  // 2. 場のカードの能力を発動（資金が足りるなら、コスト低い順に）
-  const costReduction = c.currentTurnCostReduction || 0;
-
-  // 各カードの最適な能力を事前選択
+// フェーズ2: 能力の発動（1つずつ順番に）
+function cpuPhaseAbilities() {
+  const c = gameState.cpu;
+  const cr = c.currentTurnCostReduction || 0;
   const abilityActions = [];
   for (const card of c.field) {
     if (c.usedAbilities[card.instanceId] || card.disabled) continue;
-    const costs = card.abilities.map(a => Math.max(0, a.cost - costReduction));
+    const costs = card.abilities.map(a => Math.max(0, a.cost - cr));
     const afford0 = c.funds >= costs[0];
     const afford1 = c.funds >= costs[1];
-
     let chosen = -1;
     if (afford0 && afford1) {
-      // 両方使えるなら高コスト（より強力）を選択
       chosen = costs[1] >= costs[0] ? 1 : 0;
     } else if (afford1) {
       chosen = 1;
     } else if (afford0) {
       chosen = 0;
     }
-
     if (chosen >= 0) {
       abilityActions.push({ card, abilityIdx: chosen, cost: costs[chosen] });
     }
   }
-
-  // コスト低い順にソートして発動
   abilityActions.sort((a, b) => a.cost - b.cost);
+  cpuExecuteNextAbility(abilityActions, 0);
+}
 
-  for (const action of abilityActions) {
-    if (c.usedAbilities[action.card.instanceId]) continue;
+function cpuExecuteNextAbility(abilityActions, idx) {
+  const c = gameState.cpu;
+  // 未処理を探す
+  while (idx < abilityActions.length) {
+    const action = abilityActions[idx];
+    if (c.usedAbilities[action.card.instanceId]) { idx++; continue; }
     const cr = c.currentTurnCostReduction || 0;
     let abilityIdx = action.abilityIdx;
     let effectiveCost = Math.max(0, action.card.abilities[abilityIdx].cost - cr);
-
-    // 選んだ能力が資金不足なら、もう一方を試す
     if (c.funds < effectiveCost) {
       const altIdx = 1 - abilityIdx;
       const altCost = Math.max(0, action.card.abilities[altIdx].cost - cr);
@@ -1261,20 +1265,27 @@ function doCpuMainPhase() {
         abilityIdx = altIdx;
         effectiveCost = altCost;
       } else {
-        continue;
+        idx++; continue;
       }
     }
-
     c.funds -= effectiveCost;
     c.usedAbilities[action.card.instanceId] = true;
     const ability = action.card.abilities[abilityIdx];
     const effectMsgs = executeEffect(ability.effect, "cpu");
-    msgs.push(`${action.card.name}「${ability.name}」を使用！`);
-    msgs.push(...effectMsgs);
     console.log(`  CPU: ${action.card.name}「${ability.name}」（コスト${effectiveCost}億）`);
+    renderGame();
+    showCpuActionBanner(
+      [`${action.card.name}「${ability.name}」を発動！`, ...effectMsgs],
+      () => cpuExecuteNextAbility(abilityActions, idx + 1)
+    );
+    return;
   }
+  cpuPhaseOption();
+}
 
-  // 3. 手札にオプションカードがあれば使用
+// フェーズ3: オプションカード使用
+function cpuPhaseOption() {
+  const c = gameState.cpu;
   if (!c.usedOptionThisTurn) {
     const optionIdx = c.hand.findIndex(card => card.type === "option");
     if (optionIdx >= 0) {
@@ -1282,13 +1293,28 @@ function doCpuMainPhase() {
       c.discard.push(card);
       c.usedOptionThisTurn = true;
       const effectMsgs = executeEffect(card.effect, "cpu");
-      msgs.push(`${card.name}を使用！`);
-      msgs.push(...effectMsgs);
       console.log(`  CPU: ${card.name}を使用`);
+      renderGame();
+      showCpuActionBanner(
+        [`${card.name} を使用！`, ...effectMsgs],
+        () => cpuCheckWinAndEnd()
+      );
+      return;
     }
   }
+  cpuCheckWinAndEnd();
+}
 
-  return msgs;
+// 勝敗判定 → ターン終了
+function cpuCheckWinAndEnd() {
+  const result = checkWinCondition();
+  if (result) {
+    gameState.phase = "finished";
+    renderGame();
+    showFinishOverlay(result);
+    return;
+  }
+  cpuEndPhase();
 }
 
 function cpuEndPhase() {

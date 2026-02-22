@@ -61,6 +61,32 @@ body {
   pointer-events: none;
 }
 
+/* CPUアクションバナー（各行動を1つずつ表示） */
+#cpu-action-banner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(10, 10, 40, 0.94);
+  border: 2px solid #f0a020;
+  border-radius: 10px;
+  padding: 14px 28px;
+  color: #fff;
+  font-size: 1rem;
+  text-align: center;
+  z-index: 250;
+  min-width: 220px;
+  max-width: 340px;
+  pointer-events: none;
+  display: none;
+  line-height: 1.7;
+  transition: opacity 0.4s ease;
+}
+
+#cpu-action-banner.cpu-banner-fade {
+  opacity: 0;
+}
+
 /* ============================================================
    画面共通
    ============================================================ */
