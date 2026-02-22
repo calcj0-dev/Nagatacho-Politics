@@ -1848,32 +1848,38 @@ function renderDeckSlot(slotId, deckCount) {
 function renderFieldCards(containerId, cards, isPlayer) {
   const container = document.getElementById(containerId);
   container.innerHTML = "";
-  cards.forEach((card, idx) => {
-    const el = createCardElement(card);
-    // 小さいカード上に能力名+コストを表示
-    if (card.type === "politician" && card.abilities) {
-      const abilitySummary = document.createElement("div");
-      abilitySummary.className = "card-ability-summary";
-      const costReduction = isPlayer ? (gameState.player.currentTurnCostReduction || 0) : 0;
-      card.abilities.forEach(ability => {
-        const line = document.createElement("div");
-        line.className = "card-ability-line";
-        const effectiveCost = Math.max(0, ability.cost - costReduction);
-        line.innerHTML = `${ability.name}(${fundsToHtml(effectiveCost)})`;
-        abilitySummary.appendChild(line);
-      });
-      el.appendChild(abilitySummary);
-    }
-    el.addEventListener("click", () => {
-      if (isPlayer && gameState.currentPlayer === "player") {
-        showCardZoom(card, "field", idx);
-      } else {
-        showCardZoom(card, "view");
+  for (let idx = 0; idx < 3; idx++) {
+    if (idx < cards.length) {
+      const card = cards[idx];
+      const el = createCardElement(card);
+      // 小さいカード上に能力名+コストを表示
+      if (card.type === "politician" && card.abilities) {
+        const abilitySummary = document.createElement("div");
+        abilitySummary.className = "card-ability-summary";
+        const costReduction = isPlayer ? (gameState.player.currentTurnCostReduction || 0) : 0;
+        card.abilities.forEach(ability => {
+          const line = document.createElement("div");
+          line.className = "card-ability-line";
+          const effectiveCost = Math.max(0, ability.cost - costReduction);
+          line.innerHTML = `${ability.name}(${fundsToHtml(effectiveCost)})`;
+          abilitySummary.appendChild(line);
+        });
+        el.appendChild(abilitySummary);
       }
-    });
-    container.appendChild(el);
-  });
-
+      el.addEventListener("click", () => {
+        if (isPlayer && gameState.currentPlayer === "player") {
+          showCardZoom(card, "field", idx);
+        } else {
+          showCardZoom(card, "view");
+        }
+      });
+      container.appendChild(el);
+    } else {
+      const empty = document.createElement("div");
+      empty.className = "field-empty-slot";
+      container.appendChild(empty);
+    }
+  }
 }
 
 function renderCpuHand() {
