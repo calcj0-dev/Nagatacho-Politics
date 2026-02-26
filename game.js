@@ -45,7 +45,7 @@ const POLITICIAN_CARDS = [
       },
       {
         name: "靖国参拝決行",
-        effectText: "支持率+12%、【次ターン】相手の攻撃効果×1.5",
+        effectText: "支持率+12%、【次ターン開始時】相手の支持率-4%",
         description: "保守層に強烈アピール、反発も招く",
         cost: 5,
         effect: "takaichi_2"
@@ -86,7 +86,7 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "Twitterブロック祭り",
-        effectText: "【次ターン】相手の攻撃を無効化、支持率-3%、政治資金+2億",
+        effectText: "支持率-3%、政治資金+2億、次の相手ターンの支持率低下を1回無効化",
         description: "批判者を片っ端からブロック",
         cost: 2,
         effect: "kono_1"
@@ -117,7 +117,7 @@ const POLITICIAN_CARDS = [
       },
       {
         name: "パンケーキ会食",
-        effectText: "政治資金+4億、【次ターン】相手の攻撃-4%",
+        effectText: "政治資金+4億、【次ターン】最初に受ける支持率低下を4%軽減",
         description: "メディアと懐柔策",
         cost: 2,
         effect: "suga_2"
@@ -184,7 +184,7 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "静岡茶で一服",
-        effectText: "政治資金+6億、【次ターン】相手の攻撃を50%軽減",
+        effectText: "政治資金+6億、次の相手ターンの支持率低下を1回無効化",
         description: "お茶を飲んで一息",
         cost: 2,
         effect: "shinba_1"
@@ -361,9 +361,9 @@ const POLITICIAN_CARDS = [
       },
       {
         name: "多様性推進",
-        effectText: "支持率+4%、相手の支持率-2%",
+        effectText: "支持率+5%、相手の支持率-3%",
         description: "多様性を推進し共感を獲得",
-        cost: 4,
+        cost: 3,
         effect: "mineshima_2"
       }
     ]
@@ -384,7 +384,7 @@ const OPTION_CARDS = [
     id: "kioku_ni_gozaimasen",
     name: "記憶にございません",
     description: "国会答弁の定番フレーズで追及をかわす。",
-    effectDescription: "相手からの支持率低下を一度だけ無効化。ただし効果発動後の自分のターンにドロー不可",
+    effectDescription: "次に受ける支持率低下を1回無効化。ただし次の自分のターンはドロー不可",
     image: "assets/options/kioku_ni_gozaimasen.png",
     type: "option",
     effect: "kioku_ni_gozaimasen"
@@ -411,7 +411,7 @@ const OPTION_CARDS = [
     id: "drill_hakai",
     name: "ドリル破壊",
     description: "物理的に証拠を消し去る強硬手段。",
-    effectDescription: "次の支持率が下がるイベントを一度だけスキップ。ただし政治資金-5億",
+    effectDescription: "次に受ける支持率低下を1回スキップ。ただし政治資金-5億",
     image: "assets/options/drill_hakai.png",
     type: "option",
     effect: "drill_hakai"
@@ -465,7 +465,7 @@ const OPTION_CARDS = [
     id: "masukomi_taisaku",
     name: "マスコミ対策",
     description: "記者クラブとの会食や巧妙な情報操作で報道をコントロール。",
-    effectDescription: "次の相手のターンで受ける支持率減少を無効化",
+    effectDescription: "次の相手ターンに受ける支持率低下を1回無効化",
     image: "assets/options/masukomi_taisaku.png",
     type: "option",
     effect: "masukomi_taisaku"
@@ -631,6 +631,7 @@ function initGame(playerParty, playerInitialCardId) {
 // 支持率変更（クランプ付き）- 変動メッセージを返す
 function changeApproval(player, amount) {
   const before = player.approval;
+  if (amount < 0) amount = applyDefenses(player, amount);
   player.approval = clamp(player.approval + amount, 0, 100);
   const after = player.approval;
   const who = player === gameState.player ? "あなた" : "相手";
@@ -681,9 +682,8 @@ const ABILITY_EFFECTS = {
     const msgs = [];
     const m1 = changeApproval(self, 12);
     if (m1) msgs.push(m1);
-    // 【フェーズ4】攻撃ダメージ計算時に attackMultiplier を適用予定
-    opponent.nextTurnBonuses.attackMultiplier = 1.5;
-    msgs.push("【次ターン】相手の攻撃効果×1.5！");
+    opponent.nextTurnBonuses.approvalBonus = (opponent.nextTurnBonuses.approvalBonus || 0) - 4;
+    msgs.push("【次ターン開始時】相手の支持率-4%！");
     return msgs;
   },
   koizumi_1(self, opponent) {
@@ -709,13 +709,12 @@ const ABILITY_EFFECTS = {
   },
   kono_1(self, opponent) {
     const msgs = [];
-    // 【フェーズ4】applyDefenses() 統合後に block_attack シールドが機能予定
-    self.shields.push("block_attack");
+    self.shields.push("block_approval_down");
     const m1 = changeApproval(self, -3);
     if (m1) msgs.push(m1);
     changeFunds(self, 2);
     msgs.push("政治資金+2億円を獲得！");
-    msgs.push("【次ターン】相手の攻撃を無効化！");
+    msgs.push("次の相手ターンに受ける支持率低下を1回無効化！");
     return msgs;
   },
   kono_2(self, opponent) {
@@ -740,7 +739,7 @@ const ABILITY_EFFECTS = {
     self.nextTurnBonuses.attackReduction += 4;
     changeFunds(self, 4);
     msgs.push("政治資金+4億円を獲得！");
-    msgs.push("【次ターン】相手の攻撃-4%！");
+    msgs.push("【次ターン】最初に受ける支持率低下を4%軽減！");
     return msgs;
   },
 
@@ -781,9 +780,8 @@ const ABILITY_EFFECTS = {
     const msgs = [];
     changeFunds(self, 6);
     msgs.push("政治資金+6億円を獲得！");
-    // 【フェーズ4】applyDefenses() 統合後に defenseBonus が機能予定
-    self.nextTurnBonuses.defenseBonus = 50;
-    msgs.push("【次ターン】相手の攻撃を50%軽減！");
+    self.shields.push("block_approval_down");
+    msgs.push("次の相手ターンに受ける支持率低下を1回無効化！");
     return msgs;
   },
   shinba_2(self, opponent) {
@@ -898,9 +896,9 @@ const ABILITY_EFFECTS = {
   },
   mineshima_2(self, opponent) {
     const msgs = [];
-    const m1 = changeApproval(self, 4);
+    const m1 = changeApproval(self, 5);
     if (m1) msgs.push(m1);
-    const m2 = changeApproval(opponent, -2);
+    const m2 = changeApproval(opponent, -3);
     if (m2) msgs.push(m2);
     return msgs;
   }
@@ -921,7 +919,7 @@ const OPTION_EFFECTS = {
     const msgs = [];
     self.shields.push("block_approval_down");
     self.skipNextDraw = true;
-    msgs.push("相手からの支持率低下を一度だけ無効化！");
+    msgs.push("次に受ける支持率低下を1回無効化！");
     msgs.push("ただし次のターンはドロー不可…");
     return msgs;
   },
@@ -1002,7 +1000,7 @@ const OPTION_EFFECTS = {
   masukomi_taisaku(self, opponent) {
     const msgs = [];
     self.shields.push("block_approval_down");
-    msgs.push("次の相手のターンで受ける支持率減少を無効化！");
+    msgs.push("次の相手ターンに受ける支持率低下を1回無効化！");
     return msgs;
   },
   ouen_enzetsu(self, opponent) {
@@ -1545,16 +1543,18 @@ function showFinishOverlay(result) {
   const ca = gameState.cpu.approval;
   let title, subtitle;
 
-  if (result.includes("プレイヤーの勝利")) {
-    title = "総理大臣就任！";
-    subtitle = result;
-  } else if (result.includes("CPUの勝利")) {
-    title = "政党解散…";
-    subtitle = result;
-  } else {
-    title = "引き分け";
-    subtitle = "両者互角の戦いでした";
-  }
+  const titleMap = {
+    "プレイヤーの勝利（支持率100%達成）": "総理大臣就任！",
+    "プレイヤーの勝利（CPUの支持率0%）": "相手の政党が解散！",
+    "プレイヤーの勝利":                   `支持率であなたの勝利！`,
+    "CPUの勝利（支持率100%達成）":        "相手が総理大臣に就任…",
+    "CPUの勝利（プレイヤーの支持率0%）":  "政党解散…",
+    "CPUの勝利":                          `支持率でCPUの勝利…`,
+  };
+  title    = titleMap[result] ?? "引き分け";
+  subtitle = result.startsWith("引き分け") ? "両者互角の戦いでした"
+           : result.includes("（")         ? result
+           : "25ターン終了";
 
   showOverlay(`
     <h2>${title}</h2>
