@@ -12,9 +12,21 @@
   <div id="party-select-screen" class="screen">
     <h1>政党を選んでください</h1>
     <div class="party-buttons">
-      <button class="party-btn" data-party="自民党">自民党</button>
-      <button class="party-btn" data-party="国民民主党">国民民主党</button>
-      <button class="party-btn" data-party="チームみらい">チームみらい</button>
+      <button class="party-btn" data-party="自民党">
+        <div class="party-btn-name">自民党</div>
+        <div class="party-btn-catch">王道の安定感、豊富な資金力</div>
+        <div class="party-btn-members">S・イシバ / S・タカイチ / S・コイズミ ほか</div>
+      </button>
+      <button class="party-btn" data-party="国民民主党">
+        <div class="party-btn-name">国民民主党</div>
+        <div class="party-btn-catch">民意に直結、攻守バランス型</div>
+        <div class="party-btn-members">Y・タマキ / Y・モリ / K・シンバ ほか</div>
+      </button>
+      <button class="party-btn" data-party="チームみらい">
+        <div class="party-btn-name">チームみらい</div>
+        <div class="party-btn-catch">新勢力の挑戦、スピード重視</div>
+        <div class="party-btn-members">T・アンノ / S・タカヤマ / K・ムトウ ほか</div>
+      </button>
     </div>
   </div>
 
@@ -29,11 +41,17 @@
     <!-- CPU側 -->
     <div class="player-area cpu-area">
       <div class="player-info">
-        <span>【CPU】 <span id="cpu-party">???</span></span>
-        <span>政治資金: <span id="cpu-funds">?億円</span></span>
-        <span>支持率: <span id="cpu-approval">???</span></span>
+        <div class="player-info-row1">
+          <span>【CPU】 <span id="cpu-party">???</span></span>
+          <span>支持率: <span id="cpu-approval">???</span></span>
+        </div>
+        <div class="player-info-funds">政治資金: <span id="cpu-funds">?億円</span></div>
       </div>
-      <div id="cpu-field" class="field"></div>
+      <div id="cpu-hand" class="card-list cpu-hand"></div>
+      <div class="field-row">
+        <div id="cpu-field" class="field"></div>
+        <div id="cpu-deck" class="deck-slot"></div>
+      </div>
     </div>
 
     <!-- ターン情報バー -->
@@ -43,11 +61,16 @@
 
     <!-- プレイヤー側 -->
     <div class="player-area player-area-self">
-      <div id="player-field" class="field"></div>
+      <div class="field-row">
+        <div id="player-field" class="field"></div>
+        <div id="player-deck" class="deck-slot"></div>
+      </div>
       <div class="player-info">
-        <span>【あなた】 <span id="player-party">???</span></span>
-        <span>政治資金: <span id="player-funds">0億円</span></span>
-        <span>支持率: <span id="player-approval">???</span></span>
+        <div class="player-info-row1">
+          <span>【あなた】 <span id="player-party">???</span></span>
+          <span>支持率: <span id="player-approval">???</span></span>
+        </div>
+        <div class="player-info-funds">政治資金: <span id="player-funds">0億円</span></div>
       </div>
     </div>
 

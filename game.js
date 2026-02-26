@@ -1149,7 +1149,6 @@ function startCpuTurn() {
     c.nextTurnBonuses.approvalBonus = 0;
   }
 
-  // 次ターンボーナスのコスト軽減を転写してリセット
   c.currentTurnCostReduction = c.nextTurnBonuses.costReduction;
   c.nextTurnBonuses.costReduction = 0;
 
@@ -1168,81 +1167,95 @@ function startCpuTurn() {
     console.log(`  CPUドロー: ${drawn.name}`);
   }
 
-  // ③ メインフェーズ: CPU自動行動
   renderGame();
+
+  // 「CPU思考中...」バナー → メインフェーズへ
+  const thinkingBanner = document.createElement("div");
+  thinkingBanner.id = "cpu-thinking";
+  thinkingBanner.textContent = "CPU 思考中...";
+  document.body.appendChild(thinkingBanner);
+
   setTimeout(() => {
-    const cpuMsgs = doCpuMainPhase();
-
-    const result = checkWinCondition();
-    if (result) {
-      gameState.phase = "finished";
-      renderGame();
-      const displayMsgs = cpuMsgs.length > 0 ? cpuMsgs : ["CPUはパスしました"];
-      showResultOverlay("CPUのターン", displayMsgs, () => showFinishOverlay(result));
-      return;
-    }
-
-    if (cpuMsgs.length > 0) {
-      showResultOverlay("CPUのターン", cpuMsgs, () => cpuEndPhase());
-    } else {
-      cpuEndPhase();
-    }
-  }, 600);
+    thinkingBanner.remove();
+    cpuPhasePlace();
+  }, 900);
 }
 
-// CPUのメインフェーズ行動: 行動内容のメッセージ配列を返す
-function doCpuMainPhase() {
-  const c = gameState.cpu;
-  const msgs = [];
+// CPUアクションバナーを表示して onDone を呼ぶ（ノンブロッキング）
+// isPlayer=true → 青系(プレイヤー) / false → 橙系(CPU)
+function showActionBanner(lines, isPlayer, onDone) {
+  let banner = document.getElementById("action-banner");
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = "action-banner";
+    document.body.appendChild(banner);
+  }
+  banner.className = isPlayer ? "banner-player" : "banner-cpu";
+  banner.innerHTML = lines.map(l => `<div>${l}</div>`).join("");
+  banner.style.opacity = "1";
+  banner.style.display = "block";
+  setTimeout(() => {
+    banner.style.opacity = "0";
+    setTimeout(() => {
+      banner.style.display = "none";
+      onDone();
+    }, 400);
+  }, 1100);
+}
 
-  // 1. 手札に政治家カードがあり、場が3枚未満なら場に出す
+// フェーズ1: 政治家カードを場に出す
+function cpuPhasePlace() {
+  const c = gameState.cpu;
   if (!c.placedThisTurn && c.field.length < 3) {
     const idx = c.hand.findIndex(card => card.type === "politician");
     if (idx >= 0) {
       const card = c.hand.splice(idx, 1)[0];
       c.field.push(card);
       c.placedThisTurn = true;
-      msgs.push(`${card.name}を場に出した！`);
       console.log(`  CPU: ${card.name}を場に出した`);
+      renderGame();
+      showActionBanner([`${card.name} を場に出した！`], false, () => cpuPhaseAbilities());
+      return;
     }
   }
+  cpuPhaseAbilities();
+}
 
-  // 2. 場のカードの能力を発動（資金が足りるなら、コスト低い順に）
-  const costReduction = c.currentTurnCostReduction || 0;
-
-  // 各カードの最適な能力を事前選択
+// フェーズ2: 能力の発動（1つずつ順番に）
+function cpuPhaseAbilities() {
+  const c = gameState.cpu;
+  const cr = c.currentTurnCostReduction || 0;
   const abilityActions = [];
   for (const card of c.field) {
     if (c.usedAbilities[card.instanceId] || card.disabled) continue;
-    const costs = card.abilities.map(a => Math.max(0, a.cost - costReduction));
+    const costs = card.abilities.map(a => Math.max(0, a.cost - cr));
     const afford0 = c.funds >= costs[0];
     const afford1 = c.funds >= costs[1];
-
     let chosen = -1;
     if (afford0 && afford1) {
-      // 両方使えるなら高コスト（より強力）を選択
       chosen = costs[1] >= costs[0] ? 1 : 0;
     } else if (afford1) {
       chosen = 1;
     } else if (afford0) {
       chosen = 0;
     }
-
     if (chosen >= 0) {
       abilityActions.push({ card, abilityIdx: chosen, cost: costs[chosen] });
     }
   }
-
-  // コスト低い順にソートして発動
   abilityActions.sort((a, b) => a.cost - b.cost);
+  cpuExecuteNextAbility(abilityActions, 0);
+}
 
-  for (const action of abilityActions) {
-    if (c.usedAbilities[action.card.instanceId]) continue;
+function cpuExecuteNextAbility(abilityActions, idx) {
+  const c = gameState.cpu;
+  // 未処理を探す
+  while (idx < abilityActions.length) {
+    const action = abilityActions[idx];
+    if (c.usedAbilities[action.card.instanceId]) { idx++; continue; }
     const cr = c.currentTurnCostReduction || 0;
     let abilityIdx = action.abilityIdx;
     let effectiveCost = Math.max(0, action.card.abilities[abilityIdx].cost - cr);
-
-    // 選んだ能力が資金不足なら、もう一方を試す
     if (c.funds < effectiveCost) {
       const altIdx = 1 - abilityIdx;
       const altCost = Math.max(0, action.card.abilities[altIdx].cost - cr);
@@ -1250,20 +1263,28 @@ function doCpuMainPhase() {
         abilityIdx = altIdx;
         effectiveCost = altCost;
       } else {
-        continue;
+        idx++; continue;
       }
     }
-
     c.funds -= effectiveCost;
     c.usedAbilities[action.card.instanceId] = true;
     const ability = action.card.abilities[abilityIdx];
     const effectMsgs = executeEffect(ability.effect, "cpu");
-    msgs.push(`${action.card.name}「${ability.name}」を使用！`);
-    msgs.push(...effectMsgs);
     console.log(`  CPU: ${action.card.name}「${ability.name}」（コスト${effectiveCost}億）`);
+    renderGame();
+    showActionBanner(
+      [`${action.card.name}「${ability.name}」を発動！`, ...effectMsgs],
+      false,
+      () => cpuExecuteNextAbility(abilityActions, idx + 1)
+    );
+    return;
   }
+  cpuPhaseOption();
+}
 
-  // 3. 手札にオプションカードがあれば使用
+// フェーズ3: オプションカード使用
+function cpuPhaseOption() {
+  const c = gameState.cpu;
   if (!c.usedOptionThisTurn) {
     const optionIdx = c.hand.findIndex(card => card.type === "option");
     if (optionIdx >= 0) {
@@ -1271,13 +1292,29 @@ function doCpuMainPhase() {
       c.discard.push(card);
       c.usedOptionThisTurn = true;
       const effectMsgs = executeEffect(card.effect, "cpu");
-      msgs.push(`${card.name}を使用！`);
-      msgs.push(...effectMsgs);
       console.log(`  CPU: ${card.name}を使用`);
+      renderGame();
+      showActionBanner(
+        [`${card.name} を使用！`, ...effectMsgs],
+        false,
+        () => cpuCheckWinAndEnd()
+      );
+      return;
     }
   }
+  cpuCheckWinAndEnd();
+}
 
-  return msgs;
+// 勝敗判定 → ターン終了
+function cpuCheckWinAndEnd() {
+  const result = checkWinCondition();
+  if (result) {
+    gameState.phase = "finished";
+    renderGame();
+    showFinishOverlay(result);
+    return;
+  }
+  cpuEndPhase();
 }
 
 function cpuEndPhase() {
@@ -1413,15 +1450,14 @@ function useAbility(fieldIndex, abilityIndex) {
     p.usedAbilities[card.instanceId] = true;
     console.log(`[能力発動] ${card.name}: ${ability.name}（コスト${effectiveCost}億）`);
     const msgs = executeEffect(ability.effect, "player");
-    showResultOverlay(`「${ability.name}」発動！`, msgs, () => {
-      // 勝敗即時判定
+    renderGame();
+    showActionBanner([`「${ability.name}」発動！`, ...msgs], true, () => {
       const result = checkWinCondition();
       if (result) {
         gameState.phase = "finished";
         showFinishOverlay(result);
         return;
       }
-      renderGame();
     });
   });
 }
@@ -1442,14 +1478,14 @@ function useOptionCard(handIndex) {
     p.usedOptionThisTurn = true;
     console.log(`[オプション使用] ${card.name}`);
     const msgs = executeEffect(card.effect, "player");
-    showResultOverlay(`「${card.name}」使用！`, msgs, () => {
+    renderGame();
+    showActionBanner([`「${card.name}」使用！`, ...msgs], true, () => {
       const result = checkWinCondition();
       if (result) {
         gameState.phase = "finished";
         showFinishOverlay(result);
         return;
       }
-      renderGame();
     });
   });
 }
@@ -1471,14 +1507,14 @@ function hideOverlay() {
 
 // 確認ダイアログ
 function showConfirmDialog(_cardName, abilityName, effectText, description, cost, onConfirm) {
-  const costText = cost > 0 ? `コスト: ${cost}億円` : "コスト: 無料";
+  const costHtml = cost > 0 ? `コスト: ${fundsToHtml(cost)}` : "コスト: 無料";
   const effectHtml = effectText ? `<p class="overlay-effect">${effectText}</p>` : "";
   const descHtml = description ? `<p class="overlay-desc">${description.replace(/\n/g, '<br>')}</p>` : "";
   showOverlay(`
     <h2>「${abilityName}」を使用しますか？</h2>
     ${effectHtml}
     ${descHtml}
-    <p class="overlay-cost">${costText}</p>
+    <p class="overlay-cost">${costHtml}</p>
     <div class="overlay-buttons">
       <button id="confirm-yes" class="overlay-btn btn-confirm">使用する</button>
       <button id="confirm-no" class="overlay-btn btn-cancel">やめる</button>
@@ -1518,12 +1554,12 @@ function showSurveyOverlay(onClose) {
     <div class="survey-bar">
       <div class="survey-row">
         <span>あなた:</span>
-        <div class="bar-container"><div class="bar bar-player" style="width:${pa}%"></div></div>
+        <div class="bar-container"><div class="bar bar-player" style="width:0%"></div></div>
         <span>${pa}%</span>
       </div>
       <div class="survey-row">
         <span>CPU:</span>
-        <div class="bar-container"><div class="bar bar-cpu" style="width:${ca}%"></div></div>
+        <div class="bar-container"><div class="bar bar-cpu" style="width:0%"></div></div>
         <span>${ca}%</span>
       </div>
     </div>
@@ -1531,6 +1567,13 @@ function showSurveyOverlay(onClose) {
       <button id="survey-ok" class="overlay-btn btn-confirm">続ける</button>
     </div>
   `);
+  // バーを0%から実値へアニメーション
+  setTimeout(() => {
+    const barPlayer = document.querySelector(".bar-player");
+    const barCpu = document.querySelector(".bar-cpu");
+    if (barPlayer) barPlayer.style.width = `${pa}%`;
+    if (barCpu) barCpu.style.width = `${ca}%`;
+  }, 50);
   document.getElementById("survey-ok").addEventListener("click", () => {
     hideOverlay();
     if (onClose) onClose();
@@ -1623,7 +1666,7 @@ function showCardZoom(card, context, index) {
 
       const nameRow = document.createElement("div");
       nameRow.className = "zoom-ability-name";
-      nameRow.textContent = `${ability.name}（${effectiveCost}億）`;
+      nameRow.innerHTML = `${ability.name}（${fundsToHtml(effectiveCost)}）`;
       item.appendChild(nameRow);
 
       if (ability.effectText) {
@@ -1755,6 +1798,22 @@ function showScreen(screenId) {
   document.getElementById(screenId).classList.remove("hidden");
 }
 
+// 政治資金を💰絵文字で表現するヘルパー
+// 10億ごとに大きな💰(内側に"10")、1億ごとに💰
+function fundsToHtml(amount) {
+  if (amount <= 0) return '<span class="funds-zero">—</span>';
+  const groups = Math.floor(amount / 10);
+  const singles = amount % 10;
+  let html = '';
+  for (let i = 0; i < groups; i++) {
+    html += '<span class="funds-big">💰<span class="funds-num">10</span></span>';
+  }
+  for (let i = 0; i < singles; i++) {
+    html += '💰';
+  }
+  return html;
+}
+
 function renderGame() {
   if (gameState.phase === "party_select") {
     showScreen("party-select-screen");
@@ -1776,15 +1835,20 @@ function renderGame() {
 
   // CPU情報
   document.getElementById("cpu-party").textContent = gameState.cpu.party || "???";
-  document.getElementById("cpu-funds").textContent = "?億円";
+  document.getElementById("cpu-funds").innerHTML = fundsToHtml(gameState.cpu.funds);
   document.getElementById("cpu-approval").textContent = "???";
   renderFieldCards("cpu-field", gameState.cpu.field, false);
+  renderDeckSlot("cpu-deck", gameState.cpu.deck.length);
 
   // プレイヤー情報
   document.getElementById("player-party").textContent = gameState.player.party || "???";
-  document.getElementById("player-funds").textContent = `${gameState.player.funds}億円`;
+  document.getElementById("player-funds").innerHTML = fundsToHtml(gameState.player.funds);
   document.getElementById("player-approval").textContent = "???";
   renderFieldCards("player-field", gameState.player.field, true);
+  renderDeckSlot("player-deck", gameState.player.deck.length);
+
+  // CPU手札（裏向き）
+  renderCpuHand();
 
   // 手札
   renderHand();
@@ -1794,32 +1858,65 @@ function renderGame() {
     `[DEBUG] P支持率:${gameState.player.approval}% C支持率:${gameState.cpu.approval}% P資金:${gameState.player.funds}億 P手札:${gameState.player.hand.length} P山札:${gameState.player.deck.length} C山札:${gameState.cpu.deck.length}`;
 }
 
+function renderDeckSlot(slotId, deckCount) {
+  const slot = document.getElementById(slotId);
+  if (!slot) return;
+  slot.innerHTML = "";
+  const back = document.createElement("div");
+  back.className = "deck-card-back";
+  back.textContent = deckCount > 0 ? "🂠" : "";
+  const countEl = document.createElement("div");
+  countEl.className = "deck-count";
+  countEl.textContent = `${deckCount}枚`;
+  slot.appendChild(back);
+  slot.appendChild(countEl);
+}
+
 function renderFieldCards(containerId, cards, isPlayer) {
   const container = document.getElementById(containerId);
   container.innerHTML = "";
-  cards.forEach((card, idx) => {
-    const el = createCardElement(card);
-    // 小さいカード上に能力名+コストを表示
-    if (card.type === "politician" && card.abilities) {
-      const abilitySummary = document.createElement("div");
-      abilitySummary.className = "card-ability-summary";
-      const costReduction = isPlayer ? (gameState.player.currentTurnCostReduction || 0) : 0;
-      card.abilities.forEach(ability => {
-        const line = document.createElement("div");
-        line.className = "card-ability-line";
-        const effectiveCost = Math.max(0, ability.cost - costReduction);
-        line.textContent = `${ability.name}(${effectiveCost}億)`;
-        abilitySummary.appendChild(line);
-      });
-      el.appendChild(abilitySummary);
-    }
-    el.addEventListener("click", () => {
-      if (isPlayer && gameState.currentPlayer === "player") {
-        showCardZoom(card, "field", idx);
-      } else {
-        showCardZoom(card, "view");
+  for (let idx = 0; idx < 3; idx++) {
+    if (idx < cards.length) {
+      const card = cards[idx];
+      const el = createCardElement(card);
+      // 小さいカード上に能力名+コストを表示
+      if (card.type === "politician" && card.abilities) {
+        const abilitySummary = document.createElement("div");
+        abilitySummary.className = "card-ability-summary";
+        const costReduction = isPlayer ? (gameState.player.currentTurnCostReduction || 0) : 0;
+        card.abilities.forEach(ability => {
+          const line = document.createElement("div");
+          line.className = "card-ability-line";
+          const effectiveCost = Math.max(0, ability.cost - costReduction);
+          line.innerHTML = `${ability.name}(${fundsToHtml(effectiveCost)})`;
+          abilitySummary.appendChild(line);
+        });
+        el.appendChild(abilitySummary);
       }
-    });
+      el.addEventListener("click", () => {
+        if (isPlayer && gameState.currentPlayer === "player") {
+          showCardZoom(card, "field", idx);
+        } else {
+          showCardZoom(card, "view");
+        }
+      });
+      container.appendChild(el);
+    } else {
+      const empty = document.createElement("div");
+      empty.className = "field-empty-slot";
+      container.appendChild(empty);
+    }
+  }
+}
+
+function renderCpuHand() {
+  const container = document.getElementById("cpu-hand");
+  if (!container) return;
+  container.innerHTML = "";
+  gameState.cpu.hand.forEach(() => {
+    const el = document.createElement("div");
+    el.className = "card-back";
+    el.textContent = "🂠";
     container.appendChild(el);
   });
 }
@@ -1836,7 +1933,7 @@ function renderHand() {
       card.abilities.forEach(ability => {
         const line = document.createElement("div");
         line.className = "card-ability-line";
-        line.textContent = `${ability.name}(${ability.cost}億)`;
+        line.innerHTML = `${ability.name}(${fundsToHtml(ability.cost)})`;
         abilitySummary.appendChild(line);
       });
       el.appendChild(abilitySummary);

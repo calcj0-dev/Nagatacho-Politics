@@ -19,6 +19,80 @@ body {
   display: none !important;
 }
 
+/* 💰 資金表示 */
+.funds-big {
+  position: relative;
+  display: inline-block;
+  font-size: 1.4em;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.funds-num {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -48%);
+  font-size: 0.32em;
+  font-weight: bold;
+  color: #3a2000;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.funds-zero {
+  color: #666;
+  font-size: 0.9em;
+}
+
+#cpu-thinking {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.85);
+  color: #ffd700;
+  padding: 16px 36px;
+  border-radius: 8px;
+  border: 1px solid #ffd700;
+  font-size: 1.1rem;
+  letter-spacing: 0.1em;
+  z-index: 300;
+  pointer-events: none;
+}
+
+/* アクションバナー共通（プレイヤー/CPU） */
+#action-banner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 10px;
+  padding: 14px 28px;
+  color: #fff;
+  font-size: 1rem;
+  text-align: center;
+  z-index: 250;
+  min-width: 220px;
+  max-width: 340px;
+  pointer-events: none;
+  display: none;
+  line-height: 1.7;
+  transition: opacity 0.4s ease;
+}
+
+/* プレイヤーアクション: 青系 */
+#action-banner.banner-player {
+  background: rgba(10, 30, 70, 0.95);
+  border: 2px solid #4aabf0;
+}
+
+/* CPUアクション: 橙系 */
+#action-banner.banner-cpu {
+  background: rgba(10, 10, 40, 0.95);
+  border: 2px solid #f0a020;
+}
+
 /* ============================================================
    画面共通
    ============================================================ */
@@ -61,6 +135,54 @@ h1 {
 
 .party-btn:hover {
   background: #0f3460;
+}
+
+.party-btn-name {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.party-btn-catch {
+  font-size: 0.75rem;
+  color: #ccc;
+  margin-bottom: 4px;
+}
+
+.party-btn-members {
+  font-size: 0.65rem;
+  color: #999;
+}
+
+/* ============================================================
+   CPU手札（裏向き）
+   ============================================================ */
+
+.cpu-hand {
+  justify-content: flex-start;
+  padding: 4px 0;
+  min-height: 36px;
+}
+
+.card-back {
+  width: 60px;
+  height: 84px;
+  border: 2px solid #555;
+  border-radius: 6px;
+  background: repeating-linear-gradient(
+    135deg,
+    #1a1a3e 0px,
+    #1a1a3e 6px,
+    #0f0f2a 6px,
+    #0f0f2a 12px
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #4466aa;
+  cursor: default;
+  flex-shrink: 0;
 }
 
 /* ============================================================
@@ -174,22 +296,87 @@ h1 {
 
 .player-info {
   display: flex;
-  gap: 16px;
+  flex-direction: column;
+  gap: 4px;
   font-size: 0.9rem;
-  flex-wrap: wrap;
 }
 
-/* 場 */
+.player-info-row1 {
+  display: flex;
+  gap: 16px;
+}
+
+.player-info-funds {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 場＋山札の行 */
+.field-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* 場（常に3スロット分の枠） */
 .field {
   display: flex;
   gap: 12px;
-  min-height: 170px;
+  padding: 8px;
   align-items: flex-start;
+  border: 1px solid rgba(120, 120, 180, 0.4);
+  border-radius: 8px;
+  flex-shrink: 0;
 }
 
 .field .card {
   width: 110px;
   height: 155px;
+}
+
+/* 空スロット */
+.field-empty-slot {
+  width: 110px;
+  height: 155px;
+  border: 2px dashed rgba(120, 120, 180, 0.25);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+/* 山札スロット（field-rowの右端、枠外） */
+.deck-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.deck-card-back {
+  width: 110px;
+  height: 155px;
+  border: 2px solid #555;
+  border-radius: 8px;
+  background: repeating-linear-gradient(
+    135deg,
+    #1a1a3e 0px,
+    #1a1a3e 8px,
+    #0f0f2a 8px,
+    #0f0f2a 16px
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: #4466aa;
+}
+
+.deck-count {
+  font-size: 0.8rem;
+  color: #aaa;
+  text-align: center;
 }
 
 /* 小さいカード上の能力サマリー（画像上に白半透明枠） */
@@ -381,7 +568,7 @@ h1 {
 .bar {
   height: 100%;
   border-radius: 4px;
-  transition: width 0.5s ease;
+  transition: width 0.8s ease;
 }
 
 .bar-player {
