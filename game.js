@@ -1451,15 +1451,41 @@ function useAbility(fieldIndex, abilityIndex) {
     console.log(`[能力発動] ${card.name}: ${ability.name}（コスト${effectiveCost}億）`);
     const msgs = executeEffect(ability.effect, "player");
     renderGame();
-    showActionBanner([`「${ability.name}」発動！`, ...msgs], true, () => {
-      const result = checkWinCondition();
-      if (result) {
-        gameState.phase = "finished";
-        showFinishOverlay(result);
-        return;
-      }
+    playAbilityAnimation(fieldIndex, abilityIndex, () => {
+      showActionBanner([`「${ability.name}」発動！`, ...msgs], true, () => {
+        const result = checkWinCondition();
+        if (result) {
+          gameState.phase = "finished";
+          showFinishOverlay(result);
+          return;
+        }
+      });
     });
   });
+}
+
+// 能力発動アニメーション: カード拡大＋揺れ、能力行をゴールドに光らせる
+function playAbilityAnimation(fieldIndex, abilityIndex, callback) {
+  const container = document.getElementById("player-field");
+  if (!container) { callback(); return; }
+
+  const cardEls = container.querySelectorAll(".card");
+  const cardEl = cardEls[fieldIndex];
+  if (!cardEl) { callback(); return; }
+
+  // 能力行を特定（card-ability-line の abilityIndex 番目）
+  const abilityLines = cardEl.querySelectorAll(".card-ability-line");
+  const targetLine = abilityLines[abilityIndex];
+
+  // アニメーションクラス付与
+  cardEl.classList.add("card-activating");
+  if (targetLine) targetLine.classList.add("ability-line-glowing");
+
+  setTimeout(() => {
+    cardEl.classList.remove("card-activating");
+    if (targetLine) targetLine.classList.remove("ability-line-glowing");
+    callback();
+  }, 700);
 }
 
 // オプションカード使用: 確認ダイアログ → 実行 → 結果表示
