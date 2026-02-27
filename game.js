@@ -1464,7 +1464,7 @@ function useAbility(fieldIndex, abilityIndex) {
   });
 }
 
-// 能力発動アニメーション: カード拡大＋揺れ、能力行をゴールドに光らせる
+// 能力発動アニメーション: 画面の約40%サイズに拡大→揺れ→フェードアウト
 function playAbilityAnimation(fieldIndex, abilityIndex, callback) {
   const container = document.getElementById("player-field");
   if (!container) { callback(); return; }
@@ -1473,19 +1473,78 @@ function playAbilityAnimation(fieldIndex, abilityIndex, callback) {
   const cardEl = cardEls[fieldIndex];
   if (!cardEl) { callback(); return; }
 
-  // 能力行を特定（card-ability-line の abilityIndex 番目）
-  const abilityLines = cardEl.querySelectorAll(".card-ability-line");
-  const targetLine = abilityLines[abilityIndex];
+  const rect = cardEl.getBoundingClientRect();
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
 
-  // アニメーションクラス付与
-  cardEl.classList.add("card-activating");
-  if (targetLine) targetLine.classList.add("ability-line-glowing");
+  // 目標サイズ: 画面幅の42%（最大420px）
+  const targetWidth = Math.min(vw * 0.42, 420);
+  const scale = targetWidth / rect.width;
 
+  // 画面中央への移動量
+  const tx = vw / 2 - (rect.left + rect.width / 2);
+  const ty = vh / 2 - (rect.top + rect.height / 2);
+
+  // 暗幕
+  const backdrop = document.createElement("div");
+  Object.assign(backdrop.style, {
+    position: "fixed", inset: "0",
+    background: "rgba(0,0,0,0)", zIndex: "999", pointerEvents: "none",
+    transition: "background 0.3s",
+  });
+  document.body.appendChild(backdrop);
+
+  // カードのクローンを元の位置に固定配置
+  const clone = cardEl.cloneNode(true);
+  Object.assign(clone.style, {
+    position: "fixed",
+    left: rect.left + "px", top: rect.top + "px",
+    width: rect.width + "px", height: rect.height + "px",
+    margin: "0", zIndex: "1000", pointerEvents: "none",
+    transformOrigin: "center center", transition: "none",
+  });
+  document.body.appendChild(clone);
+
+  // 能力行（クローン内）
+  const targetLine = clone.querySelectorAll(".card-ability-line")[abilityIndex];
+
+  // Step 1: 画面中央へ拡大 (0 → 350ms)
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    backdrop.style.background = "rgba(0,0,0,0.55)";
+    clone.style.transition = "transform 0.32s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.32s";
+    clone.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
+    clone.style.boxShadow = "0 0 60px 16px rgba(255,220,50,0.35)";
+  }));
+
+  // Step 2: 揺れ + 能力行グロー (360ms → 820ms)
   setTimeout(() => {
-    cardEl.classList.remove("card-activating");
-    if (targetLine) targetLine.classList.remove("ability-line-glowing");
+    clone.style.transition = "none";
+    if (targetLine) targetLine.classList.add("ability-line-glowing");
+    const shakeX = [14, -13, 11, -10, 8, -6, 4, -2, 0];
+    let step = 0;
+    const timer = setInterval(() => {
+      if (step >= shakeX.length) { clearInterval(timer); return; }
+      clone.style.transform = `translate(${tx + shakeX[step]}px,${ty}px) scale(${scale})`;
+      step++;
+    }, 50);
+  }, 360);
+
+  // Step 3: 縮小フェードアウト (830ms → 1080ms)
+  setTimeout(() => {
+    clone.style.transition = "transform 0.25s ease-in, opacity 0.25s ease-in, box-shadow 0.25s";
+    clone.style.transform = `translate(${tx}px,${ty}px) scale(${scale * 0.72})`;
+    clone.style.opacity = "0";
+    clone.style.boxShadow = "none";
+    backdrop.style.transition = "background 0.25s";
+    backdrop.style.background = "rgba(0,0,0,0)";
+  }, 830);
+
+  // Step 4: 完了 (1090ms)
+  setTimeout(() => {
+    clone.remove();
+    backdrop.remove();
     callback();
-  }, 700);
+  }, 1090);
 }
 
 // オプションカード使用: 確認ダイアログ → 実行 → 結果表示
