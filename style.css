@@ -78,7 +78,13 @@ body {
   pointer-events: none;
   display: none;
   line-height: 1.7;
-  transition: opacity 0.4s ease;
+}
+
+.banner-skip-hint {
+  font-size: 0.65rem;
+  opacity: 0.45;
+  margin-top: 8px;
+  letter-spacing: 0.05em;
 }
 
 /* プレイヤーアクション: 青系 */

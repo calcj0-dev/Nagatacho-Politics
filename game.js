@@ -1184,23 +1184,64 @@ function startCpuTurn() {
 // CPUアクションバナーを表示して onDone を呼ぶ（ノンブロッキング）
 // isPlayer=true → 青系(プレイヤー) / false → 橙系(CPU)
 function showActionBanner(lines, isPlayer, onDone) {
+  // 支持率・政治資金・その他の3グループに分類（空グループはスキップ）
+  const approvalLines = lines.filter(l =>  l.includes("支持率"));
+  const fundsLines    = lines.filter(l => !l.includes("支持率") && (l.includes("億円") || l.includes("政治資金")));
+  const otherLines    = lines.filter(l => !l.includes("支持率") && !l.includes("億円") && !l.includes("政治資金"));
+  const groups = [otherLines, approvalLines, fundsLines].filter(g => g.length > 0);
+
+  if (groups.length === 0) { onDone(); return; }
+
   let banner = document.getElementById("action-banner");
   if (!banner) {
     banner = document.createElement("div");
     banner.id = "action-banner";
     document.body.appendChild(banner);
   }
-  banner.className = isPlayer ? "banner-player" : "banner-cpu";
-  banner.innerHTML = lines.map(l => `<div>${l}</div>`).join("");
-  banner.style.opacity = "1";
-  banner.style.display = "block";
-  setTimeout(() => {
-    banner.style.opacity = "0";
-    setTimeout(() => {
+
+  function showGroup(index) {
+    if (index >= groups.length) {
       banner.style.display = "none";
+      banner.style.pointerEvents = "none";
       onDone();
-    }, 400);
-  }, 1100);
+      return;
+    }
+
+    // コンテンツ差し替え（フェード前に非表示で更新）
+    banner.style.transition = "none";
+    banner.style.opacity = "0";
+    banner.className = isPlayer ? "banner-player" : "banner-cpu";
+    banner.innerHTML = groups[index].map(l => `<div>${l}</div>`).join("")
+      + `<div class="banner-skip-hint">クリックでスキップ</div>`;
+    banner.style.display = "block";
+    banner.style.pointerEvents = "auto";
+    banner.style.cursor = "pointer";
+
+    let done = false;
+    let timer;
+
+    function next() {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      banner.removeEventListener("click", next);
+      banner.style.transition = "opacity 0.25s ease";
+      banner.style.opacity = "0";
+      setTimeout(() => showGroup(index + 1), 280);
+    }
+
+    banner.addEventListener("click", next);
+
+    // フェードイン
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      banner.style.transition = "opacity 0.25s ease";
+      banner.style.opacity = "1";
+    }));
+
+    timer = setTimeout(next, 3000);
+  }
+
+  showGroup(0);
 }
 
 // フェーズ1: 政治家カードを場に出す
@@ -1469,8 +1510,8 @@ function useAbility(fieldIndex, abilityIndex) {
   });
 }
 
-// 能力発動アニメーション: 画面の約40%サイズに拡大→揺れ→フェードアウト
-// side: "player" | "cpu"
+// 能力発動アニメーション: 画面の約40%サイズに拡大→3秒光って静止→フェードアウト
+// クリックでスキップ可。side: "player" | "cpu"
 function playAbilityAnimation(fieldIndex, abilityIndex, side, callback) {
   const containerId = side === "cpu" ? "cpu-field" : "player-field";
   const container = document.getElementById(containerId);
@@ -1484,26 +1525,22 @@ function playAbilityAnimation(fieldIndex, abilityIndex, side, callback) {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
 
-  // 目標サイズ: 画面幅の42%（最大420px）
   const targetWidth = Math.min(vw * 0.42, 420);
   const scale = targetWidth / rect.width;
-
-  // 画面中央への移動量
   const tx = vw / 2 - (rect.left + rect.width / 2);
   const ty = vh / 2 - (rect.top + rect.height / 2);
 
-  // 暗幕
+  // 暗幕（クリックでスキップ）
   const backdrop = document.createElement("div");
   Object.assign(backdrop.style, {
     position: "fixed", inset: "0",
-    background: "rgba(0,0,0,0)", zIndex: "999", pointerEvents: "none",
-    transition: "background 0.3s",
+    background: "rgba(0,0,0,0)", zIndex: "999",
+    cursor: "pointer", transition: "background 0.3s",
   });
   document.body.appendChild(backdrop);
 
-  // カードのクローンを元の位置に固定配置
+  // カードのクローン
   const clone = cardEl.cloneNode(true);
-  // onload が未完了でも画像を確実に表示する（非同期ロード対策）
   const ps = side === "cpu" ? gameState.cpu : gameState.player;
   const cardData = ps.field[fieldIndex];
   if (cardData && cardData.image) {
@@ -1519,10 +1556,25 @@ function playAbilityAnimation(fieldIndex, abilityIndex, side, callback) {
   });
   document.body.appendChild(clone);
 
-  // 能力行（クローン内）
   const targetLine = clone.querySelectorAll(".card-ability-line")[abilityIndex];
 
-  // Step 1: 画面中央へ拡大 (0 → 350ms)
+  const timers = [];
+  let finished = false;
+
+  function finish() {
+    if (finished) return;
+    finished = true;
+    timers.forEach(t => clearTimeout(t));
+    clone.style.transition = "opacity 0.15s ease-in";
+    clone.style.opacity = "0";
+    backdrop.style.transition = "background 0.15s";
+    backdrop.style.background = "rgba(0,0,0,0)";
+    setTimeout(() => { clone.remove(); backdrop.remove(); callback(); }, 150);
+  }
+
+  backdrop.addEventListener("click", finish);
+
+  // Step 1: 画面中央へ拡大 (0 → 320ms)
   requestAnimationFrame(() => requestAnimationFrame(() => {
     backdrop.style.background = "rgba(0,0,0,0.55)";
     clone.style.transition = "transform 0.32s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.32s";
@@ -1530,43 +1582,42 @@ function playAbilityAnimation(fieldIndex, abilityIndex, side, callback) {
     clone.style.boxShadow = "0 0 60px 16px rgba(255,220,50,0.35)";
   }));
 
-  // Step 2: 揺れ + 能力行グロー (360ms → 820ms)
-  setTimeout(() => {
-    clone.style.transition = "none";
-    if (targetLine) targetLine.classList.add("ability-line-glowing");
-    const shakeX = [14, -13, 11, -10, 8, -6, 4, -2, 0];
-    let step = 0;
-    const timer = setInterval(() => {
-      if (step >= shakeX.length) { clearInterval(timer); return; }
-      clone.style.transform = `translate(${tx + shakeX[step]}px,${ty}px) scale(${scale})`;
-      step++;
-    }, 50);
-  }, 360);
+  // Step 2: 能力行グロー（拡大完了後、3秒静止）
+  timers.push(setTimeout(() => {
+    if (finished) return;
+    clone.style.boxShadow = "0 0 80px 24px rgba(255,220,50,0.6)";
+    if (targetLine) {
+      targetLine.style.transition = "background 0.2s, box-shadow 0.2s, color 0.2s";
+      targetLine.style.background = "rgba(255,220,50,0.55)";
+      targetLine.style.boxShadow = "0 0 16px 6px rgba(255,220,50,0.9)";
+      targetLine.style.color = "#1a1a00";
+      targetLine.style.borderRadius = "3px";
+    }
+  }, 350));
 
-  // Step 3: 縮小フェードアウト (830ms → 1080ms)
-  setTimeout(() => {
-    clone.style.transition = "transform 0.25s ease-in, opacity 0.25s ease-in, box-shadow 0.25s";
-    clone.style.transform = `translate(${tx}px,${ty}px) scale(${scale * 0.72})`;
+  // Step 3: フェードアウト (350 + 3000 = 3350ms)
+  timers.push(setTimeout(() => {
+    if (finished) return;
+    clone.style.transition = "opacity 0.25s ease-in, box-shadow 0.25s";
     clone.style.opacity = "0";
     clone.style.boxShadow = "none";
     backdrop.style.transition = "background 0.25s";
     backdrop.style.background = "rgba(0,0,0,0)";
-  }, 830);
+  }, 3350));
 
-  // Step 4: 完了 (1090ms)
-  setTimeout(() => {
-    clone.remove();
-    backdrop.remove();
-    callback();
-  }, 1090);
+  // Step 4: 完了 (3600ms)
+  timers.push(setTimeout(() => {
+    if (finished) return;
+    clone.remove(); backdrop.remove(); callback(); finished = true;
+  }, 3600));
 }
 
-// オプションカードアニメーション
+// オプションカードアニメーション: 拡大→3秒光って静止→フェードアウト
+// クリックでスキップ可
 function playOptionCardAnimation(card, fromRect, isCpu, callback) {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
 
-  // fromRect が無い場合はデフォルト位置（CPUなら上部中央、プレイヤーなら下部中央）
   const cardW = 100, cardH = 140;
   const rect = fromRect ?? {
     left: vw / 2 - cardW / 2,
@@ -1580,12 +1631,12 @@ function playOptionCardAnimation(card, fromRect, isCpu, callback) {
   const tx = vw / 2 - (rect.left + rect.width / 2);
   const ty = vh / 2 - (rect.top + rect.height / 2);
 
-  // 暗幕
+  // 暗幕（クリックでスキップ）
   const backdrop = document.createElement("div");
   Object.assign(backdrop.style, {
     position: "fixed", inset: "0",
-    background: "rgba(0,0,0,0)", zIndex: "999", pointerEvents: "none",
-    transition: "background 0.3s",
+    background: "rgba(0,0,0,0)", zIndex: "999",
+    cursor: "pointer", transition: "background 0.3s",
   });
   document.body.appendChild(backdrop);
 
@@ -1606,7 +1657,23 @@ function playOptionCardAnimation(card, fromRect, isCpu, callback) {
 
   const targetDesc = clone.querySelector(".card-desc");
 
-  // Step 1: 画面中央へ拡大 (0 → 350ms)
+  const timers = [];
+  let finished = false;
+
+  function finish() {
+    if (finished) return;
+    finished = true;
+    timers.forEach(t => clearTimeout(t));
+    clone.style.transition = "opacity 0.15s ease-in";
+    clone.style.opacity = "0";
+    backdrop.style.transition = "background 0.15s";
+    backdrop.style.background = "rgba(0,0,0,0)";
+    setTimeout(() => { clone.remove(); backdrop.remove(); callback(); }, 150);
+  }
+
+  backdrop.addEventListener("click", finish);
+
+  // Step 1: 画面中央へ拡大 (0 → 320ms)
   requestAnimationFrame(() => requestAnimationFrame(() => {
     backdrop.style.background = "rgba(0,0,0,0.55)";
     clone.style.transition = "transform 0.32s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.32s";
@@ -1614,35 +1681,34 @@ function playOptionCardAnimation(card, fromRect, isCpu, callback) {
     clone.style.boxShadow = "0 0 60px 16px rgba(255,220,50,0.35)";
   }));
 
-  // Step 2: 揺れ + グロー (360ms → 820ms)
-  setTimeout(() => {
-    clone.style.transition = "none";
-    if (targetDesc) targetDesc.classList.add("ability-line-glowing");
-    const shakeX = [14, -13, 11, -10, 8, -6, 4, -2, 0];
-    let step = 0;
-    const timer = setInterval(() => {
-      if (step >= shakeX.length) { clearInterval(timer); return; }
-      clone.style.transform = `translate(${tx + shakeX[step]}px,${ty}px) scale(${scale})`;
-      step++;
-    }, 50);
-  }, 360);
+  // Step 2: カード説明グロー（拡大完了後、3秒静止）
+  timers.push(setTimeout(() => {
+    if (finished) return;
+    clone.style.boxShadow = "0 0 80px 24px rgba(255,220,50,0.6)";
+    if (targetDesc) {
+      targetDesc.style.transition = "background 0.2s, box-shadow 0.2s, color 0.2s";
+      targetDesc.style.background = "rgba(255,220,50,0.55)";
+      targetDesc.style.boxShadow = "0 0 16px 6px rgba(255,220,50,0.9)";
+      targetDesc.style.color = "#1a1a00";
+      targetDesc.style.borderRadius = "3px";
+    }
+  }, 350));
 
-  // Step 3: 縮小フェードアウト (830ms → 1080ms)
-  setTimeout(() => {
-    clone.style.transition = "transform 0.25s ease-in, opacity 0.25s ease-in, box-shadow 0.25s";
-    clone.style.transform = `translate(${tx}px,${ty}px) scale(${scale * 0.72})`;
+  // Step 3: フェードアウト (350 + 3000 = 3350ms)
+  timers.push(setTimeout(() => {
+    if (finished) return;
+    clone.style.transition = "opacity 0.25s ease-in, box-shadow 0.25s";
     clone.style.opacity = "0";
     clone.style.boxShadow = "none";
     backdrop.style.transition = "background 0.25s";
     backdrop.style.background = "rgba(0,0,0,0)";
-  }, 830);
+  }, 3350));
 
-  // Step 4: 完了 (1090ms)
-  setTimeout(() => {
-    clone.remove();
-    backdrop.remove();
-    callback();
-  }, 1090);
+  // Step 4: 完了 (3600ms)
+  timers.push(setTimeout(() => {
+    if (finished) return;
+    clone.remove(); backdrop.remove(); callback(); finished = true;
+  }, 3600));
 }
 
 // オプションカード使用: 確認ダイアログ → 実行 → 結果表示
