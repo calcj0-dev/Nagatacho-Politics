@@ -587,29 +587,31 @@ function buildDeck(party) {
 // ゲーム初期化
 // ============================================================
 
-function initGame(playerParty, playerInitialCardId) {
-  // プレイヤー側
+function initGame(playerParty) {
+  // プレイヤー側: 全カードをシャッフルし、手札先頭に政治家カードを1枚保証
   const playerCards = buildDeck(playerParty);
-  const initialCard = playerCards.politicians.find(c => c.id === playerInitialCardId);
-  const remainingPoliticians = playerCards.politicians.filter(c => c.instanceId !== initialCard.instanceId);
+  const playerAll = shuffleArray([...playerCards.politicians, ...playerCards.options]);
+  const pPolIdx = playerAll.findIndex(c => c.type === "politician");
+  if (pPolIdx > 2) [playerAll[0], playerAll[pPolIdx]] = [playerAll[pPolIdx], playerAll[0]];
 
   gameState.player = createPlayerState();
   gameState.player.party = playerParty;
-  gameState.player.field = [initialCard];
-  gameState.player.deck = shuffleArray([...remainingPoliticians, ...playerCards.options]);
+  gameState.player.field = [];
+  gameState.player.deck = playerAll;
   gameState.player.hand = gameState.player.deck.splice(0, 3);
 
   // CPU側: プレイヤーと異なる政党からランダム選択
   const cpuParties = PARTIES.filter(p => p !== playerParty);
   const cpuParty = cpuParties[Math.floor(Math.random() * cpuParties.length)];
   const cpuCards = buildDeck(cpuParty);
-  const cpuInitial = cpuCards.politicians[Math.floor(Math.random() * cpuCards.politicians.length)];
-  const cpuRemaining = cpuCards.politicians.filter(c => c.instanceId !== cpuInitial.instanceId);
+  const cpuAll = shuffleArray([...cpuCards.politicians, ...cpuCards.options]);
+  const cPolIdx = cpuAll.findIndex(c => c.type === "politician");
+  if (cPolIdx > 2) [cpuAll[0], cpuAll[cPolIdx]] = [cpuAll[cPolIdx], cpuAll[0]];
 
   gameState.cpu = createPlayerState();
   gameState.cpu.party = cpuParty;
-  gameState.cpu.field = [cpuInitial];
-  gameState.cpu.deck = shuffleArray([...cpuRemaining, ...cpuCards.options]);
+  gameState.cpu.field = [];
+  gameState.cpu.deck = cpuAll;
   gameState.cpu.hand = gameState.cpu.deck.splice(0, 3);
 
   gameState.turn = 1;
@@ -617,8 +619,8 @@ function initGame(playerParty, playerInitialCardId) {
   gameState.phase = "playing";
 
   console.log("[initGame] ゲーム開始");
-  console.log(`  プレイヤー: ${playerParty}, 場: ${initialCard.name}`);
-  console.log(`  CPU: ${cpuParty}, 場: ${cpuInitial.name}`);
+  console.log(`  プレイヤー: ${playerParty}`);
+  console.log(`  CPU: ${cpuParty}`);
   logState();
 
   startPlayerTurn();
@@ -2075,12 +2077,6 @@ function renderGame() {
     showScreen("party-select-screen");
     return;
   }
-  if (gameState.phase === "card_select") {
-    showScreen("card-select-screen");
-    renderCardSelect();
-    return;
-  }
-
   showScreen("game-screen");
 
   // ターン情報
@@ -2314,9 +2310,7 @@ function logState() {
 // ============================================================
 
 function selectParty(party) {
-  gameState.player.party = party;
-  gameState.phase = "card_select";
-  renderGame();
+  initGame(party);
 }
 
 // ============================================================
