@@ -795,6 +795,51 @@ h1 {
 }
 
 /* ============================================================
+   特殊効果バッジ（山札下）
+   ============================================================ */
+
+.active-effects {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 110px;
+  margin-top: 6px;
+}
+
+.effect-tag {
+  font-size: 0.6rem;
+  padding: 3px 5px;
+  border-radius: 4px;
+  text-align: center;
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.effect-shield {
+  background: rgba(100, 180, 255, 0.2);
+  border: 1px solid rgba(100, 180, 255, 0.55);
+  color: #aaddff;
+}
+
+.effect-buff {
+  background: rgba(80, 200, 120, 0.2);
+  border: 1px solid rgba(80, 200, 120, 0.55);
+  color: #aaeecc;
+}
+
+.effect-debuff {
+  background: rgba(220, 80, 80, 0.2);
+  border: 1px solid rgba(220, 80, 80, 0.55);
+  color: #ffaaaa;
+}
+
+.effect-current {
+  background: rgba(255, 200, 50, 0.2);
+  border: 1px solid rgba(255, 200, 50, 0.55);
+  color: #ffdd88;
+}
+
+/* ============================================================
    能力発動アニメーション
    ============================================================ */
 

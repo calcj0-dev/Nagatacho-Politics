@@ -1271,12 +1271,15 @@ function cpuExecuteNextAbility(abilityActions, idx) {
     const ability = action.card.abilities[abilityIdx];
     const effectMsgs = executeEffect(ability.effect, "cpu");
     console.log(`  CPU: ${action.card.name}「${ability.name}」（コスト${effectiveCost}億）`);
+    const cpuFieldIndex = c.field.findIndex(fc => fc.instanceId === action.card.instanceId);
     renderGame();
-    showActionBanner(
-      [`${action.card.name}「${ability.name}」を発動！`, ...effectMsgs],
-      false,
-      () => cpuExecuteNextAbility(abilityActions, idx + 1)
-    );
+    playAbilityAnimation(cpuFieldIndex, abilityIdx, "cpu", () => {
+      showActionBanner(
+        [`${action.card.name}「${ability.name}」を発動！`, ...effectMsgs],
+        false,
+        () => cpuExecuteNextAbility(abilityActions, idx + 1)
+      );
+    });
     return;
   }
   cpuPhaseOption();
@@ -1451,7 +1454,7 @@ function useAbility(fieldIndex, abilityIndex) {
     console.log(`[能力発動] ${card.name}: ${ability.name}（コスト${effectiveCost}億）`);
     const msgs = executeEffect(ability.effect, "player");
     renderGame();
-    playAbilityAnimation(fieldIndex, abilityIndex, () => {
+    playAbilityAnimation(fieldIndex, abilityIndex, "player", () => {
       showActionBanner([`「${ability.name}」発動！`, ...msgs], true, () => {
         const result = checkWinCondition();
         if (result) {
@@ -1465,8 +1468,10 @@ function useAbility(fieldIndex, abilityIndex) {
 }
 
 // 能力発動アニメーション: 画面の約40%サイズに拡大→揺れ→フェードアウト
-function playAbilityAnimation(fieldIndex, abilityIndex, callback) {
-  const container = document.getElementById("player-field");
+// side: "player" | "cpu"
+function playAbilityAnimation(fieldIndex, abilityIndex, side, callback) {
+  const containerId = side === "cpu" ? "cpu-field" : "player-field";
+  const container = document.getElementById(containerId);
   if (!container) { callback(); return; }
 
   const cardEls = container.querySelectorAll(".card");
@@ -1924,6 +1929,7 @@ function renderGame() {
   document.getElementById("cpu-approval").textContent = "???";
   renderFieldCards("cpu-field", gameState.cpu.field, false);
   renderDeckSlot("cpu-deck", gameState.cpu.deck.length);
+  renderActiveEffects("cpu-deck", gameState.cpu);
 
   // プレイヤー情報
   document.getElementById("player-party").textContent = gameState.player.party || "???";
@@ -1931,6 +1937,7 @@ function renderGame() {
   document.getElementById("player-approval").textContent = "???";
   renderFieldCards("player-field", gameState.player.field, true);
   renderDeckSlot("player-deck", gameState.player.deck.length);
+  renderActiveEffects("player-deck", gameState.player);
 
   // CPU手札（裏向き）
   renderCpuHand();
@@ -1955,6 +1962,45 @@ function renderDeckSlot(slotId, deckCount) {
   countEl.textContent = `${deckCount}枚`;
   slot.appendChild(back);
   slot.appendChild(countEl);
+}
+
+// 山札下の特殊効果バッジを描画
+function renderActiveEffects(slotId, ps) {
+  const slot = document.getElementById(slotId);
+  if (!slot) return;
+
+  const tags = []; // { label, type }
+
+  // シールド
+  ps.shields.forEach(s => {
+    if (s === "block_approval_down") tags.push({ label: "🛡 支持率低下を1回無効化", type: "shield" });
+    if (s === "block_attack")        tags.push({ label: "🛡 攻撃を1回無効化",       type: "shield" });
+  });
+
+  // 次ターンボーナス
+  const nb = ps.nextTurnBonuses;
+  if (nb.costReduction   > 0) tags.push({ label: `🔧 次ターン コスト-${nb.costReduction}億`,    type: "buff"   });
+  if (nb.fundBonus       > 0) tags.push({ label: `💰 次ターン 資金+${nb.fundBonus}億`,           type: "buff"   });
+  if (nb.approvalBonus   > 0) tags.push({ label: `📈 次ターン 支持率+${nb.approvalBonus}%`,      type: "buff"   });
+  if (nb.approvalBonus   < 0) tags.push({ label: `📉 次ターン 支持率${nb.approvalBonus}%`,       type: "debuff" });
+  if (nb.attackReduction > 0) tags.push({ label: `🛡 次ターン ダメージ-${nb.attackReduction}%`,  type: "shield" });
+
+  // このターン限定コスト軽減
+  if (ps.currentTurnCostReduction > 0) {
+    tags.push({ label: `⚡ このターン コスト-${ps.currentTurnCostReduction}億`, type: "current" });
+  }
+
+  if (tags.length === 0) return;
+
+  const panel = document.createElement("div");
+  panel.className = "active-effects";
+  tags.forEach(({ label, type }) => {
+    const el = document.createElement("div");
+    el.className = `effect-tag effect-${type}`;
+    el.textContent = label;
+    panel.appendChild(el);
+  });
+  slot.appendChild(panel);
 }
 
 function renderFieldCards(containerId, cards, isPlayer) {
