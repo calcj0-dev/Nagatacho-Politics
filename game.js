@@ -1297,11 +1297,13 @@ function cpuPhaseOption() {
       const effectMsgs = executeEffect(card.effect, "cpu");
       console.log(`  CPU: ${card.name}を使用`);
       renderGame();
-      showActionBanner(
-        [`${card.name} を使用！`, ...effectMsgs],
-        false,
-        () => cpuCheckWinAndEnd()
-      );
+      playOptionCardAnimation(card, null, true, () => {
+        showActionBanner(
+          [`${card.name} を使用！`, ...effectMsgs],
+          false,
+          () => cpuCheckWinAndEnd()
+        );
+      });
       return;
     }
   }
@@ -1501,6 +1503,13 @@ function playAbilityAnimation(fieldIndex, abilityIndex, side, callback) {
 
   // カードのクローンを元の位置に固定配置
   const clone = cardEl.cloneNode(true);
+  // onload が未完了でも画像を確実に表示する（非同期ロード対策）
+  const ps = side === "cpu" ? gameState.cpu : gameState.player;
+  const cardData = ps.field[fieldIndex];
+  if (cardData && cardData.image) {
+    clone.style.backgroundImage = `url(${cardData.image})`;
+    clone.classList.add("has-image");
+  }
   Object.assign(clone.style, {
     position: "fixed",
     left: rect.left + "px", top: rect.top + "px",
@@ -1552,6 +1561,90 @@ function playAbilityAnimation(fieldIndex, abilityIndex, side, callback) {
   }, 1090);
 }
 
+// オプションカードアニメーション
+function playOptionCardAnimation(card, fromRect, isCpu, callback) {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  // fromRect が無い場合はデフォルト位置（CPUなら上部中央、プレイヤーなら下部中央）
+  const cardW = 100, cardH = 140;
+  const rect = fromRect ?? {
+    left: vw / 2 - cardW / 2,
+    top: isCpu ? 60 : vh - cardH - 60,
+    width: cardW,
+    height: cardH,
+  };
+
+  const targetWidth = Math.min(vw * 0.42, 420);
+  const scale = targetWidth / rect.width;
+  const tx = vw / 2 - (rect.left + rect.width / 2);
+  const ty = vh / 2 - (rect.top + rect.height / 2);
+
+  // 暗幕
+  const backdrop = document.createElement("div");
+  Object.assign(backdrop.style, {
+    position: "fixed", inset: "0",
+    background: "rgba(0,0,0,0)", zIndex: "999", pointerEvents: "none",
+    transition: "background 0.3s",
+  });
+  document.body.appendChild(backdrop);
+
+  // カード要素を新規作成（backgroundImage を直接設定して非同期ロード競合を回避）
+  const clone = createCardElement(card);
+  if (card.image) {
+    clone.style.backgroundImage = `url(${card.image})`;
+    clone.classList.add("has-image");
+  }
+  Object.assign(clone.style, {
+    position: "fixed",
+    left: rect.left + "px", top: rect.top + "px",
+    width: rect.width + "px", height: rect.height + "px",
+    margin: "0", zIndex: "1000", pointerEvents: "none",
+    transformOrigin: "center center", transition: "none",
+  });
+  document.body.appendChild(clone);
+
+  const targetDesc = clone.querySelector(".card-desc");
+
+  // Step 1: 画面中央へ拡大 (0 → 350ms)
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    backdrop.style.background = "rgba(0,0,0,0.55)";
+    clone.style.transition = "transform 0.32s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.32s";
+    clone.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
+    clone.style.boxShadow = "0 0 60px 16px rgba(255,220,50,0.35)";
+  }));
+
+  // Step 2: 揺れ + グロー (360ms → 820ms)
+  setTimeout(() => {
+    clone.style.transition = "none";
+    if (targetDesc) targetDesc.classList.add("ability-line-glowing");
+    const shakeX = [14, -13, 11, -10, 8, -6, 4, -2, 0];
+    let step = 0;
+    const timer = setInterval(() => {
+      if (step >= shakeX.length) { clearInterval(timer); return; }
+      clone.style.transform = `translate(${tx + shakeX[step]}px,${ty}px) scale(${scale})`;
+      step++;
+    }, 50);
+  }, 360);
+
+  // Step 3: 縮小フェードアウト (830ms → 1080ms)
+  setTimeout(() => {
+    clone.style.transition = "transform 0.25s ease-in, opacity 0.25s ease-in, box-shadow 0.25s";
+    clone.style.transform = `translate(${tx}px,${ty}px) scale(${scale * 0.72})`;
+    clone.style.opacity = "0";
+    clone.style.boxShadow = "none";
+    backdrop.style.transition = "background 0.25s";
+    backdrop.style.background = "rgba(0,0,0,0)";
+  }, 830);
+
+  // Step 4: 完了 (1090ms)
+  setTimeout(() => {
+    clone.remove();
+    backdrop.remove();
+    callback();
+  }, 1090);
+}
+
 // オプションカード使用: 確認ダイアログ → 実行 → 結果表示
 function useOptionCard(handIndex) {
   const p = gameState.player;
@@ -1559,6 +1652,11 @@ function useOptionCard(handIndex) {
 
   if (!card || card.type !== "option") return;
   if (p.usedOptionThisTurn) return;
+
+  // 確認ダイアログ後はカード要素がDOMから消えるため、先に位置を取得
+  const handContainer = document.getElementById("player-hand");
+  const handCardEls = handContainer ? handContainer.querySelectorAll(".card") : [];
+  const cardRect = handCardEls[handIndex]?.getBoundingClientRect() ?? null;
 
   const effectText = card.effectDescription || "";
   const desc = card.description || "";
@@ -1569,13 +1667,15 @@ function useOptionCard(handIndex) {
     console.log(`[オプション使用] ${card.name}`);
     const msgs = executeEffect(card.effect, "player");
     renderGame();
-    showActionBanner([`「${card.name}」使用！`, ...msgs], true, () => {
-      const result = checkWinCondition();
-      if (result) {
-        gameState.phase = "finished";
-        showFinishOverlay(result);
-        return;
-      }
+    playOptionCardAnimation(card, cardRect, false, () => {
+      showActionBanner([`「${card.name}」使用！`, ...msgs], true, () => {
+        const result = checkWinCondition();
+        if (result) {
+          gameState.phase = "finished";
+          showFinishOverlay(result);
+          return;
+        }
+      });
     });
   });
 }
