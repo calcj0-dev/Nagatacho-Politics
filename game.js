@@ -1219,6 +1219,13 @@ function showActionBanner(lines, isPlayer, onDone) {
     banner.style.pointerEvents = "auto";
     banner.style.cursor = "pointer";
 
+    // 全画面クリック受け口（バナー外側でもスキップ可）
+    const clickCatcher = document.createElement("div");
+    Object.assign(clickCatcher.style, {
+      position: "fixed", inset: "0", zIndex: "249", cursor: "pointer",
+    });
+    document.body.appendChild(clickCatcher);
+
     let done = false;
     let timer;
 
@@ -1226,12 +1233,14 @@ function showActionBanner(lines, isPlayer, onDone) {
       if (done) return;
       done = true;
       clearTimeout(timer);
+      clickCatcher.remove();
       banner.removeEventListener("click", next);
       banner.style.transition = "opacity 0.25s ease";
       banner.style.opacity = "0";
       setTimeout(() => showGroup(index + 1), 280);
     }
 
+    clickCatcher.addEventListener("click", next);
     banner.addEventListener("click", next);
 
     // フェードイン
@@ -1240,7 +1249,7 @@ function showActionBanner(lines, isPlayer, onDone) {
       banner.style.opacity = "1";
     }));
 
-    timer = setTimeout(next, 3000);
+    timer = setTimeout(next, 2000);
   }
 
   showGroup(0);
@@ -1597,7 +1606,7 @@ function playAbilityAnimation(fieldIndex, abilityIndex, side, callback) {
     }
   }, 350));
 
-  // Step 3: フェードアウト (350 + 3000 = 3350ms)
+  // Step 3: フェードアウト (350 + 2000 = 2350ms)
   timers.push(setTimeout(() => {
     if (finished) return;
     clone.style.transition = "opacity 0.25s ease-in, box-shadow 0.25s";
@@ -1605,13 +1614,13 @@ function playAbilityAnimation(fieldIndex, abilityIndex, side, callback) {
     clone.style.boxShadow = "none";
     backdrop.style.transition = "background 0.25s";
     backdrop.style.background = "rgba(0,0,0,0)";
-  }, 3350));
+  }, 2350));
 
-  // Step 4: 完了 (3600ms)
+  // Step 4: 完了 (2600ms)
   timers.push(setTimeout(() => {
     if (finished) return;
     clone.remove(); backdrop.remove(); callback(); finished = true;
-  }, 3600));
+  }, 2600));
 }
 
 // オプションカードアニメーション: 拡大→3秒光って静止→フェードアウト
@@ -1696,7 +1705,7 @@ function playOptionCardAnimation(card, fromRect, isCpu, callback) {
     }
   }, 350));
 
-  // Step 3: フェードアウト (350 + 3000 = 3350ms)
+  // Step 3: フェードアウト (350 + 2000 = 2350ms)
   timers.push(setTimeout(() => {
     if (finished) return;
     clone.style.transition = "opacity 0.25s ease-in, box-shadow 0.25s";
@@ -1704,13 +1713,13 @@ function playOptionCardAnimation(card, fromRect, isCpu, callback) {
     clone.style.boxShadow = "none";
     backdrop.style.transition = "background 0.25s";
     backdrop.style.background = "rgba(0,0,0,0)";
-  }, 3350));
+  }, 2350));
 
-  // Step 4: 完了 (3600ms)
+  // Step 4: 完了 (2600ms)
   timers.push(setTimeout(() => {
     if (finished) return;
     clone.remove(); backdrop.remove(); callback(); finished = true;
-  }, 3600));
+  }, 2600));
 }
 
 // オプションカード使用: 確認ダイアログ → 実行 → 結果表示
@@ -2094,7 +2103,9 @@ function renderGame() {
   document.getElementById("cpu-approval").textContent = "???";
   renderFieldCards("cpu-field", gameState.cpu.field, false);
   renderDeckSlot("cpu-deck", gameState.cpu.deck.length);
-  renderActiveEffects("cpu-deck", gameState.cpu);
+  const cpuEffectsEl = document.getElementById("cpu-effects");
+  if (cpuEffectsEl) cpuEffectsEl.innerHTML = "";
+  renderActiveEffects("cpu-effects", gameState.cpu);
 
   // プレイヤー情報
   document.getElementById("player-party").textContent = gameState.player.party || "???";
@@ -2226,6 +2237,7 @@ function renderCpuHand() {
 function renderHand() {
   const container = document.getElementById("player-hand");
   container.innerHTML = "";
+  container.classList.toggle("hand-locked", gameState.currentPlayer !== "player");
   gameState.player.hand.forEach((card, idx) => {
     const el = createCardElement(card);
     // 手札の政治家カードにも能力サマリーを表示
@@ -2283,18 +2295,6 @@ function createCardElement(card) {
   return el;
 }
 
-function renderCardSelect() {
-  const container = document.getElementById("card-select-list");
-  container.innerHTML = "";
-  const politicians = POLITICIAN_CARDS.filter(c => c.party === gameState.player.party);
-  politicians.forEach(card => {
-    const el = createCardElement(createCardInstance(card));
-    el.addEventListener("click", () => {
-      initGame(gameState.player.party, card.id);
-    });
-    container.appendChild(el);
-  });
-}
 
 function setMainPhaseUI(enabled) {
   const endTurnBtn = document.getElementById("end-turn-btn");

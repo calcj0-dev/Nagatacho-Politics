@@ -309,6 +309,7 @@ h1 {
 
 .player-info-row1 {
   display: flex;
+  align-items: center;
   gap: 16px;
 }
 
@@ -473,6 +474,17 @@ h1 {
   min-width: 36px;
   text-align: right;
   flex-shrink: 0;
+}
+
+/* CPUターン中は手札を操作不可にする */
+.hand-locked .card {
+  pointer-events: none;
+  cursor: default;
+}
+
+.hand-locked .card:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 /* 手札エリア */
@@ -856,15 +868,25 @@ h1 {
 }
 
 /* ============================================================
-   特殊効果バッジ（山札下）
+   特殊効果バッジ
    ============================================================ */
 
+/* 山札下（プレイヤー）: 縦並び */
 .active-effects {
   display: flex;
   flex-direction: column;
   gap: 3px;
   width: 110px;
   margin-top: 6px;
+}
+
+/* 支持率横（CPU）: 横並び */
+#cpu-effects .active-effects {
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: auto;
+  margin-top: 0;
+  gap: 3px;
 }
 
 .effect-tag {
