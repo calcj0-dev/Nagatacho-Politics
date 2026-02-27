@@ -30,12 +30,6 @@
     </div>
   </div>
 
-  <!-- 初期カード選択画面 -->
-  <div id="card-select-screen" class="screen hidden">
-    <h1>場に出す政治家を選んでください</h1>
-    <div id="card-select-list" class="card-list"></div>
-  </div>
-
   <!-- ゲーム画面 -->
   <div id="game-screen" class="screen hidden">
     <!-- CPU側 -->
@@ -56,7 +50,9 @@
 
     <!-- ターン情報バー -->
     <div id="turn-bar">
-      <span id="turn-info">ターン: 1/25　情勢調査まで: あと5ターン</span>
+      <span id="turn-num">1 / 25</span>
+      <span id="turn-survey">情勢調査まで あと5T</span>
+      <span id="turn-owner">あなたのターン</span>
     </div>
 
     <!-- プレイヤー側 -->
@@ -68,7 +64,13 @@
       <div class="player-info">
         <div class="player-info-row1">
           <span>【あなた】 <span id="player-party">???</span></span>
-          <span>支持率: <span id="player-approval">???</span></span>
+          <div class="approval-row">
+            <span class="approval-label">支持率</span>
+            <div class="approval-bar-wrap">
+              <div id="player-approval-bar" class="approval-bar"></div>
+            </div>
+            <span id="player-approval" class="approval-num">--%</span>
+          </div>
         </div>
         <div class="player-info-funds">政治資金: <span id="player-funds">0億円</span></div>
       </div>

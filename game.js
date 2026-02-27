@@ -2081,9 +2081,12 @@ function renderGame() {
 
   // ターン情報
   const turnsUntilSurvey = 5 - (gameState.turn % 5 || 5);
-  const turnOwner = gameState.currentPlayer === "player" ? "【あなたのターン】" : "【CPUのターン…】";
-  document.getElementById("turn-info").textContent =
-    `ターン: ${gameState.turn}/25　情勢調査まで: あと${turnsUntilSurvey}ターン　${turnOwner}`;
+  const isPlayerTurn = gameState.currentPlayer === "player";
+  document.getElementById("turn-num").textContent = `${gameState.turn} / 25`;
+  document.getElementById("turn-survey").textContent = `情勢調査まで あと${turnsUntilSurvey}T`;
+  const ownerEl = document.getElementById("turn-owner");
+  ownerEl.textContent = isPlayerTurn ? "あなたのターン" : "CPUのターン…";
+  ownerEl.className = isPlayerTurn ? "owner-player" : "owner-cpu";
 
   // CPU情報
   document.getElementById("cpu-party").textContent = gameState.cpu.party || "???";
@@ -2096,7 +2099,13 @@ function renderGame() {
   // プレイヤー情報
   document.getElementById("player-party").textContent = gameState.player.party || "???";
   document.getElementById("player-funds").innerHTML = fundsToHtml(gameState.player.funds);
-  document.getElementById("player-approval").textContent = "???";
+  const pa = gameState.player.approval;
+  document.getElementById("player-approval").textContent = `${pa}%`;
+  const barEl = document.getElementById("player-approval-bar");
+  barEl.style.width = `${pa}%`;
+  barEl.style.background = pa >= 70 ? "linear-gradient(90deg,#1a7a3e,#2ecc71)"
+                          : pa >= 30 ? "linear-gradient(90deg,#1a5276,#3498db)"
+                          :            "linear-gradient(90deg,#7a1a1a,#e94560)";
   renderFieldCards("player-field", gameState.player.field, true);
   renderDeckSlot("player-deck", gameState.player.deck.length);
   renderActiveEffects("player-deck", gameState.player);

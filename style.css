@@ -412,12 +412,67 @@ h1 {
 
 /* ターン情報バー */
 #turn-bar {
-  text-align: center;
-  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
   background: #16213e;
   border-radius: 4px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+}
+
+#turn-num {
+  color: #aaa;
+  min-width: 56px;
+}
+
+#turn-survey {
   color: #ffd700;
+}
+
+#turn-owner {
+  font-weight: bold;
+  min-width: 100px;
+  text-align: right;
+}
+
+#turn-owner.owner-player { color: #4aabf0; }
+#turn-owner.owner-cpu    { color: #f0a020; }
+
+/* 支持率バー */
+.approval-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.approval-label {
+  font-size: 0.85rem;
+  color: #aaa;
+  flex-shrink: 0;
+}
+
+.approval-bar-wrap {
+  width: 80px;
+  height: 7px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.approval-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease, background 0.4s ease;
+}
+
+.approval-num {
+  font-size: 0.85rem;
+  font-weight: bold;
+  min-width: 36px;
+  text-align: right;
+  flex-shrink: 0;
 }
 
 /* 手札エリア */
@@ -845,18 +900,3 @@ h1 {
   color: #ffdd88;
 }
 
-/* ============================================================
-   能力発動アニメーション
-   ============================================================ */
-
-@keyframes ability-glow {
-  0%   { background: rgba(255, 220, 50, 0);    box-shadow: none; color: inherit; }
-  25%  { background: rgba(255, 220, 50, 0.55); box-shadow: 0 0 16px 6px rgba(255, 220, 50, 0.9); color: #1a1a00; }
-  60%  { background: rgba(255, 200, 0,  0.45); box-shadow: 0 0 22px 8px rgba(255, 180, 0,  1.0); color: #1a1a00; }
-  100% { background: rgba(255, 220, 50, 0);    box-shadow: none; color: inherit; }
-}
-
-.ability-line-glowing {
-  animation: ability-glow 0.75s ease-out forwards;
-  border-radius: 3px;
-}
