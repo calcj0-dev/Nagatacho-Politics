@@ -646,7 +646,10 @@ function changeApproval(player, amount) {
 
 // 資金変更
 function changeFunds(player, amount) {
+  const before = player.funds;
   player.funds = Math.max(0, player.funds + amount);
+  const delta = player.funds - before;
+  if (delta !== 0) player._fundsFlash = { dir: delta > 0 ? "up" : "down", delta };
 }
 
 // 自分/相手を取得
@@ -1118,9 +1121,11 @@ function startPlayerTurn() {
 
   // ① 資金フェーズ
   const bonus = p.nextTurnBonuses.fundBonus;
-  p.funds += 3 + bonus;
+  const income = 3 + bonus;
+  p.funds += income;
+  p._fundsFlash = { dir: "up", delta: income };
   p.nextTurnBonuses.fundBonus = 0;
-  console.log(`[ターン${gameState.turn}] プレイヤーのターン開始 - 資金+${3 + bonus}億 (合計${p.funds}億)`);
+  console.log(`[ターン${gameState.turn}] プレイヤーのターン開始 - 資金+${income}億 (合計${p.funds}億)`);
 
   // ② ドローフェーズ
   let playerDrew = false;
@@ -2019,13 +2024,18 @@ function showSurveyOverlay(onClose) {
       <button id="survey-ok" class="overlay-btn btn-confirm">続ける</button>
     </div>
   `);
-  // バーを0%から実値へアニメーション
+  // オーバーレイコンテンツ スライドイン
+  const content = document.getElementById("overlay-content");
+  content.classList.remove("survey-overlay-enter");
+  void content.offsetWidth;
+  content.classList.add("survey-overlay-enter");
+  // バーを0%から実値へアニメーション（スライドイン後）
   setTimeout(() => {
     const barPlayer = document.querySelector(".bar-player");
     const barCpu = document.querySelector(".bar-cpu");
     if (barPlayer) barPlayer.style.width = `${pa}%`;
     if (barCpu) barCpu.style.width = `${ca}%`;
-  }, 50);
+  }, 200);
   document.getElementById("survey-ok").addEventListener("click", () => {
     hideOverlay();
     if (onClose) onClose();
@@ -2058,6 +2068,15 @@ function showFinishOverlay(result) {
     hist.push({ turn: gameState.turn, player: pa, cpu: ca });
   }
 
+  // 全画面フラッシュ（勝利:金、敗北:赤、引き分け:灰）
+  const isWin  = result.startsWith("プレイヤーの勝利");
+  const isDraw = result.startsWith("引き分け");
+  const flashColor = isWin ? "rgba(255,215,0,0.28)" : isDraw ? "rgba(180,180,180,0.22)" : "rgba(233,69,96,0.28)";
+  const flash = document.createElement("div");
+  flash.style.cssText = `position:fixed;inset:0;background:${flashColor};z-index:999;pointer-events:none;animation:finish-flash 0.75s ease-out forwards;`;
+  document.body.appendChild(flash);
+  setTimeout(() => flash.remove(), 800);
+
   showOverlay(`
     <h2>${title}</h2>
     <p>${subtitle}</p>
@@ -2067,6 +2086,12 @@ function showFinishOverlay(result) {
       <button id="finish-retry" class="overlay-btn btn-confirm">もう一度遊ぶ</button>
     </div>
   `);
+  // オーバーレイコンテンツ登場アニメーション
+  const content = document.getElementById("overlay-content");
+  content.classList.remove("finish-overlay-enter");
+  void content.offsetWidth;
+  content.classList.add("finish-overlay-enter");
+
   document.getElementById("finish-graph").addEventListener("click", showApprovalHistoryOverlay);
   document.getElementById("finish-retry").addEventListener("click", () => {
     hideOverlay();
@@ -2416,6 +2441,17 @@ function fundsToHtml(amount) {
   return html;
 }
 
+// 政治資金変動フローティングテキスト
+function showFundsDelta(delta, x, y, dir) {
+  const el = document.createElement("div");
+  el.className = `funds-delta funds-delta-${dir}`;
+  el.textContent = (delta > 0 ? "+" : "") + delta + "億";
+  el.style.left = x + "px";
+  el.style.top = y + "px";
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1100);
+}
+
 // 支持率変動フローティングテキスト
 function showApprovalDelta(delta, x, y, dir) {
   const el = document.createElement("div");
@@ -2466,6 +2502,15 @@ function renderGame() {
   // プレイヤー情報
   document.getElementById("player-party").textContent = gameState.player.party || "???";
   document.getElementById("player-funds").innerHTML = fundsToHtml(gameState.player.funds);
+  if (gameState.player._fundsFlash) {
+    const { dir, delta } = gameState.player._fundsFlash;
+    delete gameState.player._fundsFlash;
+    requestAnimationFrame(() => {
+      const fundsEl = document.getElementById("player-funds");
+      const rect = fundsEl.getBoundingClientRect();
+      showFundsDelta(delta, rect.right + 6, rect.top + rect.height / 2, dir);
+    });
+  }
   const pa = gameState.player.approval;
   document.getElementById("player-approval").textContent = `${pa}%`;
   const barEl = document.getElementById("player-approval-bar");
@@ -2836,6 +2881,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.getElementById("end-turn-btn").addEventListener("click", () => {
+    const btn = document.getElementById("end-turn-btn");
+    btn.classList.remove("btn-pulse");
+    void btn.offsetWidth;
+    btn.classList.add("btn-pulse");
     if (gameState.currentPlayer === "player") {
       endPlayerTurn();
     }
