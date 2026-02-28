@@ -637,6 +637,7 @@ function changeApproval(player, amount) {
   if (amount < 0) amount = applyDefenses(player, amount);
   player.approval = clamp(player.approval + amount, 0, 100);
   const after = player.approval;
+  if (after !== before) player._approvalFlash = { dir: after > before ? "up" : "down", delta: after - before };
   const who = player === gameState.player ? "あなた" : "相手";
   if (after > before) return `${who}の支持率が上がった！`;
   if (after < before) return `${who}の支持率が下がった…`;
@@ -1122,6 +1123,7 @@ function startPlayerTurn() {
   console.log(`[ターン${gameState.turn}] プレイヤーのターン開始 - 資金+${3 + bonus}億 (合計${p.funds}億)`);
 
   // ② ドローフェーズ
+  let playerDrew = false;
   if (p.skipNextDraw) {
     console.log("  ドロースキップ");
     p.skipNextDraw = false;
@@ -1129,20 +1131,90 @@ function startPlayerTurn() {
     const drawn = p.deck.shift();
     p.hand.push(drawn);
     console.log(`  ドロー: ${drawn.name}`);
+    playerDrew = true;
   } else {
     console.log("  山札なし - ドロー不可");
   }
 
   // ③ メインフェーズ: UI操作待ち
-  // 支持率推移を記録（プレイヤーターン開始時点）
   gameState.approvalHistory.push({
     turn: gameState.turn,
     player: gameState.player.approval,
     cpu: gameState.cpu.approval,
   });
 
-  renderGame();
-  setMainPhaseUI(true);
+  showTurnBanner(true, () => {
+    renderGame();
+    if (playerDrew) {
+      animateDrawCard(true, () => setMainPhaseUI(true));
+    } else {
+      setMainPhaseUI(true);
+    }
+  });
+}
+
+// 山札→手札ドローアニメーション
+function animateDrawCard(isPlayer, onDone) {
+  const deckId = isPlayer ? "player-deck" : "cpu-deck";
+  const handId = isPlayer ? "player-hand" : "cpu-hand";
+  const srcEl = document.querySelector(`#${deckId} .deck-card-back`);
+  const handEl = document.getElementById(handId);
+  const handCards = handEl ? handEl.querySelectorAll(isPlayer ? ".card" : ".card-back") : [];
+  const destEl = handCards[handCards.length - 1];
+
+  if (!srcEl || !destEl) { onDone(); return; }
+
+  const srcRect = srcEl.getBoundingClientRect();
+  const destRect = destEl.getBoundingClientRect();
+
+  const clone = srcEl.cloneNode(true);
+  clone.style.position = "fixed";
+  clone.style.left = srcRect.left + "px";
+  clone.style.top = srcRect.top + "px";
+  clone.style.width = srcRect.width + "px";
+  clone.style.height = srcRect.height + "px";
+  clone.style.margin = "0";
+  clone.style.zIndex = "450";
+  clone.style.pointerEvents = "none";
+  clone.style.transition = "none";
+  document.body.appendChild(clone);
+  clone.getBoundingClientRect();
+
+  requestAnimationFrame(() => {
+    clone.style.transition = [
+      "left 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+      "top 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+      "width 0.28s ease",
+      "height 0.28s ease"
+    ].join(", ");
+    clone.style.left = destRect.left + "px";
+    clone.style.top = destRect.top + "px";
+    clone.style.width = destRect.width + "px";
+    clone.style.height = destRect.height + "px";
+  });
+
+  setTimeout(() => {
+    clone.style.transition = "opacity 0.12s ease";
+    clone.style.opacity = "0";
+    setTimeout(() => { clone.remove(); onDone(); }, 120);
+  }, 330);
+}
+
+// ターン交代バナー（画面中央にスライドインして自動消え）
+function showTurnBanner(isPlayer, onDone) {
+  const el = document.createElement("div");
+  el.id = "turn-transition-banner";
+  el.className = isPlayer ? "ttb-player" : "ttb-cpu";
+  el.textContent = isPlayer ? "あなたのターン" : "CPUのターン";
+  document.body.appendChild(el);
+  requestAnimationFrame(() => {
+    el.classList.add("ttb-show");
+    setTimeout(() => {
+      el.classList.remove("ttb-show");
+      el.classList.add("ttb-hide");
+      setTimeout(() => { el.remove(); onDone(); }, 220);
+    }, 750);
+  });
 }
 
 function startCpuTurn() {
@@ -1169,26 +1241,36 @@ function startCpuTurn() {
   console.log(`[ターン${gameState.turn}] CPUのターン開始 - 資金+${3 + bonus}億 (合計${c.funds}億)`);
 
   // ② ドローフェーズ
+  let cpuDrew = false;
   if (c.skipNextDraw) {
     c.skipNextDraw = false;
   } else if (c.deck.length > 0) {
     const drawn = c.deck.shift();
     c.hand.push(drawn);
     console.log(`  CPUドロー: ${drawn.name}`);
+    cpuDrew = true;
   }
 
-  renderGame();
+  showTurnBanner(false, () => {
+    renderGame();
 
-  // 「CPU思考中...」バナー → メインフェーズへ
-  const thinkingBanner = document.createElement("div");
-  thinkingBanner.id = "cpu-thinking";
-  thinkingBanner.textContent = "CPU 思考中...";
-  document.body.appendChild(thinkingBanner);
+    const startThinking = () => {
+      const thinkingBanner = document.createElement("div");
+      thinkingBanner.id = "cpu-thinking";
+      thinkingBanner.textContent = "CPU 思考中...";
+      document.body.appendChild(thinkingBanner);
+      setTimeout(() => {
+        thinkingBanner.remove();
+        cpuPhasePlace();
+      }, 900);
+    };
 
-  setTimeout(() => {
-    thinkingBanner.remove();
-    cpuPhasePlace();
-  }, 900);
+    if (cpuDrew) {
+      animateDrawCard(false, startThinking);
+    } else {
+      startThinking();
+    }
+  });
 }
 
 // CPUアクションバナーを表示して onDone を呼ぶ（ノンブロッキング）
@@ -1269,12 +1351,29 @@ function cpuPhasePlace() {
   if (!c.placedThisTurn && c.field.length < 3) {
     const idx = c.hand.findIndex(card => card.type === "politician");
     if (idx >= 0) {
+      // アニメーション用に配置前の位置を取得
+      const srcEl = document.querySelector("#cpu-hand .card-back");
+      const destEl = document.querySelector("#cpu-field .field-empty-slot");
+
       const card = c.hand.splice(idx, 1)[0];
       c.field.push(card);
       c.placedThisTurn = true;
       console.log(`  CPU: ${card.name}を場に出した`);
-      renderGame();
-      showActionBanner([`${card.name} を場に出した！`], false, () => cpuPhaseAbilities());
+
+      const afterPlace = () => {
+        renderGame();
+        // 着地アニメーション
+        const cpuFieldCards = document.querySelectorAll("#cpu-field .card");
+        const newCard = cpuFieldCards[cpuFieldCards.length - 1];
+        if (newCard) newCard.classList.add("card-landing");
+        showActionBanner([`${card.name} を場に出した！`], false, () => cpuPhaseAbilities());
+      };
+
+      if (srcEl && destEl) {
+        animateCardFly(srcEl, destEl, false, afterPlace);
+      } else {
+        afterPlace();
+      }
       return;
     }
   }
@@ -1505,6 +1604,52 @@ function checkWinCondition() {
 // メインフェーズのアクション
 // ============================================================
 
+// 手札→場カードフライアニメーション
+// isPlayer=true → 青グロー / false → 橙グロー
+function animateCardFly(srcEl, destEl, isPlayer, onDone) {
+  const srcRect = srcEl.getBoundingClientRect();
+  const destRect = destEl.getBoundingClientRect();
+
+  const clone = srcEl.cloneNode(true);
+  clone.style.position = "fixed";
+  clone.style.left = srcRect.left + "px";
+  clone.style.top = srcRect.top + "px";
+  clone.style.width = srcRect.width + "px";
+  clone.style.height = srcRect.height + "px";
+  clone.style.margin = "0";
+  clone.style.zIndex = "500";
+  clone.style.pointerEvents = "none";
+  clone.style.transition = "none";
+  clone.style.transform = "none";
+  document.body.appendChild(clone);
+
+  clone.getBoundingClientRect(); // force layout
+
+  requestAnimationFrame(() => {
+    clone.style.transition = [
+      "left 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+      "top 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+      "width 0.33s ease",
+      "height 0.33s ease",
+      "box-shadow 0.38s ease",
+      "transform 0.38s ease"
+    ].join(", ");
+    clone.style.left = destRect.left + "px";
+    clone.style.top = destRect.top + "px";
+    clone.style.width = destRect.width + "px";
+    clone.style.height = destRect.height + "px";
+    clone.style.transform = "scale(1.04)";
+    clone.style.boxShadow = isPlayer
+      ? "0 8px 28px rgba(74, 171, 240, 0.65)"
+      : "0 8px 28px rgba(240, 160, 32, 0.65)";
+  });
+
+  setTimeout(() => {
+    clone.remove();
+    onDone();
+  }, 410);
+}
+
 // 手札から政治家カードを場に出す
 function playCardToField(handIndex) {
   const p = gameState.player;
@@ -1519,6 +1664,12 @@ function playCardToField(handIndex) {
   p.placedThisTurn = true;
   console.log(`${card.name}を場に出した`);
   renderGame();
+
+  // 着地アニメーション
+  const fieldCards = document.querySelectorAll("#player-field .card");
+  const newCard = fieldCards[fieldCards.length - 1];
+  if (newCard) newCard.classList.add("card-landing");
+
   return true;
 }
 
@@ -2152,8 +2303,14 @@ function showCardZoom(card, context, index) {
       btn.disabled = true;
     }
     btn.addEventListener("click", () => {
+      const srcEl = document.querySelectorAll("#player-hand .card")[index];
+      const destEl = document.querySelector("#player-field .field-empty-slot");
       overlay.remove();
-      playCardToField(index);
+      if (srcEl && destEl) {
+        animateCardFly(srcEl, destEl, true, () => playCardToField(index));
+      } else {
+        playCardToField(index);
+      }
     });
     actions.appendChild(btn);
   } else if (context === "hand-option") {
@@ -2259,6 +2416,17 @@ function fundsToHtml(amount) {
   return html;
 }
 
+// 支持率変動フローティングテキスト
+function showApprovalDelta(delta, x, y, dir) {
+  const el = document.createElement("div");
+  el.className = `approval-delta approval-delta-${dir}`;
+  el.textContent = (delta > 0 ? "+" : "") + delta + "%";
+  el.style.left = x + "px";
+  el.style.top = y + "px";
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1100);
+}
+
 function renderGame() {
   if (gameState.phase === "party_select") {
     showScreen("party-select-screen");
@@ -2305,6 +2473,24 @@ function renderGame() {
   barEl.style.background = pa >= 70 ? "linear-gradient(90deg,#1a7a3e,#2ecc71)"
                           : pa >= 30 ? "linear-gradient(90deg,#1a5276,#3498db)"
                           :            "linear-gradient(90deg,#7a1a1a,#e94560)";
+  if (gameState.player._approvalFlash) {
+    const { dir, delta } = gameState.player._approvalFlash;
+    delete gameState.player._approvalFlash;
+    requestAnimationFrame(() => {
+      // バーフラッシュ
+      barEl.classList.remove("approval-flash-up", "approval-flash-down");
+      void barEl.offsetWidth;
+      barEl.classList.add(dir === "up" ? "approval-flash-up" : "approval-flash-down");
+      // 数値テキストパルス
+      const numEl = document.getElementById("player-approval");
+      numEl.classList.remove("approval-num-up", "approval-num-down");
+      void numEl.offsetWidth;
+      numEl.classList.add(dir === "up" ? "approval-num-up" : "approval-num-down");
+      // フローティングデルタ
+      const numRect = numEl.getBoundingClientRect();
+      showApprovalDelta(delta, numRect.right + 6, numRect.top + numRect.height / 2, dir);
+    });
+  }
   renderFieldCards("player-field", gameState.player.field, true);
   renderDeckSlot("player-deck", gameState.player.deck.length);
   renderDiscardSlot("player-discard", gameState.player.discard);
