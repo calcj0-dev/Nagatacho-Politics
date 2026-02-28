@@ -617,6 +617,7 @@ function initGame(playerParty) {
   gameState.turn = 1;
   gameState.currentPlayer = "player";
   gameState.phase = "playing";
+  gameState.approvalHistory = [];
 
   console.log("[initGame] ゲーム開始");
   console.log(`  プレイヤー: ${playerParty}`);
@@ -1133,6 +1134,13 @@ function startPlayerTurn() {
   }
 
   // ③ メインフェーズ: UI操作待ち
+  // 支持率推移を記録（プレイヤーターン開始時点）
+  gameState.approvalHistory.push({
+    turn: gameState.turn,
+    player: gameState.player.approval,
+    cpu: gameState.cpu.approval,
+  });
+
   renderGame();
   setMainPhaseUI(true);
 }
@@ -1530,7 +1538,7 @@ function useAbility(fieldIndex, abilityIndex) {
   // 確認ダイアログ表示
   showConfirmDialog(card.name, ability.name, ability.effectText || "", ability.description || "", effectiveCost, () => {
     p.funds -= effectiveCost;
-    p.usedAbilities[card.instanceId] = true;
+    p.usedAbilities[card.instanceId] = abilityIndex + 1; // 1 or 2 (常にtruthyで0を避ける)
     console.log(`[能力発動] ${card.name}: ${ability.name}（コスト${effectiveCost}億）`);
     const msgs = executeEffect(ability.effect, "player");
     renderGame();
@@ -1892,14 +1900,23 @@ function showFinishOverlay(result) {
            : result.includes("（")         ? result
            : "25ターン終了";
 
+  // 最終支持率を履歴に追記（ゲーム途中終了のケースに対応）
+  const hist = gameState.approvalHistory;
+  const lastTurn = hist.length > 0 ? hist[hist.length - 1].turn : -1;
+  if (lastTurn !== gameState.turn) {
+    hist.push({ turn: gameState.turn, player: pa, cpu: ca });
+  }
+
   showOverlay(`
     <h2>${title}</h2>
     <p>${subtitle}</p>
     <p>あなた: ${pa}% / CPU: ${ca}%</p>
     <div class="overlay-buttons">
+      <button id="finish-graph" class="overlay-btn btn-secondary">📈 支持率の推移を見る</button>
       <button id="finish-retry" class="overlay-btn btn-confirm">もう一度遊ぶ</button>
     </div>
   `);
+  document.getElementById("finish-graph").addEventListener("click", showApprovalHistoryOverlay);
   document.getElementById("finish-retry").addEventListener("click", () => {
     hideOverlay();
     gameState.phase = "party_select";
@@ -1907,6 +1924,100 @@ function showFinishOverlay(result) {
     gameState.cpu = createPlayerState();
     renderGame();
   });
+}
+
+function buildApprovalSVG() {
+  const hist = gameState.approvalHistory;
+  if (hist.length === 0) return "<p style='color:#666;text-align:center'>データなし</p>";
+
+  const W = 460, H = 210;
+  const pl = 38, pr = 14, pt = 16, pb = 28;
+  const cw = W - pl - pr;
+  const ch = H - pt - pb;
+
+  const minT = hist[0].turn;
+  const maxT = hist[hist.length - 1].turn;
+  const tRange = Math.max(maxT - minT, 1);
+
+  function px(t) { return pl + (t - minT) / tRange * cw; }
+  function py(a) { return pt + (1 - a / 100) * ch; }
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" style="max-width:100%">`;
+  svg += `<rect width="${W}" height="${H}" fill="#080818" rx="6"/>`;
+
+  // グリッドライン
+  [0, 25, 50, 75, 100].forEach(a => {
+    const y = py(a);
+    const dash = a === 50 ? "4,3" : "";
+    svg += `<line x1="${pl}" y1="${y}" x2="${pl + cw}" y2="${y}" stroke="rgba(255,255,255,${a === 50 ? 0.18 : 0.08})" stroke-width="1"${dash ? ` stroke-dasharray="${dash}"` : ""}/>`;
+    svg += `<text x="${pl - 4}" y="${y + 4}" text-anchor="end" font-size="9" fill="#555">${a}%</text>`;
+  });
+
+  // X軸ラベル（最大7本）
+  const step = Math.max(1, Math.ceil(hist.length / 7));
+  hist.forEach((d, i) => {
+    if (i % step === 0 || i === hist.length - 1) {
+      svg += `<text x="${px(d.turn)}" y="${H - 6}" text-anchor="middle" font-size="9" fill="#555">${d.turn}T</text>`;
+    }
+  });
+
+  // 折れ線
+  function makeLine(key, color) {
+    if (hist.length === 1) {
+      const d = hist[0];
+      return `<circle cx="${px(d.turn)}" cy="${py(d[key])}" r="4" fill="${color}"/>`;
+    }
+    const pts = hist.map(d => `${px(d.turn).toFixed(1)},${py(d[key]).toFixed(1)}`).join(" ");
+    return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>`;
+  }
+
+  svg += makeLine("cpu", "#f0a020");
+  svg += makeLine("player", "#4aabf0");
+
+  // ドット
+  hist.forEach(d => {
+    svg += `<circle cx="${px(d.turn).toFixed(1)}" cy="${py(d.cpu).toFixed(1)}" r="2.8" fill="#f0a020"/>`;
+    svg += `<circle cx="${px(d.turn).toFixed(1)}" cy="${py(d.player).toFixed(1)}" r="2.8" fill="#4aabf0"/>`;
+  });
+
+  // 凡例
+  const lx = W - 112, ly = 8;
+  svg += `<rect x="${lx}" y="${ly}" width="106" height="32" fill="rgba(0,0,0,0.4)" rx="4"/>`;
+  svg += `<line x1="${lx + 6}" y1="${ly + 9}" x2="${lx + 20}" y2="${ly + 9}" stroke="#4aabf0" stroke-width="2"/>`;
+  svg += `<circle cx="${lx + 13}" cy="${ly + 9}" r="2.5" fill="#4aabf0"/>`;
+  svg += `<text x="${lx + 24}" y="${ly + 13}" font-size="10" fill="#4aabf0">あなた</text>`;
+  svg += `<line x1="${lx + 6}" y1="${ly + 23}" x2="${lx + 20}" y2="${ly + 23}" stroke="#f0a020" stroke-width="2"/>`;
+  svg += `<circle cx="${lx + 13}" cy="${ly + 23}" r="2.5" fill="#f0a020"/>`;
+  svg += `<text x="${lx + 24}" y="${ly + 27}" font-size="10" fill="#f0a020">CPU</text>`;
+
+  svg += `</svg>`;
+  return svg;
+}
+
+function showApprovalHistoryOverlay() {
+  const existing = document.getElementById("approval-graph-overlay");
+  if (existing) { existing.remove(); return; }
+
+  const overlay = document.createElement("div");
+  overlay.id = "approval-graph-overlay";
+  overlay.className = "approval-graph-overlay";
+
+  const box = document.createElement("div");
+  box.className = "approval-graph-box";
+
+  box.innerHTML = `
+    <h3 class="approval-graph-title">支持率の推移</h3>
+    <div class="approval-graph-svg">${buildApprovalSVG()}</div>
+    <div class="approval-graph-footer">
+      <span class="approval-graph-hint">あなた <span style="color:#4aabf0">━</span> &nbsp; CPU <span style="color:#f0a020">━</span></span>
+      <button class="card-zoom-close" id="approval-graph-close">閉じる</button>
+    </div>
+  `;
+
+  overlay.appendChild(box);
+  overlay.addEventListener("click", e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+  document.getElementById("approval-graph-close").addEventListener("click", () => overlay.remove());
 }
 
 // カード拡大表示
@@ -1951,59 +2062,75 @@ function showCardZoom(card, context, index) {
       infoPanel.innerHTML = `<div class="card-zoom-hint">能力をクリックで詳細表示</div>`;
     }
 
-    card.abilities.forEach((ability, aIdx) => {
-      const item = document.createElement("div");
-      item.className = "zoom-ability-item";
-      const effectiveCost = Math.max(0, ability.cost - costReduction);
+    // 封印中: 全能力を非表示にして通知のみ
+    if (isFieldPlayer && card.disabled) {
+      const notice = document.createElement("div");
+      notice.className = "ability-disabled-notice";
+      notice.textContent = "封印中 — このカードは使用できません";
+      abilityOverlay.appendChild(notice);
+    } else {
+      const usedVal = isFieldPlayer ? p.usedAbilities[card.instanceId] : 0;
+      const usedIdx = usedVal ? usedVal - 1 : -1; // 使用した能力のインデックス（0 or 1）、未使用は-1
 
-      // 無効判定（場のプレイヤーカードのみ）
-      let inactive = false;
-      if (isFieldPlayer) {
-        const isUsed = p.usedAbilities[card.instanceId];
-        const cantAfford = p.funds < effectiveCost;
-        const isDisabled = card.disabled;
-        inactive = isUsed || cantAfford || isDisabled;
-        if (inactive) item.classList.add("inactive");
-      }
+      card.abilities.forEach((ability, aIdx) => {
+        const effectiveCost = Math.max(0, ability.cost - costReduction);
 
-      const nameRow = document.createElement("div");
-      nameRow.className = "zoom-ability-name";
-      nameRow.innerHTML = `${ability.name}（${fundsToHtml(effectiveCost)}）`;
-      item.appendChild(nameRow);
+        // 使用済みカード: 使った能力だけ表示、それ以外は非表示
+        if (isFieldPlayer && usedIdx >= 0 && aIdx !== usedIdx) return;
 
-      if (ability.effectText) {
-        const effectRow = document.createElement("div");
-        effectRow.className = "zoom-ability-effect";
-        effectRow.textContent = ability.effectText;
-        item.appendChild(effectRow);
-      }
+        const item = document.createElement("div");
+        item.className = "zoom-ability-item";
 
-      // 場のプレイヤーカード: クリックで確認ダイアログ
-      if (isFieldPlayer && !inactive) {
-        item.addEventListener("click", (e) => {
-          e.stopPropagation();
-          overlay.remove();
-          useAbility(index, aIdx);
-        });
-      }
+        // スタイル判定
+        if (isFieldPlayer) {
+          if (usedIdx >= 0) {
+            // 使用済み能力として表示
+            item.classList.add("ability-used");
+          } else if (p.funds < effectiveCost) {
+            // 資金不足: グレーアウト（非表示にはしない）
+            item.classList.add("inactive");
+          }
+        }
 
-      // 相手カード閲覧: クリックで能力名・効果・説明を表示
-      if (isCpuView && infoPanel) {
-        item.style.cursor = "pointer";
-        item.addEventListener("click", (e) => {
-          e.stopPropagation();
-          abilityOverlay.querySelectorAll(".zoom-ability-item").forEach(el => el.classList.remove("selected"));
-          item.classList.add("selected");
-          infoPanel.innerHTML = [
-            `<div class="card-zoom-name">${ability.name}</div>`,
-            ability.effectText   ? `<div class="card-zoom-effect">${ability.effectText}</div>`   : "",
-            ability.description  ? `<div class="card-zoom-desc">${ability.description}</div>`    : "",
-          ].join("");
-        });
-      }
+        const nameRow = document.createElement("div");
+        nameRow.className = "zoom-ability-name";
+        nameRow.innerHTML = `${ability.name}（${fundsToHtml(effectiveCost)}）`;
+        item.appendChild(nameRow);
 
-      abilityOverlay.appendChild(item);
-    });
+        if (ability.effectText) {
+          const effectRow = document.createElement("div");
+          effectRow.className = "zoom-ability-effect";
+          effectRow.textContent = ability.effectText;
+          item.appendChild(effectRow);
+        }
+
+        // 場のプレイヤーカード: クリックで確認ダイアログ（未使用・資金十分時のみ）
+        if (isFieldPlayer && usedIdx < 0 && p.funds >= effectiveCost) {
+          item.addEventListener("click", (e) => {
+            e.stopPropagation();
+            overlay.remove();
+            useAbility(index, aIdx);
+          });
+        }
+
+        // 相手カード閲覧: クリックで能力名・効果・説明を表示
+        if (isCpuView && infoPanel) {
+          item.style.cursor = "pointer";
+          item.addEventListener("click", (e) => {
+            e.stopPropagation();
+            abilityOverlay.querySelectorAll(".zoom-ability-item").forEach(el => el.classList.remove("selected"));
+            item.classList.add("selected");
+            infoPanel.innerHTML = [
+              `<div class="card-zoom-name">${ability.name}</div>`,
+              ability.effectText   ? `<div class="card-zoom-effect">${ability.effectText}</div>`   : "",
+              ability.description  ? `<div class="card-zoom-desc">${ability.description}</div>`    : "",
+            ].join("");
+          });
+        }
+
+        abilityOverlay.appendChild(item);
+      });
+    }
 
     imageDiv.appendChild(abilityOverlay);
   }

@@ -872,6 +872,33 @@ h1 {
   opacity: 0.45;
 }
 
+/* 使用済み能力: チェックマーク付きで薄く表示 */
+.zoom-ability-item.ability-used {
+  cursor: default;
+  pointer-events: none;
+  opacity: 0.5;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.zoom-ability-item.ability-used::before {
+  content: "✓ 使用済み";
+  display: block;
+  font-size: 0.62rem;
+  color: #aaa;
+  margin-bottom: 3px;
+  letter-spacing: 0.05em;
+}
+
+/* 封印中カードの通知 */
+.ability-disabled-notice {
+  font-size: 0.75rem;
+  color: #e94560;
+  text-align: center;
+  padding: 12px 8px;
+  font-style: italic;
+  opacity: 0.8;
+}
+
 .zoom-ability-item.selected {
   background: rgba(255, 220, 50, 0.15);
   outline: 1px solid rgba(255, 220, 50, 0.4);
@@ -1211,5 +1238,68 @@ h1 {
   color: #aaa;
   margin-top: 4px;
   line-height: 1.4;
+}
+
+/* ============================================================
+   終了画面: セカンダリボタン
+   ============================================================ */
+
+.btn-secondary {
+  background: transparent;
+  color: #aaa;
+  border-color: #555;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #eee;
+  border-color: #888;
+}
+
+/* ============================================================
+   支持率推移グラフ オーバーレイ
+   ============================================================ */
+
+.approval-graph-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 400;
+}
+
+.approval-graph-box {
+  background: #0e0e24;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 20px 22px 16px;
+  width: min(500px, 94vw);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.approval-graph-title {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #ffd700;
+  text-align: center;
+}
+
+.approval-graph-svg {
+  line-height: 0;
+}
+
+.approval-graph-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.approval-graph-hint {
+  font-size: 0.78rem;
+  color: #666;
 }
 
