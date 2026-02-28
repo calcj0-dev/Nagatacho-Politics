@@ -1462,11 +1462,13 @@ function cpuPhaseOption() {
       console.log(`  CPU: ${card.name}を使用`);
       renderGame();
       playOptionCardAnimation(card, null, true, () => {
-        showActionBanner(
-          [`${card.name} を使用！`, ...effectMsgs],
-          false,
-          () => cpuCheckWinAndEnd()
-        );
+        animateCardToDiscard(card, false, () => {
+          showActionBanner(
+            [`${card.name} を使用！`, ...effectMsgs],
+            false,
+            () => cpuCheckWinAndEnd()
+          );
+        });
       });
       return;
     }
@@ -1935,13 +1937,15 @@ function useOptionCard(handIndex) {
     const msgs = executeEffect(card.effect, "player");
     renderGame();
     playOptionCardAnimation(card, cardRect, false, () => {
-      showActionBanner([`「${card.name}」使用！`, ...msgs], true, () => {
-        const result = checkWinCondition();
-        if (result) {
-          gameState.phase = "finished";
-          showFinishOverlay(result);
-          return;
-        }
+      animateCardToDiscard(card, true, () => {
+        showActionBanner([`「${card.name}」使用！`, ...msgs], true, () => {
+          const result = checkWinCondition();
+          if (result) {
+            gameState.phase = "finished";
+            showFinishOverlay(result);
+            return;
+          }
+        });
       });
     });
   });
@@ -2441,6 +2445,35 @@ function fundsToHtml(amount) {
   return html;
 }
 
+// オプションカード使用後: 中央→捨て札スロットへ飛ぶ
+function animateCardToDiscard(card, isPlayer, onDone) {
+  const discardEl = document.getElementById(isPlayer ? "player-discard" : "cpu-discard");
+  if (!discardEl) { onDone(); return; }
+  const destRect = discardEl.getBoundingClientRect();
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const W = 72, H = 101;
+  const clone = createCardElement(card);
+  Object.assign(clone.style, {
+    position: "fixed",
+    left: (vw / 2 - W / 2) + "px",
+    top:  (vh / 2 - H / 2) + "px",
+    width: W + "px", height: H + "px",
+    margin: "0", zIndex: "500",
+    pointerEvents: "none", transition: "none", opacity: "0.88",
+  });
+  document.body.appendChild(clone);
+  clone.getBoundingClientRect(); // force reflow
+  requestAnimationFrame(() => {
+    clone.style.transition = "left 0.34s cubic-bezier(0.4,0,0.9,1), top 0.34s cubic-bezier(0.4,0,0.9,1), width 0.28s, height 0.28s, opacity 0.28s ease-in";
+    clone.style.left    = destRect.left + "px";
+    clone.style.top     = destRect.top  + "px";
+    clone.style.width   = destRect.width  + "px";
+    clone.style.height  = destRect.height + "px";
+    clone.style.opacity = "0";
+  });
+  setTimeout(() => { clone.remove(); onDone(); }, 380);
+}
+
 // 政治資金変動フローティングテキスト
 function showFundsDelta(delta, x, y, dir) {
   const el = document.createElement("div");
@@ -2719,6 +2752,27 @@ function renderFieldCards(containerId, cards, isPlayer) {
     } else {
       const empty = document.createElement("div");
       empty.className = "field-empty-slot";
+      // プレイヤーの場: 未配置ならドロップターゲットにする
+      if (isPlayer && gameState.currentPlayer === "player" && !gameState.player.placedThisTurn) {
+        empty.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+          empty.classList.add("drag-over");
+        });
+        empty.addEventListener("dragleave", () => empty.classList.remove("drag-over"));
+        empty.addEventListener("drop", (e) => {
+          e.preventDefault();
+          empty.classList.remove("drag-over");
+          const handIdx = parseInt(e.dataTransfer.getData("text/plain"), 10);
+          if (isNaN(handIdx)) return;
+          const srcEl = document.querySelectorAll("#player-hand .card")[handIdx];
+          if (srcEl) {
+            animateCardFly(srcEl, empty, true, () => playCardToField(handIdx));
+          } else {
+            playCardToField(handIdx);
+          }
+        });
+      }
       container.appendChild(empty);
     }
   }
@@ -2809,6 +2863,25 @@ function renderHand() {
         showCardZoom(card, "hand-option", idx);
       }
     });
+    // 政治家カードはドラッグで場に出せる
+    const canPlace = card.type === "politician"
+      && gameState.currentPlayer === "player"
+      && !gameState.player.placedThisTurn
+      && gameState.player.field.length < 3;
+    if (canPlace) {
+      el.draggable = true;
+      el.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("text/plain", String(idx));
+        e.dataTransfer.effectAllowed = "move";
+        hideHandTooltip();
+        setTimeout(() => el.classList.add("dragging"), 0);
+      });
+      el.addEventListener("dragend", () => {
+        el.classList.remove("dragging");
+        document.querySelectorAll(".field-empty-slot.drag-over")
+          .forEach(s => s.classList.remove("drag-over"));
+      });
+    }
     container.appendChild(el);
   });
 }

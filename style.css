@@ -1460,3 +1460,28 @@ h1 {
   animation: btn-end-turn-pulse 0.28s ease-out;
 }
 
+/* ============================================================
+   ドラッグ＆ドロップ（手札→フィールド）
+   ============================================================ */
+
+/* ドラッグ可能な手札カード */
+.card[draggable="true"] {
+  cursor: grab;
+}
+
+/* ドラッグ中のソースカード（半透明で残る） */
+.card.dragging {
+  opacity: 0.3;
+  cursor: grabbing;
+  box-shadow: 0 6px 20px rgba(74, 171, 240, 0.5);
+}
+
+/* ドロップターゲットの空スロット */
+.field-empty-slot.drag-over {
+  border-color: #4aabf0;
+  border-style: solid;
+  background: rgba(74, 171, 240, 0.12);
+  box-shadow: 0 0 16px rgba(74, 171, 240, 0.5);
+}
+
+
