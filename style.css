@@ -427,8 +427,74 @@ h1 {
   min-width: 56px;
 }
 
-#turn-survey {
-  color: #ffd700;
+/* 情勢調査カウントダウン */
+.survey-countdown {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.survey-label {
+  font-size: 0.72rem;
+  color: #888;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.survey-pips {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.survey-pip {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: transparent;
+  border: 2px solid #444;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+/* 塗りつぶし済み */
+.survey-pip.pip-filled {
+  background: #4aabf0;
+  border-color: #4aabf0;
+  box-shadow: 0 0 5px rgba(74, 171, 240, 0.5);
+}
+
+/* フィルアニメーション（CPUターン終了時に1個ずつ） */
+@keyframes pip-fill-anim {
+  0%   { transform: scale(1);   background: transparent; border-color: #ffd700; box-shadow: 0 0 0 rgba(255,215,0,0); }
+  40%  { transform: scale(1.5); background: #ffd700;     border-color: #ffd700; box-shadow: 0 0 10px rgba(255,215,0,0.8); }
+  100% { transform: scale(1);   background: #4aabf0;     border-color: #4aabf0; box-shadow: 0 0 5px rgba(74,171,240,0.5); }
+}
+
+.survey-pip.pip-filling {
+  animation: pip-fill-anim 0.45s ease-out forwards;
+}
+
+/* 情勢調査ターンの警告（最後のピップが空で点滅） */
+@keyframes pip-pulse-urgent {
+  0%, 100% { border-color: #f0a020; box-shadow: 0 0 0 rgba(240,160,32,0); }
+  50%       { border-color: #f0a020; box-shadow: 0 0 8px rgba(240,160,32,0.8); }
+}
+
+.survey-pip.pip-urgent {
+  border-color: #f0a020;
+  animation: pip-pulse-urgent 0.9s ease-in-out infinite;
+}
+
+/* 情勢調査発生フラッシュ（全ピップ同時） */
+@keyframes pip-survey-flash-anim {
+  0%   { background: #4aabf0; border-color: #4aabf0; box-shadow: 0 0 5px rgba(74,171,240,0.5); }
+  30%  { background: #ffd700; border-color: #ffd700; box-shadow: 0 0 14px rgba(255,215,0,0.9); transform: scale(1.4); }
+  60%  { background: #e94560; border-color: #e94560; box-shadow: 0 0 10px rgba(233,69,96,0.8); transform: scale(1.2); }
+  100% { background: #e94560; border-color: #e94560; box-shadow: 0 0 4px rgba(233,69,96,0.4); transform: scale(1); }
+}
+
+.survey-pip.pip-survey-flash {
+  animation: pip-survey-flash-anim 0.7s ease-out forwards;
 }
 
 #turn-owner {
@@ -738,21 +804,39 @@ h1 {
 }
 
 .card-zoom-info {
+  width: 250px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 10px 14px;
   text-align: center;
-  max-width: 300px;
+}
+
+.card-zoom-hint {
+  font-size: 0.75rem;
+  color: #666;
+  font-style: italic;
 }
 
 .card-zoom-info .card-zoom-name {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: bold;
   color: #ffd700;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+.card-zoom-info .card-zoom-effect {
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #e94560;
+  margin-bottom: 6px;
+  line-height: 1.4;
 }
 
 .card-zoom-info .card-zoom-desc {
-  font-size: 0.85rem;
-  color: #ccc;
-  line-height: 1.4;
+  font-size: 0.82rem;
+  color: #bbb;
+  line-height: 1.5;
 }
 
 /* 拡大カード画像上の白半透明枠 */
@@ -788,6 +872,11 @@ h1 {
   opacity: 0.45;
 }
 
+.zoom-ability-item.selected {
+  background: rgba(255, 220, 50, 0.15);
+  outline: 1px solid rgba(255, 220, 50, 0.4);
+}
+
 .zoom-ability-name {
   font-size: 0.8rem;
   font-weight: bold;
@@ -804,7 +893,7 @@ h1 {
 }
 
 .zoom-ability-desc {
-  display: none;
+  display: none; /* zoom-ability-overlay 内では非表示（card-zoom-info 内で使用） */
 }
 
 .card-zoom-actions {
@@ -880,14 +969,6 @@ h1 {
   margin-top: 6px;
 }
 
-/* 支持率横（CPU）: 横並び */
-#cpu-effects .active-effects {
-  flex-direction: row;
-  flex-wrap: wrap;
-  width: auto;
-  margin-top: 0;
-  gap: 3px;
-}
 
 .effect-tag {
   font-size: 0.6rem;
@@ -920,5 +1001,215 @@ h1 {
   background: rgba(255, 200, 50, 0.2);
   border: 1px solid rgba(255, 200, 50, 0.55);
   color: #ffdd88;
+}
+
+/* ============================================================
+   捨て札スロット（山札横）
+   ============================================================ */
+
+.discard-slot {
+  cursor: default;
+}
+
+.discard-label {
+  font-size: 0.65rem;
+  color: #888;
+  text-align: center;
+  margin-bottom: 2px;
+  letter-spacing: 0.05em;
+}
+
+.discard-slot-empty {
+  width: 110px;
+  height: 155px;
+  border: 2px dashed rgba(120, 120, 120, 0.25);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+  font-size: 1.2rem;
+}
+
+.discard-slot-preview {
+  width: 110px;
+  height: 155px;
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 6px;
+  font-size: 0.65rem;
+  font-weight: bold;
+  text-align: center;
+  line-height: 1.3;
+  transition: opacity 0.15s;
+}
+
+.discard-slot:hover .discard-slot-preview {
+  opacity: 0.8;
+}
+
+.discard-slot-politician {
+  background: linear-gradient(160deg, #2a0a18 0%, #4a1a28 100%);
+  border: 2px solid #e94560;
+  color: #ffaaaa;
+}
+
+.discard-slot-option {
+  background: linear-gradient(160deg, #0a1a2e 0%, #0f2a4a 100%);
+  border: 2px solid #4488cc;
+  color: #aaccff;
+}
+
+/* ============================================================
+   捨て札オーバーレイ
+   ============================================================ */
+
+.discard-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+}
+
+.discard-overlay-box {
+  background: #12122a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 20px 24px;
+  width: min(520px, 92vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.discard-overlay-title {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #ffd700;
+  text-align: center;
+}
+
+.discard-overlay-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.discard-overlay-item {
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.discard-overlay-item.card-politician {
+  background: rgba(233, 69, 96, 0.1);
+  border: 1px solid rgba(233, 69, 96, 0.35);
+}
+
+.discard-overlay-item.card-option {
+  background: rgba(68, 136, 204, 0.1);
+  border: 1px solid rgba(68, 136, 204, 0.35);
+}
+
+.discard-overlay-name {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #eee;
+  margin-bottom: 4px;
+}
+
+.discard-overlay-ability {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: #bbb;
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+
+.doa-name {
+  font-weight: bold;
+  color: #ccc;
+}
+
+.doa-cost {
+  color: #ffd700;
+  font-size: 0.7rem;
+}
+
+.doa-effect {
+  color: #e94560;
+  font-size: 0.72rem;
+}
+
+.discard-overlay-desc {
+  font-size: 0.78rem;
+  color: #aaa;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+/* ============================================================
+   手札ホバートゥールチップ
+   ============================================================ */
+
+.card-tooltip {
+  position: fixed;
+  z-index: 400;
+  background: rgba(10, 10, 30, 0.97);
+  border: 1px solid rgba(255, 215, 0, 0.5);
+  border-radius: 8px;
+  padding: 10px 14px;
+  min-width: 180px;
+  max-width: 260px;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+.tip-card-name {
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #ffd700;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+  padding-bottom: 4px;
+}
+
+.tip-ability {
+  margin-top: 6px;
+}
+
+.tip-ability-name {
+  font-size: 0.78rem;
+  font-weight: bold;
+  color: #eee;
+}
+
+.tip-ability-cost {
+  font-size: 0.7rem;
+  color: #ffd700;
+  margin-left: 6px;
+}
+
+.tip-ability-effect {
+  font-size: 0.72rem;
+  color: #e94560;
+  margin-top: 2px;
+  line-height: 1.35;
+}
+
+.tip-desc {
+  font-size: 0.72rem;
+  color: #aaa;
+  margin-top: 4px;
+  line-height: 1.4;
 }
 

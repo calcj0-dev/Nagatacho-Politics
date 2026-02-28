@@ -1424,17 +1424,43 @@ function endTurn() {
     renderGame();
     startCpuTurn();
   } else {
-    // CPUのターン終了 → 情勢調査チェック → 次ターン
-    if (gameState.turn % 5 === 0) {
-      console.log(`[情勢調査] ターン${gameState.turn}: プレイヤー${gameState.player.approval}% / CPU${gameState.cpu.approval}%`);
-      showSurveyOverlay(() => {
+    // CPUのターン終了 → ピップアニメーション → 情勢調査チェック → 次ターン
+    animateSurveyPip(() => {
+      if (gameState.turn % 5 === 0) {
+        console.log(`[情勢調査] ターン${gameState.turn}: プレイヤー${gameState.player.approval}% / CPU${gameState.cpu.approval}%`);
+        showSurveyOverlay(() => advanceToNextTurn());
+      } else {
         advanceToNextTurn();
-      });
-      return;
-    }
-
-    advanceToNextTurn();
+      }
+    });
   }
+}
+
+function animateSurveyPip(onDone) {
+  const pips = Array.from(document.querySelectorAll(".survey-pip"));
+  const pipIdx = (gameState.turn - 1) % 5;   // 0-4: 今のターンに対応するピップ
+  const pip = pips[pipIdx];
+  if (!pip) { onDone(); return; }
+
+  // 警告クラスを外してフィルアニメーション開始
+  pip.classList.remove("pip-urgent");
+  pip.classList.add("pip-filling");
+
+  setTimeout(() => {
+    pip.classList.remove("pip-filling");
+    pip.classList.add("pip-filled");
+
+    if (gameState.turn % 5 === 0) {
+      // 情勢調査ターン: 全ピップをフラッシュしてからリセット
+      pips.forEach(p => p.classList.add("pip-survey-flash"));
+      setTimeout(() => {
+        pips.forEach(p => p.classList.remove("pip-filled", "pip-survey-flash"));
+        onDone();
+      }, 700);
+    } else {
+      onDone();
+    }
+  }, 450);
 }
 
 function advanceToNextTurn() {
@@ -1908,13 +1934,22 @@ function showCardZoom(card, context, index) {
   };
 
   // 政治家カード: 画像上に白半透明枠で能力を配置
+  let infoPanel = null;
   if (card.type === "politician" && card.abilities) {
     const abilityOverlay = document.createElement("div");
     abilityOverlay.className = "zoom-ability-overlay";
 
     const isFieldPlayer = context === "field";
+    const isCpuView = context === "view";
     const p = gameState.player;
     const costReduction = isFieldPlayer ? (p.currentTurnCostReduction || 0) : 0;
+
+    // 相手カード閲覧時: 能力詳細パネルを用意
+    if (isCpuView) {
+      infoPanel = document.createElement("div");
+      infoPanel.className = "card-zoom-info";
+      infoPanel.innerHTML = `<div class="card-zoom-hint">能力をクリックで詳細表示</div>`;
+    }
 
     card.abilities.forEach((ability, aIdx) => {
       const item = document.createElement("div");
@@ -1952,6 +1987,21 @@ function showCardZoom(card, context, index) {
         });
       }
 
+      // 相手カード閲覧: クリックで能力名・効果・説明を表示
+      if (isCpuView && infoPanel) {
+        item.style.cursor = "pointer";
+        item.addEventListener("click", (e) => {
+          e.stopPropagation();
+          abilityOverlay.querySelectorAll(".zoom-ability-item").forEach(el => el.classList.remove("selected"));
+          item.classList.add("selected");
+          infoPanel.innerHTML = [
+            `<div class="card-zoom-name">${ability.name}</div>`,
+            ability.effectText   ? `<div class="card-zoom-effect">${ability.effectText}</div>`   : "",
+            ability.description  ? `<div class="card-zoom-desc">${ability.description}</div>`    : "",
+          ].join("");
+        });
+      }
+
       abilityOverlay.appendChild(item);
     });
 
@@ -1959,6 +2009,7 @@ function showCardZoom(card, context, index) {
   }
 
   container.appendChild(imageDiv);
+  if (infoPanel) container.appendChild(infoPanel);
 
   // アクションボタン（画像の下に配置）
   const actions = document.createElement("div");
@@ -2089,10 +2140,21 @@ function renderGame() {
   showScreen("game-screen");
 
   // ターン情報
-  const turnsUntilSurvey = 5 - (gameState.turn % 5 || 5);
   const isPlayerTurn = gameState.currentPlayer === "player";
   document.getElementById("turn-num").textContent = `${gameState.turn} / 25`;
-  document.getElementById("turn-survey").textContent = `情勢調査まで あと${turnsUntilSurvey}T`;
+
+  // 情勢調査ピップ: (turn-1) % 5 個が「完了済み」として塗られる
+  const pipsFilled = (gameState.turn - 1) % 5;
+  document.querySelectorAll(".survey-pip").forEach((pip, i) => {
+    pip.classList.remove("pip-filled", "pip-urgent", "pip-filling", "pip-survey-flash");
+    if (i < pipsFilled) {
+      pip.classList.add("pip-filled");
+    } else if (i === pipsFilled && pipsFilled === 4) {
+      // ターン5,10,15,20,25の開始時: 最後のピップが空で警告表示
+      pip.classList.add("pip-urgent");
+    }
+  });
+
   const ownerEl = document.getElementById("turn-owner");
   ownerEl.textContent = isPlayerTurn ? "あなたのターン" : "CPUのターン…";
   ownerEl.className = isPlayerTurn ? "owner-player" : "owner-cpu";
@@ -2103,9 +2165,8 @@ function renderGame() {
   document.getElementById("cpu-approval").textContent = "???";
   renderFieldCards("cpu-field", gameState.cpu.field, false);
   renderDeckSlot("cpu-deck", gameState.cpu.deck.length);
-  const cpuEffectsEl = document.getElementById("cpu-effects");
-  if (cpuEffectsEl) cpuEffectsEl.innerHTML = "";
-  renderActiveEffects("cpu-effects", gameState.cpu);
+  renderDiscardSlot("cpu-discard", gameState.cpu.discard);
+  renderActiveEffects("cpu-deck", gameState.cpu, "before");
 
   // プレイヤー情報
   document.getElementById("player-party").textContent = gameState.player.party || "???";
@@ -2119,6 +2180,7 @@ function renderGame() {
                           :            "linear-gradient(90deg,#7a1a1a,#e94560)";
   renderFieldCards("player-field", gameState.player.field, true);
   renderDeckSlot("player-deck", gameState.player.deck.length);
+  renderDiscardSlot("player-discard", gameState.player.discard);
   renderActiveEffects("player-deck", gameState.player);
 
   // CPU手札（裏向き）
@@ -2146,8 +2208,86 @@ function renderDeckSlot(slotId, deckCount) {
   slot.appendChild(countEl);
 }
 
-// 山札下の特殊効果バッジを描画
-function renderActiveEffects(slotId, ps) {
+function renderDiscardSlot(slotId, pile) {
+  const slot = document.getElementById(slotId);
+  if (!slot) return;
+  slot.innerHTML = "";
+
+  const label = document.createElement("div");
+  label.className = "discard-label";
+  label.textContent = "捨て札";
+  slot.appendChild(label);
+
+  if (pile.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "discard-slot-empty";
+    empty.textContent = "－";
+    slot.appendChild(empty);
+    return;
+  }
+
+  const topCard = pile[pile.length - 1];
+  const preview = document.createElement("div");
+  preview.className = `discard-slot-preview ${topCard.type === "politician" ? "discard-slot-politician" : "discard-slot-option"}`;
+  preview.textContent = topCard.name;
+  slot.appendChild(preview);
+
+  const countEl = document.createElement("div");
+  countEl.className = "deck-count";
+  countEl.textContent = `${pile.length}枚`;
+  slot.appendChild(countEl);
+
+  slot.style.cursor = "pointer";
+  slot.onclick = () => showDiscardOverlay(pile, slotId === "player-discard");
+}
+
+function showDiscardOverlay(pile, isPlayer) {
+  if (pile.length === 0) return;
+
+  const overlay = document.createElement("div");
+  overlay.className = "discard-overlay";
+
+  const box = document.createElement("div");
+  box.className = "discard-overlay-box";
+
+  const title = document.createElement("h3");
+  title.className = "discard-overlay-title";
+  title.textContent = `${isPlayer ? "あなた" : "CPU"}の捨て札（${pile.length}枚）`;
+  box.appendChild(title);
+
+  const list = document.createElement("div");
+  list.className = "discard-overlay-list";
+
+  [...pile].reverse().forEach(card => {
+    const item = document.createElement("div");
+    item.className = `discard-overlay-item ${card.type === "politician" ? "card-politician" : "card-option"}`;
+
+    let html = `<div class="discard-overlay-name">${card.name}</div>`;
+    if (card.type === "politician" && card.abilities) {
+      html += card.abilities.map(ab =>
+        `<div class="discard-overlay-ability"><span class="doa-name">${ab.name}</span><span class="doa-cost">${ab.cost}億</span><span class="doa-effect">${ab.effectText || ""}</span></div>`
+      ).join("");
+    } else if (card.description) {
+      html += `<div class="discard-overlay-desc">${card.description}</div>`;
+    }
+    item.innerHTML = html;
+    list.appendChild(item);
+  });
+  box.appendChild(list);
+
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "card-zoom-close";
+  closeBtn.textContent = "閉じる";
+  closeBtn.addEventListener("click", () => overlay.remove());
+  box.appendChild(closeBtn);
+
+  overlay.appendChild(box);
+  overlay.addEventListener("click", e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
+// 特殊効果バッジを描画。position="before" で先頭挿入（CPU用）、省略で末尾追加（プレイヤー用）
+function renderActiveEffects(slotId, ps, position = "after") {
   const slot = document.getElementById(slotId);
   if (!slot) return;
 
@@ -2182,7 +2322,11 @@ function renderActiveEffects(slotId, ps) {
     el.textContent = label;
     panel.appendChild(el);
   });
-  slot.appendChild(panel);
+  if (position === "before") {
+    slot.insertBefore(panel, slot.firstChild);
+  } else {
+    slot.appendChild(panel);
+  }
 }
 
 function renderFieldCards(containerId, cards, isPlayer) {
@@ -2234,6 +2378,50 @@ function renderCpuHand() {
   });
 }
 
+let _handTooltipEl = null;
+
+function showHandTooltip(card, cardEl) {
+  hideHandTooltip();
+  const tip = document.createElement("div");
+  tip.className = "card-tooltip";
+
+  if (card.type === "politician" && card.abilities) {
+    let html = `<div class="tip-card-name">${card.name}</div>`;
+    card.abilities.forEach(ab => {
+      html += `<div class="tip-ability">
+        <span class="tip-ability-name">${ab.name}</span>
+        <span class="tip-ability-cost">${ab.cost}億</span>
+        <div class="tip-ability-effect">${ab.effectText || ""}</div>
+      </div>`;
+    });
+    tip.innerHTML = html;
+  } else {
+    tip.innerHTML = `<div class="tip-card-name">${card.name}</div>
+      ${card.effectText ? `<div class="tip-ability-effect">${card.effectText}</div>` : ""}
+      ${card.description ? `<div class="tip-desc">${card.description}</div>` : ""}`;
+  }
+
+  document.body.appendChild(tip);
+  _handTooltipEl = tip;
+
+  const rect = cardEl.getBoundingClientRect();
+  const tipH = tip.offsetHeight;
+  const tipW = tip.offsetWidth;
+  let top = rect.top - tipH - 10;
+  if (top < 4) top = rect.bottom + 10;
+  let left = rect.left + rect.width / 2 - tipW / 2;
+  left = Math.max(4, Math.min(left, window.innerWidth - tipW - 4));
+  tip.style.top = `${top}px`;
+  tip.style.left = `${left}px`;
+}
+
+function hideHandTooltip() {
+  if (_handTooltipEl) {
+    _handTooltipEl.remove();
+    _handTooltipEl = null;
+  }
+}
+
 function renderHand() {
   const container = document.getElementById("player-hand");
   container.innerHTML = "";
@@ -2252,7 +2440,10 @@ function renderHand() {
       });
       el.appendChild(abilitySummary);
     }
+    el.addEventListener("mouseenter", () => showHandTooltip(card, el));
+    el.addEventListener("mouseleave", hideHandTooltip);
     el.addEventListener("click", () => {
+      hideHandTooltip();
       if (gameState.currentPlayer !== "player") return;
       if (card.type === "politician") {
         showCardZoom(card, "hand-politician", idx);
