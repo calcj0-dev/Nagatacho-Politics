@@ -1148,8 +1148,17 @@ function startPlayerTurn() {
     cpu: gameState.cpu.approval,
   });
 
+  // ゲーム画面に先に切り替える（フラッシュアニメーションはバナー後に発火させたいので一時退避）
+  const savedFundsFlash    = gameState.player._fundsFlash;
+  const savedApprovalFlash = gameState.player._approvalFlash;
+  delete gameState.player._fundsFlash;
+  delete gameState.player._approvalFlash;
+  renderGame(); // ← ここでゲーム画面へ遷移（フラッシュなし）
+  if (savedFundsFlash)    gameState.player._fundsFlash    = savedFundsFlash;
+  if (savedApprovalFlash) gameState.player._approvalFlash = savedApprovalFlash;
+
   showTurnBanner(true, () => {
-    renderGame();
+    renderGame(); // ← バナー後にフラッシュ発火
     if (playerDrew) {
       animateDrawCard(true, () => setMainPhaseUI(true));
     } else {
@@ -1436,13 +1445,15 @@ function cpuExecuteNextAbility(abilityActions, idx) {
     const effectMsgs = executeEffect(ability.effect, "cpu");
     console.log(`  CPU: ${action.card.name}「${ability.name}」（コスト${effectiveCost}億）`);
     const cpuFieldIndex = c.field.findIndex(fc => fc.instanceId === action.card.instanceId);
-    renderGame();
     playAbilityAnimation(cpuFieldIndex, abilityIdx, "cpu", () => {
-      showActionBanner(
-        [`${action.card.name}「${ability.name}」を発動！`, ...effectMsgs],
-        false,
-        () => cpuExecuteNextAbility(abilityActions, idx + 1)
-      );
+      renderGame(); // カードアニメーション後に支持率・資金フラッシュを発火
+      setTimeout(() => {
+        showActionBanner(
+          [`${action.card.name}「${ability.name}」を発動！`, ...effectMsgs],
+          false,
+          () => cpuExecuteNextAbility(abilityActions, idx + 1)
+        );
+      }, 700);
     });
     return;
   }
@@ -1460,14 +1471,16 @@ function cpuPhaseOption() {
       c.usedOptionThisTurn = true;
       const effectMsgs = executeEffect(card.effect, "cpu");
       console.log(`  CPU: ${card.name}を使用`);
-      renderGame();
       playOptionCardAnimation(card, null, true, () => {
         animateCardToDiscard(card, false, () => {
-          showActionBanner(
-            [`${card.name} を使用！`, ...effectMsgs],
-            false,
-            () => cpuCheckWinAndEnd()
-          );
+          renderGame(); // カード・捨て札アニメーション後に支持率・資金フラッシュを発火
+          setTimeout(() => {
+            showActionBanner(
+              [`${card.name} を使用！`, ...effectMsgs],
+              false,
+              () => cpuCheckWinAndEnd()
+            );
+          }, 700);
         });
       });
       return;
@@ -1699,16 +1712,18 @@ function useAbility(fieldIndex, abilityIndex) {
     p.usedAbilities[card.instanceId] = abilityIndex + 1; // 1 or 2 (常にtruthyで0を避ける)
     console.log(`[能力発動] ${card.name}: ${ability.name}（コスト${effectiveCost}億）`);
     const msgs = executeEffect(ability.effect, "player");
-    renderGame();
     playAbilityAnimation(fieldIndex, abilityIndex, "player", () => {
-      showActionBanner([`「${ability.name}」発動！`, ...msgs], true, () => {
-        const result = checkWinCondition();
-        if (result) {
-          gameState.phase = "finished";
-          showFinishOverlay(result);
-          return;
-        }
-      });
+      renderGame(); // カードアニメーション後に支持率・資金フラッシュを発火
+      setTimeout(() => {
+        showActionBanner([`「${ability.name}」発動！`, ...msgs], true, () => {
+          const result = checkWinCondition();
+          if (result) {
+            gameState.phase = "finished";
+            showFinishOverlay(result);
+            return;
+          }
+        });
+      }, 700);
     });
   });
 }
@@ -1935,17 +1950,19 @@ function useOptionCard(handIndex) {
     p.usedOptionThisTurn = true;
     console.log(`[オプション使用] ${card.name}`);
     const msgs = executeEffect(card.effect, "player");
-    renderGame();
     playOptionCardAnimation(card, cardRect, false, () => {
       animateCardToDiscard(card, true, () => {
-        showActionBanner([`「${card.name}」使用！`, ...msgs], true, () => {
-          const result = checkWinCondition();
-          if (result) {
-            gameState.phase = "finished";
-            showFinishOverlay(result);
-            return;
-          }
-        });
+        renderGame(); // カード・捨て札アニメーション後に支持率・資金フラッシュを発火
+        setTimeout(() => {
+          showActionBanner([`「${card.name}」使用！`, ...msgs], true, () => {
+            const result = checkWinCondition();
+            if (result) {
+              gameState.phase = "finished";
+              showFinishOverlay(result);
+              return;
+            }
+          });
+        }, 700);
       });
     });
   });
@@ -2854,7 +2871,9 @@ function renderHand() {
     }
     el.addEventListener("mouseenter", () => showHandTooltip(card, el));
     el.addEventListener("mouseleave", hideHandTooltip);
+    let _dragged = false;
     el.addEventListener("click", () => {
+      if (_dragged) return;
       hideHandTooltip();
       if (gameState.currentPlayer !== "player") return;
       if (card.type === "politician") {
@@ -2871,6 +2890,7 @@ function renderHand() {
     if (canPlace) {
       el.draggable = true;
       el.addEventListener("dragstart", (e) => {
+        _dragged = true;
         e.dataTransfer.setData("text/plain", String(idx));
         e.dataTransfer.effectAllowed = "move";
         hideHandTooltip();
@@ -2880,6 +2900,7 @@ function renderHand() {
         el.classList.remove("dragging");
         document.querySelectorAll(".field-empty-slot.drag-over")
           .forEach(s => s.classList.remove("drag-over"));
+        setTimeout(() => { _dragged = false; }, 0);
       });
     }
     container.appendChild(el);
