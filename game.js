@@ -2878,6 +2878,95 @@ function hideHandTooltip() {
   }
 }
 
+// タッチD&D（モバイル向け）: 政治家→空スロット / オプション→ドロップゾーン
+function addTouchDrag(el, idx, canPlace, canUseOption) {
+  let ts = null; // タッチ状態
+
+  el.addEventListener("touchstart", (e) => {
+    if (e.touches.length !== 1) return;
+    const t = e.touches[0];
+    ts = {
+      startX: t.clientX, startY: t.clientY,
+      rect: el.getBoundingClientRect(),
+      moved: false, clone: null,
+    };
+  }, { passive: true });
+
+  el.addEventListener("touchmove", (e) => {
+    if (!ts) return;
+    e.preventDefault(); // スクロール抑制
+    const t = e.touches[0];
+    const dx = t.clientX - ts.startX;
+    const dy = t.clientY - ts.startY;
+
+    // 8px 以上動いたらドラッグ開始
+    if (!ts.moved && Math.hypot(dx, dy) > 8) {
+      ts.moved = true;
+      hideHandTooltip();
+      el.style.opacity = "0.3";
+      const clone = el.cloneNode(true);
+      Object.assign(clone.style, {
+        position: "fixed",
+        left: ts.rect.left + "px", top: ts.rect.top + "px",
+        width: ts.rect.width + "px", height: ts.rect.height + "px",
+        opacity: "0.9", zIndex: "999",
+        pointerEvents: "none", margin: "0", transition: "none",
+        transform: "scale(1.06)",
+        boxShadow: "0 8px 24px rgba(74,171,240,0.5)",
+      });
+      document.body.appendChild(clone);
+      ts.clone = clone;
+      if (canUseOption) showOptionDropZone(idx);
+    }
+    if (!ts.moved) return;
+
+    // クローンを指に追従
+    ts.clone.style.left = (ts.rect.left + dx) + "px";
+    ts.clone.style.top  = (ts.rect.top  + dy) + "px";
+
+    // 指の下の要素をハイライト
+    ts.clone.style.visibility = "hidden";
+    const under = document.elementFromPoint(t.clientX, t.clientY);
+    ts.clone.style.visibility = "";
+    document.querySelectorAll(".field-empty-slot.drag-over, #option-drop-zone.drag-over")
+      .forEach(s => s.classList.remove("drag-over"));
+    if (under) {
+      if (canPlace)     under.closest?.(".field-empty-slot")?.classList.add("drag-over");
+      if (canUseOption) under.closest?.("#option-drop-zone")?.classList.add("drag-over");
+    }
+  }, { passive: false });
+
+  el.addEventListener("touchend", (e) => {
+    if (!ts) return;
+    const state = ts;
+    ts = null;
+
+    // タップ（動いていない）→ click イベントに委譲
+    if (!state.moved) return;
+
+    const t = e.changedTouches[0];
+    if (state.clone) state.clone.style.visibility = "hidden";
+    const under = document.elementFromPoint(t.clientX, t.clientY);
+    if (state.clone) state.clone.remove();
+    el.style.opacity = "";
+
+    const slot = under?.closest?.(".field-empty-slot");
+    const zone = under?.closest?.("#option-drop-zone");
+
+    document.querySelectorAll(".field-empty-slot.drag-over").forEach(s => s.classList.remove("drag-over"));
+    hideOptionDropZone();
+
+    if (slot && canPlace && !gameState.player.placedThisTurn) {
+      const srcEl = document.querySelectorAll("#player-hand .card")[idx];
+      srcEl
+        ? animateCardFly(srcEl, slot, true, () => playCardToField(idx))
+        : playCardToField(idx);
+    } else if (zone && canUseOption) {
+      useOptionCard(idx);
+    }
+  });
+}
+
 function renderHand() {
   const container = document.getElementById("player-hand");
   container.innerHTML = "";
@@ -2931,6 +3020,8 @@ function renderHand() {
         hideOptionDropZone();
         setTimeout(() => { _dragged = false; }, 0);
       });
+      // タッチデバイス向けD&D
+      addTouchDrag(el, idx, canPlace, canUseOption);
     }
     container.appendChild(el);
   });
