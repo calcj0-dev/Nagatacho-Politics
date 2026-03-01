@@ -1210,12 +1210,37 @@ function animateDrawCard(isPlayer, onDone) {
   setTimeout(() => {
     clone.style.transition = "opacity 0.12s ease";
     clone.style.opacity = "0";
-    setTimeout(() => { clone.remove(); onDone(); }, 120);
+    setTimeout(() => {
+      clone.remove();
+      // ドロー完了時: 最後の手札カードをフリップ演出で登場させる
+      if (isPlayer) {
+        const lastCard = [...document.querySelectorAll("#player-hand .card")].at(-1);
+        if (lastCard) {
+          lastCard.classList.remove("card-draw-appear");
+          void lastCard.offsetWidth;
+          lastCard.classList.add("card-draw-appear");
+          lastCard.addEventListener("animationend",
+            () => lastCard.classList.remove("card-draw-appear"), { once: true });
+        }
+      }
+      onDone();
+    }, 120);
   }, 330);
 }
 
 // ターン交代バナー（画面中央にスライドインして自動消え）
 function showTurnBanner(isPlayer, onDone) {
+  // 全画面フラッシュ
+  const flash = document.createElement("div");
+  Object.assign(flash.style, {
+    position: "fixed", inset: "0", pointerEvents: "none", zIndex: "355",
+    background: isPlayer ? "rgba(74,171,240,0.18)" : "rgba(240,160,32,0.18)",
+    opacity: "1", transition: "opacity 0.5s ease",
+  });
+  document.body.appendChild(flash);
+  requestAnimationFrame(() => requestAnimationFrame(() => { flash.style.opacity = "0"; }));
+  setTimeout(() => flash.remove(), 550);
+
   const el = document.createElement("div");
   el.id = "turn-transition-banner";
   el.className = isPlayer ? "ttb-player" : "ttb-cpu";
@@ -1227,7 +1252,7 @@ function showTurnBanner(isPlayer, onDone) {
       el.classList.remove("ttb-show");
       el.classList.add("ttb-hide");
       setTimeout(() => { el.remove(); onDone(); }, 220);
-    }, 750);
+    }, 850);
   });
 }
 
@@ -1738,6 +1763,10 @@ function playAbilityAnimation(fieldIndex, abilityIndex, side, callback) {
   const cardEls = container.querySelectorAll(".card");
   const cardEl = cardEls[fieldIndex];
   if (!cardEl) { callback(); return; }
+
+  // 元カードを一瞬発光させる
+  cardEl.classList.add("card-ability-glow");
+  cardEl.addEventListener("animationend", () => cardEl.classList.remove("card-ability-glow"), { once: true });
 
   const rect = cardEl.getBoundingClientRect();
   const vw = window.innerWidth;
@@ -2774,15 +2803,20 @@ function renderFieldCards(containerId, cards, isPlayer) {
         card.abilities.forEach(ability => {
           const line = document.createElement("div");
           line.className = "card-ability-line";
-          const effectiveCost = Math.max(0, ability.cost - costReduction);
-          line.innerHTML = `${ability.name}(${fundsToHtml(effectiveCost)})`;
+          line.textContent = ability.name;
           abilitySummary.appendChild(line);
         });
         el.appendChild(abilitySummary);
       }
       el.addEventListener("click", () => {
+        clearHandSelection();
+        const isMobile = window.matchMedia("(pointer: coarse)").matches;
         if (isPlayer && gameState.currentPlayer === "player") {
-          showCardZoom(card, "field", idx);
+          if (isMobile) {
+            showCardActionMenu(card, idx, true, el);
+          } else {
+            showCardZoom(card, "field", idx);
+          }
         } else {
           showCardZoom(card, "view");
         }
@@ -2832,6 +2866,7 @@ function renderCpuHand() {
 }
 
 let _handTooltipEl = null;
+let selectedHandIndex = null; // タップ選択中の手札インデックス
 
 function showHandTooltip(card, cardEl) {
   hideHandTooltip();
@@ -2973,6 +3008,132 @@ function addTouchDrag(el, idx, canPlace, canUseOption) {
   });
 }
 
+// 手札タップ選択をクリア
+function clearHandSelection() {
+  selectedHandIndex = null;
+  document.querySelectorAll("#player-hand .card.card-selected")
+    .forEach(el => el.classList.remove("card-selected"));
+  document.querySelectorAll("#player-field .field-empty-slot.slot-target")
+    .forEach(slot => {
+      slot.classList.remove("slot-target");
+      if (slot._slotTapHandler) {
+        slot.removeEventListener("click", slot._slotTapHandler);
+        delete slot._slotTapHandler;
+      }
+    });
+  hideOptionDropZone();
+}
+
+// 手札カードをタップ選択し、場の空スロットをターゲット化
+function selectHandCard(idx, el, canPlace) {
+  clearHandSelection();
+  selectedHandIndex = idx;
+  el.classList.add("card-selected");
+  if (canPlace) {
+    document.querySelectorAll("#player-field .field-empty-slot").forEach(slot => {
+      slot.classList.add("slot-target");
+      const handler = (e) => {
+        e.stopPropagation();
+        const handIdx = selectedHandIndex;
+        clearHandSelection();
+        const srcEl = document.querySelectorAll("#player-hand .card")[handIdx];
+        if (srcEl) {
+          animateCardFly(srcEl, slot, true, () => playCardToField(handIdx));
+        } else {
+          playCardToField(handIdx);
+        }
+      };
+      slot._slotTapHandler = handler;
+      slot.addEventListener("click", handler);
+    });
+  }
+}
+
+// フィールドカードタップ時のアクションメニュー
+function showCardActionMenu(card, fieldIndex, isPlayer, anchorEl) {
+  document.querySelectorAll(".card-action-menu").forEach(el => el.remove());
+
+  const menu = document.createElement("div");
+  menu.className = "card-action-menu";
+
+  if (isPlayer && gameState.currentPlayer === "player" && card.type === "politician") {
+    const p = gameState.player;
+    const costReduction = p.currentTurnCostReduction || 0;
+    const usedVal = p.usedAbilities[card.instanceId];
+
+    if (card.disabled) {
+      const msg = document.createElement("div");
+      msg.className = "cam-status-msg";
+      msg.textContent = "封印中";
+      menu.appendChild(msg);
+    } else if (usedVal) {
+      const msg = document.createElement("div");
+      msg.className = "cam-status-msg";
+      msg.textContent = "使用済み";
+      menu.appendChild(msg);
+    } else if (card.abilities) {
+      card.abilities.forEach((ability, aIdx) => {
+        const effectiveCost = Math.max(0, ability.cost - costReduction);
+        const canUse = p.funds >= effectiveCost;
+        const btn = document.createElement("button");
+        btn.className = "cam-btn" + (canUse ? "" : " cam-btn-disabled");
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = ability.name;
+        const costSpan = document.createElement("span");
+        costSpan.className = "cam-cost";
+        costSpan.textContent = effectiveCost + "億";
+        btn.appendChild(nameSpan);
+        btn.appendChild(costSpan);
+        if (canUse) {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            menu.remove();
+            useAbility(fieldIndex, aIdx);
+          });
+        }
+        menu.appendChild(btn);
+      });
+    }
+  }
+
+  const detailBtn = document.createElement("button");
+  detailBtn.className = "cam-btn cam-btn-detail";
+  detailBtn.textContent = "詳細確認";
+  detailBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    menu.remove();
+    showCardZoom(card, isPlayer && gameState.currentPlayer === "player" ? "field" : "view", fieldIndex);
+  });
+  menu.appendChild(detailBtn);
+
+  // いったん非表示で追加してサイズ計測
+  menu.style.visibility = "hidden";
+  document.body.appendChild(menu);
+  const menuRect = menu.getBoundingClientRect();
+  const cardRect = anchorEl.getBoundingClientRect();
+
+  let left = cardRect.left + cardRect.width / 2;
+  let top = cardRect.top - menuRect.height - 10;
+  if (top < 8) top = cardRect.bottom + 10;
+
+  const halfW = menuRect.width / 2;
+  left = Math.max(halfW + 8, Math.min(window.innerWidth - halfW - 8, left));
+  top  = Math.max(8, Math.min(window.innerHeight - menuRect.height - 8, top));
+
+  menu.style.left = left + "px";
+  menu.style.top  = top  + "px";
+  menu.style.visibility = "";
+
+  // 外側クリックで閉じる
+  const dismiss = (e) => {
+    if (!menu.contains(e.target)) {
+      menu.remove();
+      document.removeEventListener("click", dismiss, true);
+    }
+  };
+  setTimeout(() => document.addEventListener("click", dismiss, true), 0);
+}
+
 function renderHand() {
   const container = document.getElementById("player-hand");
   container.innerHTML = "";
@@ -2986,22 +3147,11 @@ function renderHand() {
       card.abilities.forEach(ability => {
         const line = document.createElement("div");
         line.className = "card-ability-line";
-        line.innerHTML = `${ability.name}(${fundsToHtml(ability.cost)})`;
+        line.textContent = ability.name;
         abilitySummary.appendChild(line);
       });
       el.appendChild(abilitySummary);
     }
-    el.addEventListener("mouseenter", () => showHandTooltip(card, el));
-    el.addEventListener("mouseleave", hideHandTooltip);
-    let _dragged = false;
-    // クリック: カード詳細表示のみ（使用はD&Dで行う）
-    el.addEventListener("click", () => {
-      if (_dragged) return;
-      hideHandTooltip();
-      if (gameState.currentPlayer !== "player") return;
-      showCardZoom(card, "view");
-    });
-    // ドラッグで使用（政治家: 場の空スロットへ / オプション: ドロップゾーンへ）
     const canPlace = card.type === "politician"
       && gameState.currentPlayer === "player"
       && !gameState.player.placedThisTurn
@@ -3009,10 +3159,48 @@ function renderHand() {
     const canUseOption = card.type === "option"
       && gameState.currentPlayer === "player"
       && !gameState.player.usedOptionThisTurn;
-    if (canPlace || canUseOption) {
-      const isTouch = window.matchMedia("(pointer: coarse)").matches;
-      if (!isTouch) {
-        // デスクトップ: HTML5 Drag & Drop
+
+    const isTouch = window.matchMedia("(pointer: coarse)").matches;
+
+    if (isTouch) {
+      // モバイル: タップ選択方式
+      // 選択中であれば選択状態を復元
+      if (selectedHandIndex === idx) el.classList.add("card-selected");
+
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        hideHandTooltip();
+        if (gameState.currentPlayer !== "player") {
+          showCardZoom(card, "view");
+          return;
+        }
+        if (canUseOption && !canPlace) {
+          // オプション: タップで即使用
+          clearHandSelection();
+          useOptionCard(idx);
+        } else if (canPlace) {
+          // 政治家: タップ選択切り替え
+          if (selectedHandIndex === idx) {
+            clearHandSelection();
+          } else {
+            selectHandCard(idx, el, canPlace);
+          }
+        } else {
+          showCardZoom(card, "view");
+        }
+      });
+    } else {
+      // デスクトップ: ホバーツールチップ + クリック詳細 + ドラッグ操作
+      el.addEventListener("mouseenter", () => showHandTooltip(card, el));
+      el.addEventListener("mouseleave", hideHandTooltip);
+      let _dragged = false;
+      el.addEventListener("click", () => {
+        if (_dragged) return;
+        hideHandTooltip();
+        if (gameState.currentPlayer !== "player") return;
+        showCardZoom(card, "view");
+      });
+      if (canPlace || canUseOption) {
         el.draggable = true;
         el.addEventListener("dragstart", (e) => {
           _dragged = true;
@@ -3029,12 +3217,35 @@ function renderHand() {
           hideOptionDropZone();
           setTimeout(() => { _dragged = false; }, 0);
         });
-      } else {
-        // モバイル: タッチD&Dのみ（draggable競合を避ける）
-        addTouchDrag(el, idx, canPlace, canUseOption);
       }
     }
     container.appendChild(el);
+  });
+
+  // モバイルのみファン効果を適用
+  if (window.matchMedia("(pointer: coarse)").matches) {
+    applyHandFan(container);
+  }
+}
+
+// 手札ファン（扇形）レイアウト
+function applyHandFan(container) {
+  const cards = [...container.querySelectorAll(".card")];
+  const n = cards.length;
+  cards.forEach((card, i) => {
+    if (n < 2) {
+      card.style.transform = "";
+      card.style.marginLeft = "";
+      card.style.zIndex = "";
+      return;
+    }
+    const t = (i / (n - 1)) - 0.5;          // -0.5 〜 0.5
+    const angle = t * Math.min(14, n * 3);   // 枚数に応じた最大角度
+    const yOffset = Math.abs(t) * 10;        // 端ほど下がる
+    card.style.transform = `rotate(${angle}deg) translateY(${yOffset}px)`;
+    card.style.transformOrigin = "bottom center";
+    card.style.marginLeft = i === 0 ? "0" : "-8px";
+    card.style.zIndex = String(Math.round((1 - Math.abs(t)) * 10)); // 中央が前面
   });
 }
 

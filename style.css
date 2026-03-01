@@ -79,19 +79,43 @@ body {
   z-index: 360;
   pointer-events: none;
   white-space: nowrap;
+  overflow: hidden; /* シマー用 */
   transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.22s ease;
+}
+/* シマー（光の帯） */
+#turn-transition-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.28) 50%, transparent 80%);
+  transform: translateX(-120%);
+  pointer-events: none;
 }
 #turn-transition-banner.ttb-show {
   transform: translate(-50%, -50%) scaleX(1);
   opacity: 1;
+}
+#turn-transition-banner.ttb-show::after {
+  animation: ttb-shimmer 0.45s ease-out 0.18s forwards;
+}
+@keyframes ttb-shimmer {
+  to { transform: translateX(120%); }
 }
 #turn-transition-banner.ttb-hide {
   transform: translate(-50%, -50%) scaleX(0.1);
   opacity: 0;
   transition: transform 0.2s ease-in, opacity 0.2s ease;
 }
-#turn-transition-banner.ttb-player { border-color: #4aabf0; color: #4aabf0; }
-#turn-transition-banner.ttb-cpu    { border-color: #f0a020; color: #f0a020; }
+#turn-transition-banner.ttb-player {
+  border-color: #4aabf0;
+  color: #4aabf0;
+  box-shadow: 0 0 28px 6px rgba(74, 171, 240, 0.45);
+}
+#turn-transition-banner.ttb-cpu {
+  border-color: #f0a020;
+  color: #f0a020;
+  box-shadow: 0 0 28px 6px rgba(240, 160, 32, 0.45);
+}
 
 /* アクションバナー共通（プレイヤー/CPU） */
 #action-banner {
@@ -260,13 +284,19 @@ h1 {
 
 /* 着地アニメーション */
 @keyframes card-land {
-  0%   { transform: scale(1.06); box-shadow: 0 8px 24px rgba(255, 215, 0, 0.5); }
-  65%  { transform: scale(0.97); box-shadow: 0 2px 6px rgba(255, 215, 0, 0.15); }
-  100% { transform: scale(1);    box-shadow: none; }
+  0%   { transform: scale(1.18);  filter: brightness(1.7);
+         box-shadow: 0 0 0   0px  rgba(255, 220, 50, 0.9); }
+  20%  { transform: scale(0.93);  filter: brightness(1.1);
+         box-shadow: 0 0 32px 12px rgba(255, 220, 50, 0.55); }
+  55%  { transform: scale(1.04);  filter: brightness(1);
+         box-shadow: 0 0 18px 6px  rgba(255, 220, 50, 0.25); }
+  80%  { transform: scale(0.98); }
+  100% { transform: scale(1);     filter: brightness(1);
+         box-shadow: none; }
 }
 
 .card-landing {
-  animation: card-land 0.32s ease-out forwards;
+  animation: card-land 0.48s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 /* 政治家カード */
@@ -388,12 +418,18 @@ h1 {
 }
 
 /* 空スロット */
+@keyframes slot-pulse {
+  0%, 100% { border-color: rgba(74, 171, 240, 0.22); box-shadow: none; }
+  50%       { border-color: rgba(74, 171, 240, 0.55); box-shadow: 0 0 10px rgba(74, 171, 240, 0.18); }
+}
+
 .field-empty-slot {
   width: 110px;
   height: 155px;
-  border: 2px dashed rgba(120, 120, 180, 0.25);
+  border: 2px dashed rgba(74, 171, 240, 0.22);
   border-radius: 8px;
   flex-shrink: 0;
+  animation: slot-pulse 2.4s ease-in-out infinite;
 }
 
 /* 山札スロット（field-rowの右端、枠外） */
@@ -430,15 +466,14 @@ h1 {
   text-align: center;
 }
 
-/* 小さいカード上の能力サマリー（画像上に白半透明枠） */
+/* 小さいカード上の能力サマリー（下部ストリップ） */
 .card-ability-summary {
   position: absolute;
-  bottom: 4px;
-  left: 4px;
-  right: 4px;
-  height: 40%;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 4px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.62);
+  border-radius: 0 0 6px 6px;
   padding: 3px 4px;
   display: flex;
   flex-direction: column;
@@ -448,11 +483,14 @@ h1 {
 }
 
 .card-ability-line {
-  font-size: 0.5rem;
+  font-size: 0.48rem;
   font-weight: bold;
-  color: #333;
+  color: #fff;
   text-align: center;
   line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ターン情報バー */
@@ -580,48 +618,50 @@ h1 {
 
 @keyframes bar-flash-up {
   0%   { filter: brightness(1); }
-  35%  { filter: brightness(2) drop-shadow(0 0 5px rgba(46,204,113,0.9)); }
+  20%  { filter: brightness(2.2) drop-shadow(0 0 8px rgba(46,204,113,1)); }
   100% { filter: brightness(1); }
 }
 @keyframes bar-flash-down {
   0%   { filter: brightness(1); }
-  35%  { filter: brightness(1.8) drop-shadow(0 0 5px rgba(233,69,96,0.9)); }
+  20%  { filter: brightness(2.0) drop-shadow(0 0 8px rgba(233,69,96,1)); }
   100% { filter: brightness(1); }
 }
-.approval-flash-up   { animation: bar-flash-up   0.55s ease-out; }
-.approval-flash-down { animation: bar-flash-down 0.55s ease-out; }
+.approval-flash-up   { animation: bar-flash-up   0.6s ease-out; }
+.approval-flash-down { animation: bar-flash-down 0.6s ease-out; }
 
-/* 支持率数値パルス */
+/* 支持率数値パルス（text-shadow グロー方式：overflow:hidden でもクリップされない） */
 @keyframes approval-num-up {
-  0%   { color: inherit; transform: scale(1); }
-  30%  { color: #2ecc71;  transform: scale(1.4); }
-  100% { color: inherit; transform: scale(1); }
+  0%   { color: inherit; text-shadow: none; }
+  18%  { color: #2ecc71;
+         text-shadow: 0 0 14px rgba(46,204,113,1), 0 0 6px rgba(46,204,113,0.7); }
+  100% { color: inherit; text-shadow: none; }
 }
 @keyframes approval-num-down {
-  0%   { color: inherit; transform: scale(1); }
-  30%  { color: #e94560;  transform: scale(1.4); }
-  100% { color: inherit; transform: scale(1); }
+  0%   { color: inherit; text-shadow: none; }
+  18%  { color: #e94560;
+         text-shadow: 0 0 14px rgba(233,69,96,1), 0 0 6px rgba(233,69,96,0.7); }
+  100% { color: inherit; text-shadow: none; }
 }
-.approval-num-up   { animation: approval-num-up   0.6s ease-out; }
-.approval-num-down { animation: approval-num-down 0.6s ease-out; }
+.approval-num-up   { animation: approval-num-up   0.65s ease-out; }
+.approval-num-down { animation: approval-num-down 0.65s ease-out; }
 
 /* フローティングデルタ（+X% / -X%） */
 @keyframes approval-delta-float {
-  0%   { opacity: 1; transform: translateY(0); }
-  20%  { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-28px); }
+  0%   { opacity: 1; transform: translateY(0)    scale(1); }
+  15%  { opacity: 1; transform: translateY(-6px)  scale(1.15); }
+  100% { opacity: 0; transform: translateY(-32px) scale(0.9); }
 }
 .approval-delta {
   position: fixed;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   font-weight: bold;
   pointer-events: none;
   z-index: 410;
   animation: approval-delta-float 1.1s ease-out forwards;
   white-space: nowrap;
 }
-.approval-delta-up   { color: #2ecc71; }
-.approval-delta-down { color: #e94560; }
+.approval-delta-up   { color: #2ecc71; text-shadow: 0 0 8px rgba(46,204,113,0.7); }
+.approval-delta-down { color: #e94560; text-shadow: 0 0 8px rgba(233,69,96,0.7); }
 
 .approval-num {
   font-size: 0.85rem;
@@ -1484,6 +1524,126 @@ h1 {
 }
 
 /* ============================================================
+   タップ選択アクション（ポケポケ方式）
+   ============================================================ */
+
+/* 選択中の手札カード */
+.card-selected {
+  outline: 3px solid #4aabf0 !important;
+  box-shadow: 0 0 20px 5px rgba(74, 171, 240, 0.7) !important;
+  transform: translateY(-18px) scale(1.08) !important;
+  z-index: 30 !important;
+}
+
+/* 配置ターゲットスロット */
+.field-empty-slot.slot-target {
+  border-color: rgba(74, 171, 240, 0.85) !important;
+  background: rgba(74, 171, 240, 0.08) !important;
+  cursor: pointer !important;
+  animation: slot-target-pulse 0.75s ease-in-out infinite !important;
+}
+
+@keyframes slot-target-pulse {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(74, 171, 240, 0.3); }
+  50%       { box-shadow: 0 0 22px 7px rgba(74, 171, 240, 0.65); }
+}
+
+/* カードアクションメニュー */
+.card-action-menu {
+  position: fixed;
+  z-index: 500;
+  background: rgba(8, 8, 28, 0.97);
+  border: 1px solid rgba(74, 171, 240, 0.4);
+  border-radius: 12px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 155px;
+  max-width: 230px;
+  box-shadow: 0 6px 32px rgba(0, 0, 0, 0.75);
+  animation: cam-appear 0.14s ease-out;
+}
+
+@keyframes cam-appear {
+  from { opacity: 0; transform: translateX(-50%) scale(0.86); }
+  to   { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+.cam-btn {
+  background: rgba(74, 171, 240, 0.1);
+  border: 1px solid rgba(74, 171, 240, 0.3);
+  border-radius: 8px;
+  color: #eee;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.cam-btn:active { background: rgba(74, 171, 240, 0.28); }
+
+.cam-btn-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.cam-btn-detail {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #999;
+  font-size: 0.75rem;
+  justify-content: center;
+}
+
+.cam-cost {
+  font-size: 0.72rem;
+  color: #ffd700;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.cam-status-msg {
+  color: #888;
+  font-size: 0.78rem;
+  text-align: center;
+  padding: 8px 12px;
+}
+
+/* ============================================================
+   能力発動時カード発光
+   ============================================================ */
+
+@keyframes card-ability-glow {
+  0%   { box-shadow: 0 0 0   0px rgba(255, 220, 50, 0); }
+  25%  { box-shadow: 0 0 28px 10px rgba(255, 220, 50, 0.9); }
+  100% { box-shadow: 0 0 0   0px rgba(255, 220, 50, 0); }
+}
+
+.card-ability-glow {
+  animation: card-ability-glow 0.55s ease-out forwards;
+}
+
+/* ============================================================
+   ドロー時カードフリップ演出
+   ============================================================ */
+
+@keyframes card-draw-flip {
+  0%   { clip-path: inset(0 100% 0 0); filter: brightness(2.2); }
+  40%  { clip-path: inset(0 0% 0 0);   filter: brightness(1.6); }
+  100% { clip-path: inset(0 0% 0 0);   filter: brightness(1); }
+}
+
+.card-draw-appear {
+  animation: card-draw-flip 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* ============================================================
    ドラッグ＆ドロップ（手札→フィールド）
    ============================================================ */
 
@@ -1594,6 +1754,9 @@ h1 {
     display: none;
   }
 
+  /* カード上のテキスト説明を非表示（画像＋能力名のみ表示） */
+  .card-desc { display: none; }
+
   /* 手札カード */
   .card {
     height: 15vh;
@@ -1603,6 +1766,13 @@ h1 {
   /* 手札カードは縮まない（横スクロールさせる） */
   #player-hand > .card {
     flex-shrink: 0;
+  }
+
+  /* タッチ時に浮き上がり */
+  #player-hand > .card:active {
+    transform: rotate(0deg) translateY(-12px) scale(1.1) !important;
+    z-index: 20 !important;
+    transition: transform 0.1s ease;
   }
 
   .card-list {
