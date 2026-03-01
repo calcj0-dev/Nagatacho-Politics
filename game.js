@@ -3004,24 +3004,29 @@ function renderHand() {
       && gameState.currentPlayer === "player"
       && !gameState.player.usedOptionThisTurn;
     if (canPlace || canUseOption) {
-      el.draggable = true;
-      el.addEventListener("dragstart", (e) => {
-        _dragged = true;
-        e.dataTransfer.setData("text/plain", String(idx));
-        e.dataTransfer.effectAllowed = "move";
-        hideHandTooltip();
-        setTimeout(() => el.classList.add("dragging"), 0);
-        if (canUseOption) showOptionDropZone(idx);
-      });
-      el.addEventListener("dragend", () => {
-        el.classList.remove("dragging");
-        document.querySelectorAll(".field-empty-slot.drag-over")
-          .forEach(s => s.classList.remove("drag-over"));
-        hideOptionDropZone();
-        setTimeout(() => { _dragged = false; }, 0);
-      });
-      // タッチデバイス向けD&D
-      addTouchDrag(el, idx, canPlace, canUseOption);
+      const isTouch = window.matchMedia("(pointer: coarse)").matches;
+      if (!isTouch) {
+        // デスクトップ: HTML5 Drag & Drop
+        el.draggable = true;
+        el.addEventListener("dragstart", (e) => {
+          _dragged = true;
+          e.dataTransfer.setData("text/plain", String(idx));
+          e.dataTransfer.effectAllowed = "move";
+          hideHandTooltip();
+          setTimeout(() => el.classList.add("dragging"), 0);
+          if (canUseOption) showOptionDropZone(idx);
+        });
+        el.addEventListener("dragend", () => {
+          el.classList.remove("dragging");
+          document.querySelectorAll(".field-empty-slot.drag-over")
+            .forEach(s => s.classList.remove("drag-over"));
+          hideOptionDropZone();
+          setTimeout(() => { _dragged = false; }, 0);
+        });
+      } else {
+        // モバイル: タッチD&Dのみ（draggable競合を避ける）
+        addTouchDrag(el, idx, canPlace, canUseOption);
+      }
     }
     container.appendChild(el);
   });

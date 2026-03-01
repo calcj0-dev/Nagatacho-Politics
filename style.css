@@ -13,6 +13,7 @@ body {
   background: #1a1a2e;
   color: #eee;
   min-height: 100vh;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .hidden {
@@ -1536,59 +1537,121 @@ h1 {
    ============================================================ */
 
 @media (max-width: 600px) {
-  /* --- ゲーム画面 --- */
-  #game-screen {
-    padding: 5px;
-    gap: 4px;
+  /* =====================================================
+     Step1-2: 100dvh 固定・スクロールなし・flex 比率分割
+     ===================================================== */
+  body {
+    overflow: hidden;
   }
+
+  #game-screen {
+    height: 100dvh;
+    min-height: unset;       /* .screen の min-height:100vh を上書き */
+    overflow: hidden;
+    padding: 4px;
+    gap: 2px;
+    align-items: stretch;   /* .screen の align-items:center を上書き */
+  }
+
+  /* 各エリアの flex 比率 */
+  .cpu-area         { flex: 35; min-height: 0; overflow: hidden; }
+  #turn-bar         { flex-shrink: 0; }
+  .player-area-self { flex: 27; min-height: 0; overflow: hidden; }
+  #hand-area        { flex: 1;  min-height: 0; overflow: hidden; }
 
   .player-area {
     padding: 4px;
     gap: 4px;
+    display: flex;
+    flex-direction: column;
   }
 
-  /* --- フィールドカード --- */
+  /* =====================================================
+     Step3: カードサイズを vh 基準に統一
+     ===================================================== */
+
+  /* フィールドカード・空スロット */
   .field .card,
   .field-empty-slot {
-    width: 68px;
-    height: 95px;
+    height: 14vh;
+    width: calc(14vh * 0.714);
   }
 
   .field {
-    gap: 5px;
-    padding: 5px;
-  }
-
-  /* --- 山札・捨て札スロット --- */
-  .deck-card-back {
-    width: 55px;
-    height: 77px;
-    font-size: 1.4rem;
+    gap: 4px;
+    padding: 4px;
   }
 
   .field-row {
-    gap: 6px;
-    overflow-x: auto;
+    gap: 4px;
+    overflow: visible;
+    align-items: center;
   }
 
-  /* --- 手札カード --- */
+  /* 山札・捨て札スロット */
+  .deck-card-back {
+    height: 14vh;
+    width: calc(14vh * 0.714);
+    font-size: 1.2rem;
+  }
+
+  .discard-slot-empty,
+  .discard-slot-preview {
+    height: 14vh;
+    width: calc(14vh * 0.714);
+  }
+
+  .active-effects {
+    width: calc(14vh * 0.714);
+  }
+
+  /* 手札カード */
   .card {
-    width: 80px;
-    height: 112px;
+    height: 15vh;
+    width: calc(15vh * 0.714);
   }
 
   .card-list {
     gap: 7px;
   }
 
-  /* --- CPU手札（裏向き） --- */
+  /* CPU 手札（裏向き） */
   .card-back {
-    width: 44px;
-    height: 61px;
-    font-size: 1rem;
+    height: 4.5vh;
+    width: calc(4.5vh * 0.714);
+    font-size: 0.9rem;
   }
 
-  /* --- ターン情報バー --- */
+  /* =====================================================
+     Step4: 手札エリアを横スクロール化
+     ===================================================== */
+  #hand-area {
+    padding: 4px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  #player-hand {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 4px 8px;
+    height: 100%;
+    scrollbar-width: none;   /* Firefox */
+  }
+
+  #player-hand::-webkit-scrollbar {
+    display: none;           /* Chrome / Safari */
+  }
+
+  /* =====================================================
+     その他 UI 調整
+     ===================================================== */
+
+  /* ターン情報バー */
   #turn-bar {
     padding: 5px 8px;
     font-size: 0.72rem;
@@ -1597,14 +1660,10 @@ h1 {
   #turn-num   { min-width: 36px; }
   #turn-owner { min-width: 72px; }
 
-  .survey-pip {
-    width: 8px;
-    height: 8px;
-  }
-
+  .survey-pip   { width: 8px; height: 8px; }
   .survey-label { font-size: 0.64rem; }
 
-  /* --- プレイヤー情報 --- */
+  /* プレイヤー情報 */
   .player-info { font-size: 0.75rem; }
 
   .player-info-row1 {
@@ -1614,25 +1673,23 @@ h1 {
 
   .approval-bar-wrap { width: 56px; }
 
-  /* --- 政党選択画面 --- */
+  /* 政党選択画面 */
   .party-buttons {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
   }
 
-  .party-btn {
-    padding: 14px 20px;
-  }
+  .party-btn { padding: 14px 20px; }
 
-  /* --- カード拡大オーバーレイ --- */
+  /* カード拡大オーバーレイ */
   .card-zoom-container {
     max-height: 88vh;
     overflow-y: auto;
     padding: 12px;
   }
 
-  /* --- オーバーレイ --- */
+  /* オーバーレイ */
   .overlay-content {
     max-width: 96vw;
     max-height: 88vh;
