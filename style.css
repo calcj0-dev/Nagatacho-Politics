@@ -1551,6 +1551,10 @@ h1 {
     flex-direction: column;
   }
 
+  /* field-row と player-info が押し出されないよう固定 */
+  .player-area > .field-row   { flex-shrink: 0; }
+  .player-area > .player-info { flex-shrink: 0; }
+
   /* =====================================================
      Step3: カードサイズを vh 基準に統一
      ===================================================== */
@@ -1587,13 +1591,18 @@ h1 {
   }
 
   .active-effects {
-    width: calc(14vh * 0.714);
+    display: none;
   }
 
   /* 手札カード */
   .card {
     height: 15vh;
     width: calc(15vh * 0.714);
+  }
+
+  /* 手札カードは縮まない（横スクロールさせる） */
+  #player-hand > .card {
+    flex-shrink: 0;
   }
 
   .card-list {
