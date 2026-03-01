@@ -2622,9 +2622,6 @@ function renderGame() {
   // 手札
   renderHand();
 
-  // デバッグ情報
-  document.getElementById("debug-info").textContent =
-    `[DEBUG] P支持率:${gameState.player.approval}% C支持率:${gameState.cpu.approval}% P資金:${gameState.player.funds}億 P手札:${gameState.player.hand.length} P山札:${gameState.player.deck.length} C山札:${gameState.cpu.deck.length}`;
 }
 
 function renderDeckSlot(slotId, deckCount) {
@@ -2889,15 +2886,22 @@ function addTouchDrag(el, idx, canPlace, canUseOption) {
       startX: t.clientX, startY: t.clientY,
       rect: el.getBoundingClientRect(),
       moved: false, clone: null,
+      isScrolling: null, // null=未判定 true=横スクロール false=ドラッグ
     };
   }, { passive: true });
 
   el.addEventListener("touchmove", (e) => {
     if (!ts) return;
-    e.preventDefault(); // スクロール抑制
     const t = e.touches[0];
     const dx = t.clientX - ts.startX;
     const dy = t.clientY - ts.startY;
+
+    // 初回移動で方向を判定（横優勢→スクロール、縦優勢→ドラッグ）
+    if (ts.isScrolling === null && Math.hypot(dx, dy) > 6) {
+      ts.isScrolling = Math.abs(dx) > Math.abs(dy);
+    }
+    if (ts.isScrolling) return; // 横スクロールはブラウザに委譲
+    e.preventDefault(); // ドラッグ中のスクロール抑制
 
     // 8px 以上動いたらドラッグ開始
     if (!ts.moved && Math.hypot(dx, dy) > 8) {
@@ -2941,6 +2945,8 @@ function addTouchDrag(el, idx, canPlace, canUseOption) {
     const state = ts;
     ts = null;
 
+    // 横スクロール中に指を離した → 何もしない（クリックも発火させない）
+    if (state.isScrolling) { e.preventDefault(); return; }
     // タップ（動いていない）→ click イベントに委譲
     if (!state.moved) return;
 
