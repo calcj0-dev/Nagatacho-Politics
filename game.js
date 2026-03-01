@@ -2462,6 +2462,31 @@ function fundsToHtml(amount) {
   return html;
 }
 
+// オプションカード用ドロップゾーンを表示（ドラッグ開始時に呼ぶ）
+function showOptionDropZone(handIdx) {
+  hideOptionDropZone();
+  const zone = document.createElement("div");
+  zone.id = "option-drop-zone";
+  zone.textContent = "ここにドロップして使用";
+  document.body.appendChild(zone);
+  zone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    zone.classList.add("drag-over");
+  });
+  zone.addEventListener("dragleave", () => zone.classList.remove("drag-over"));
+  zone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    zone.remove();
+    useOptionCard(handIdx);
+  });
+}
+
+function hideOptionDropZone() {
+  const zone = document.getElementById("option-drop-zone");
+  if (zone) zone.remove();
+}
+
 // オプションカード使用後: 中央→捨て札スロットへ飛ぶ
 function animateCardToDiscard(card, isPlayer, onDone) {
   const discardEl = document.getElementById(isPlayer ? "player-discard" : "cpu-discard");
@@ -2782,6 +2807,8 @@ function renderFieldCards(containerId, cards, isPlayer) {
           empty.classList.remove("drag-over");
           const handIdx = parseInt(e.dataTransfer.getData("text/plain"), 10);
           if (isNaN(handIdx)) return;
+          const draggedCard = gameState.player.hand[handIdx];
+          if (!draggedCard || draggedCard.type !== "politician") return; // オプションカードは弾く
           const srcEl = document.querySelectorAll("#player-hand .card")[handIdx];
           if (srcEl) {
             animateCardFly(srcEl, empty, true, () => playCardToField(handIdx));
@@ -2872,22 +2899,22 @@ function renderHand() {
     el.addEventListener("mouseenter", () => showHandTooltip(card, el));
     el.addEventListener("mouseleave", hideHandTooltip);
     let _dragged = false;
+    // クリック: カード詳細表示のみ（使用はD&Dで行う）
     el.addEventListener("click", () => {
       if (_dragged) return;
       hideHandTooltip();
       if (gameState.currentPlayer !== "player") return;
-      if (card.type === "politician") {
-        showCardZoom(card, "hand-politician", idx);
-      } else {
-        showCardZoom(card, "hand-option", idx);
-      }
+      showCardZoom(card, "view");
     });
-    // 政治家カードはドラッグで場に出せる
+    // ドラッグで使用（政治家: 場の空スロットへ / オプション: ドロップゾーンへ）
     const canPlace = card.type === "politician"
       && gameState.currentPlayer === "player"
       && !gameState.player.placedThisTurn
       && gameState.player.field.length < 3;
-    if (canPlace) {
+    const canUseOption = card.type === "option"
+      && gameState.currentPlayer === "player"
+      && !gameState.player.usedOptionThisTurn;
+    if (canPlace || canUseOption) {
       el.draggable = true;
       el.addEventListener("dragstart", (e) => {
         _dragged = true;
@@ -2895,11 +2922,13 @@ function renderHand() {
         e.dataTransfer.effectAllowed = "move";
         hideHandTooltip();
         setTimeout(() => el.classList.add("dragging"), 0);
+        if (canUseOption) showOptionDropZone(idx);
       });
       el.addEventListener("dragend", () => {
         el.classList.remove("dragging");
         document.querySelectorAll(".field-empty-slot.drag-over")
           .forEach(s => s.classList.remove("drag-over"));
+        hideOptionDropZone();
         setTimeout(() => { _dragged = false; }, 0);
       });
     }
