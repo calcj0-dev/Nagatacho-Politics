@@ -1789,11 +1789,6 @@ function playAbilityAnimation(fieldIndex, abilityIndex, side, callback) {
   // カードのクローン
   const clone = cardEl.cloneNode(true);
   const ps = side === "cpu" ? gameState.cpu : gameState.player;
-  const cardData = ps.field[fieldIndex];
-  if (cardData && cardData.image) {
-    clone.style.backgroundImage = `url(${cardData.image})`;
-    clone.classList.add("has-image");
-  }
   Object.assign(clone.style, {
     position: "fixed",
     left: rect.left + "px", top: rect.top + "px",
@@ -1803,7 +1798,7 @@ function playAbilityAnimation(fieldIndex, abilityIndex, side, callback) {
   });
   document.body.appendChild(clone);
 
-  const targetLine = clone.querySelectorAll(".card-ability-line")[abilityIndex];
+  const targetLine = clone.querySelectorAll(".card-ability-row")[abilityIndex]?.querySelector(".ability-name-text");
 
   const timers = [];
   let finished = false;
@@ -1887,12 +1882,8 @@ function playOptionCardAnimation(card, fromRect, isCpu, callback) {
   });
   document.body.appendChild(backdrop);
 
-  // カード要素を新規作成（backgroundImage を直接設定して非同期ロード競合を回避）
+  // カード要素を新規作成
   const clone = createCardElement(card);
-  if (card.image) {
-    clone.style.backgroundImage = `url(${card.image})`;
-    clone.classList.add("has-image");
-  }
   Object.assign(clone.style, {
     position: "fixed",
     left: rect.left + "px", top: rect.top + "px",
@@ -1901,8 +1892,6 @@ function playOptionCardAnimation(card, fromRect, isCpu, callback) {
     transformOrigin: "center center", transition: "none",
   });
   document.body.appendChild(clone);
-
-  const targetDesc = clone.querySelector(".card-desc");
 
   const timers = [];
   let finished = false;
@@ -1928,17 +1917,10 @@ function playOptionCardAnimation(card, fromRect, isCpu, callback) {
     clone.style.boxShadow = "0 0 60px 16px rgba(255,220,50,0.35)";
   }));
 
-  // Step 2: カード説明グロー（拡大完了後、3秒静止）
+  // Step 2: カードグロー（拡大完了後、3秒静止）
   timers.push(setTimeout(() => {
     if (finished) return;
     clone.style.boxShadow = "0 0 80px 24px rgba(255,220,50,0.6)";
-    if (targetDesc) {
-      targetDesc.style.transition = "background 0.2s, box-shadow 0.2s, color 0.2s";
-      targetDesc.style.background = "rgba(255,220,50,0.55)";
-      targetDesc.style.boxShadow = "0 0 16px 6px rgba(255,220,50,0.9)";
-      targetDesc.style.color = "#1a1a00";
-      targetDesc.style.borderRadius = "3px";
-    }
   }, 350));
 
   // Step 3: フェードアウト (350 + 2000 = 2350ms)
@@ -2795,19 +2777,6 @@ function renderFieldCards(containerId, cards, isPlayer) {
     if (idx < cards.length) {
       const card = cards[idx];
       const el = createCardElement(card);
-      // 小さいカード上に能力名+コストを表示
-      if (card.type === "politician" && card.abilities) {
-        const abilitySummary = document.createElement("div");
-        abilitySummary.className = "card-ability-summary";
-        const costReduction = isPlayer ? (gameState.player.currentTurnCostReduction || 0) : 0;
-        card.abilities.forEach(ability => {
-          const line = document.createElement("div");
-          line.className = "card-ability-line";
-          line.textContent = ability.name;
-          abilitySummary.appendChild(line);
-        });
-        el.appendChild(abilitySummary);
-      }
       el.addEventListener("click", () => {
         clearHandSelection();
         if (isPlayer && gameState.currentPlayer === "player") {
@@ -2984,18 +2953,6 @@ function renderHand() {
   container.classList.toggle("hand-locked", gameState.currentPlayer !== "player");
   gameState.player.hand.forEach((card, idx) => {
     const el = createCardElement(card);
-    // 手札の政治家カードにも能力サマリーを表示
-    if (card.type === "politician" && card.abilities) {
-      const abilitySummary = document.createElement("div");
-      abilitySummary.className = "card-ability-summary";
-      card.abilities.forEach(ability => {
-        const line = document.createElement("div");
-        line.className = "card-ability-line";
-        line.textContent = ability.name;
-        abilitySummary.appendChild(line);
-      });
-      el.appendChild(abilitySummary);
-    }
     const canPlace = card.type === "politician"
       && gameState.currentPlayer === "player"
       && !gameState.player.placedThisTurn
@@ -3060,27 +3017,52 @@ function createCardElement(card) {
   el.className = `card card-${card.type}`;
   el.dataset.instanceId = card.instanceId;
 
-  // 画像のフォールバック
-  const img = new Image();
+  // 画像エリア
+  const imgArea = document.createElement("div");
+  imgArea.className = "card-img-area";
+
+  const img = document.createElement("img");
+  img.className = "card-photo";
+  img.alt = card.name;
   img.src = card.image;
-  img.onload = () => {
-    el.style.backgroundImage = `url(${card.image})`;
-    el.classList.add("has-image");
-  };
-  img.onerror = () => {
-    el.classList.add("no-image");
-  };
+  img.onload = () => el.classList.add("has-image");
+  img.onerror = () => el.classList.add("no-image");
+  imgArea.appendChild(img);
 
-  const nameLabel = document.createElement("div");
-  nameLabel.className = "card-name";
-  nameLabel.textContent = card.name;
-  el.appendChild(nameLabel);
+  // 名前バー（画像上端オーバーレイ）
+  const nameBar = document.createElement("div");
+  nameBar.className = "card-name-bar";
+  nameBar.textContent = card.name;
+  imgArea.appendChild(nameBar);
 
-  if (card.type === "option") {
-    const descLabel = document.createElement("div");
-    descLabel.className = "card-desc";
-    descLabel.textContent = card.description;
-    el.appendChild(descLabel);
+  el.appendChild(imgArea);
+
+  // 能力パネル（政治家カードのみ）
+  if (card.type === "politician" && card.abilities) {
+    const panel = document.createElement("div");
+    panel.className = "card-abilities-panel";
+    card.abilities.forEach((ability, i) => {
+      if (i > 0) {
+        const sep = document.createElement("div");
+        sep.className = "card-ability-sep";
+        panel.appendChild(sep);
+      }
+      const row = document.createElement("div");
+      row.className = "card-ability-row";
+
+      const costEl = document.createElement("span");
+      costEl.className = "ability-cost-icons";
+      costEl.textContent = "💰".repeat(ability.cost);
+      row.appendChild(costEl);
+
+      const nameEl = document.createElement("span");
+      nameEl.className = "ability-name-text";
+      nameEl.textContent = ability.name;
+      row.appendChild(nameEl);
+
+      panel.appendChild(row);
+    });
+    el.appendChild(panel);
   }
 
   return el;
