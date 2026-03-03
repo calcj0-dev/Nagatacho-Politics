@@ -16,14 +16,14 @@ const POLITICIAN_CARDS = [
         name: "一口でおにぎり",
         effectText: "支持率-5%、政治資金+7億",
         description: "おにぎりの産地が注目され、地方団体からの献金",
-        cost: 0,
+        cost: 1,
         effect: "ishiba_1"
       },
       {
-        name: "ゲル顔で威嚇",
+        name: "ゲル顔プレス",
         effectText: "相手の支持率-8%、【次ターン】相手の能力コスト+1億",
-        description: "独特の表情で相手を威圧",
-        cost: 4,
+        description: "圧倒的な表情圧で記者会見の場が一瞬にして凍りつく",
+        cost: 3,
         effect: "ishiba_2"
       }
     ]
@@ -39,15 +39,15 @@ const POLITICIAN_CARDS = [
       {
         name: "早苗ネーム連呼",
         effectText: "支持率+8%、政治資金-2億",
-        description: "自分の名前を連呼して存在感アピール",
+        description: "自分の名前を繰り返すだけで保守クラスタがざわめく",
         cost: 2,
         effect: "takaichi_1"
       },
       {
         name: "靖国参拝決行",
         effectText: "支持率+12%、【次ターン開始時】相手の支持率-4%",
-        description: "保守層に強烈アピール、反発も招く",
-        cost: 5,
+        description: "外交部から止められても笑顔で参拝、毎年恒例の風物詩",
+        cost: 4,
         effect: "takaichi_2"
       }
     ]
@@ -63,14 +63,14 @@ const POLITICIAN_CARDS = [
       {
         name: "セクシー発言",
         effectText: "支持率+15% or -10%",
-        description: "「気候変動はセクシーに」などの迷言で物議",
+        description: "予想外のワードチョイスで世界中のメディアが注目、話題性は抜群",
         cost: 1,
         effect: "koizumi_1"
       },
       {
         name: "レジ袋有料化",
         effectText: "相手の支持率-5%、自分の支持率-3%、政治資金+6億",
-        description: "環境アピールだが不評",
+        description: "日本のプラごみ削減に一石を投じた勇気ある一手",
         cost: 2,
         effect: "koizumi_2"
       }
@@ -85,17 +85,17 @@ const POLITICIAN_CARDS = [
     type: "politician",
     abilities: [
       {
-        name: "Twitterブロック祭り",
+        name: "Xブロック祭り",
         effectText: "支持率-3%、政治資金+2億、次の相手ターンの支持率低下を1回無効化",
-        description: "批判者を片っ端からブロック",
-        cost: 2,
+        description: "批判コメントを片っ端からブロック、タイムラインを完璧に最適化",
+        cost: 1,
         effect: "kono_1"
       },
       {
         name: "ハンコ廃止！",
         effectText: "支持率+9%、【次ターン】自分の資金収入+3億",
-        description: "デジタル化推進で支持獲得",
-        cost: 4,
+        description: "日本のハンコ文化に終止符、デジタル行政の扉を開く",
+        cost: 2,
         effect: "kono_2"
       }
     ]
@@ -109,18 +109,18 @@ const POLITICIAN_CARDS = [
     type: "politician",
     abilities: [
       {
-        name: "ガースーです",
-        effectText: "支持率+8%（場が1枚以下なら追加+4%）",
-        description: "独特の自己紹介で親しみアピール",
-        cost: 3,
-        effect: "suga_1"
-      },
-      {
         name: "パンケーキ会食",
         effectText: "政治資金+4億、【次ターン】最初に受ける支持率低下を4%軽減",
-        description: "メディアと懐柔策",
+        description: "パンケーキで心をつかむ",
         cost: 2,
         effect: "suga_2"
+      },
+      {
+        name: "ガースーです",
+        effectText: "支持率+8%（場が1枚以下なら追加+4%）",
+        description: "まさかの自己紹介で場が和む",
+        cost: 3,
+        effect: "suga_1"
       }
     ]
   },
@@ -137,15 +137,15 @@ const POLITICIAN_CARDS = [
       {
         name: "文春砲サバイバル",
         effectText: "支持率-8%、政治資金+10億",
-        description: "不倫疑惑報道を乗り越える",
-        cost: 2,
+        description: "不倫報道後に逆に知名度爆上がり",
+        cost: 1,
         effect: "tamaki_1"
       },
       {
         name: "手取りを増やす！",
         effectText: "支持率+10%、政治資金+5億",
-        description: "国民の手取りアップを訴求",
-        cost: 4,
+        description: "シンプルな一言が有権者の心に刺さる",
+        cost: 3,
         effect: "tamaki_2"
       }
     ]
@@ -159,16 +159,16 @@ const POLITICIAN_CARDS = [
     type: "politician",
     abilities: [
       {
-        name: "若手のフットワーク",
+        name: "国会デビュー質疑",
         effectText: "支持率+9%、【次ターン】自分の能力コスト全て-1億",
-        description: "身軽に動いて支持獲得",
-        cost: 3,
+        description: "初々しさが逆に好評、SNSで話題に",
+        cost: 2,
         effect: "mori_1"
       },
       {
         name: "次世代の星",
         effectText: "支持率+7%（場が2枚以下なら追加+5%）",
-        description: "若手ならではのフレッシュさ",
+        description: "若手ならではの突破力で党の顔へ急浮上",
         cost: 3,
         effect: "mori_2"
       }
@@ -185,40 +185,40 @@ const POLITICIAN_CARDS = [
       {
         name: "静岡茶で一服",
         effectText: "政治資金+6億、次の相手ターンの支持率低下を1回無効化",
-        description: "お茶を飲んで一息",
+        description: "お茶を一杯飲む間に根回し完了",
         cost: 2,
         effect: "shinba_1"
       },
       {
-        name: "国対の調整力",
+        name: "永田町の根回し王",
         effectText: "支持率+6%、【次ターン】自分の場の全カードのコスト-2億",
-        description: "水面下の調整で場を整える",
+        description: "誰も気づかないうちに話がまとまっている",
         cost: 4,
         effect: "shinba_2"
       }
     ]
   },
   {
-    id: "k-ushida",
-    name: "M・ウシダ",
-    gender: "女",
+    id: "k-furukawa",
+    name: "M・フルカワ",
+    gender: "男",
     party: "国民民主党",
-    image: "assets/politicians/kokumin/k-ushida.png",
+    image: "assets/politicians/kokumin/k-furukawa.png",
     type: "politician",
     abilities: [
       {
-        name: "日銀理論で論破",
+        name: "キャリア官僚の洗礼",
         effectText: "相手の支持率-8%、政治資金+7億",
-        description: "経済理論で相手を圧倒",
-        cost: 5,
-        effect: "ushida_1"
+        description: "財務省仕込みの論理で委員会を制す",
+        cost: 1,
+        effect: "furukawa_1"
       },
       {
-        name: "金融緩和論",
+        name: "国家戦略会議召集",
         effectText: "支持率+8% or -3%、政治資金+4億",
-        description: "難しい経済政策を語る",
+        description: "有識者を束ね、政策を一気に動かす",
         cost: 3,
-        effect: "ushida_2"
+        effect: "furukawa_2"
       }
     ]
   },
@@ -231,16 +231,16 @@ const POLITICIAN_CARDS = [
     type: "politician",
     abilities: [
       {
-        name: "元アナの美声",
+        name: "元NHKアナの本気",
         effectText: "支持率+10%、【次ターン開始】自分の支持率+2%",
-        description: "元アナウンサーの滑舌と声で訴求力UP",
-        cost: 4,
+        description: "流暢な語り口で視聴者を魅了",
+        cost: 2,
         effect: "ito_1"
       },
       {
-        name: "ママ目線の追及",
+        name: "ママ目線の予算追及",
         effectText: "支持率+9%、相手の支持率-3%",
-        description: "子育て世代の代弁で共感",
+        description: "子育て世代の声を国会へ届ける",
         cost: 4,
         effect: "ito_2"
       }
@@ -257,17 +257,17 @@ const POLITICIAN_CARDS = [
     type: "politician",
     abilities: [
       {
-        name: "ビジョン宣言",
-        effectText: "支持率+6%（場が3枚なら追加+4%）",
-        description: "理想的なビジョンを力強く訴える",
-        cost: 3,
+        name: "未来への投資",
+        effectText: "支持率+5%",
+        description: "スタートアップ精神で政界に風穴",
+        cost: 1,
         effect: "anno_1"
       },
       {
-        name: "マニフェスト",
-        effectText: "支持率+5%",
-        description: "公約を発表して共感を集める",
-        cost: 2,
+        name: "デジタル民主主義",
+        effectText: "支持率+6%（場が3枚なら追加+4%）",
+        description: "テクノロジーで民意を政治へ直結",
+        cost: 3,
         effect: "anno_2"
       }
     ]
@@ -281,16 +281,16 @@ const POLITICIAN_CARDS = [
     type: "politician",
     abilities: [
       {
-        name: "草の根運動",
+        name: "社会保険料で混乱！",
         effectText: "支持率+4%",
-        description: "地道な草の根活動で支持を広げる",
+        description: "ミスを動画で謝罪、誠実さで逆に人気UP",
         cost: 1,
         effect: "takayama_1"
       },
       {
-        name: "SNSバズ",
+        name: "BCGメソッド炸裂",
         effectText: "支持率+7%",
-        description: "SNSで話題を作りバズらせる",
+        description: "コンサル仕込みの戦略で議会を制す",
         cost: 3,
         effect: "takayama_2"
       }
@@ -305,18 +305,18 @@ const POLITICIAN_CARDS = [
     type: "politician",
     abilities: [
       {
-        name: "構造改革",
-        effectText: "相手の支持率-5%、支持率+5%",
-        description: "既存システムを大胆に改革",
-        cost: 5,
-        effect: "muto_1"
+        name: "ママエンジニアの本気",
+        effectText: "支持率+6%",
+        description: "育児と仕事を両立するパワフルな行動力",
+        cost: 1,
+        effect: "muto_2"
       },
       {
-        name: "規制緩和",
-        effectText: "支持率+6%",
-        description: "規制緩和で経済活性化を訴える",
+        name: "NPOから永田町へ",
+        effectText: "相手の支持率-5%、支持率+5%",
+        description: "地域支援の経験が国政レベルで開花",
         cost: 3,
-        effect: "muto_2"
+        effect: "muto_1"
       }
     ]
   },
@@ -329,18 +329,18 @@ const POLITICIAN_CARDS = [
     type: "politician",
     abilities: [
       {
-        name: "テクノ政策",
-        effectText: "相手の場のランダム1枚を次の相手のターンで使用不可",
-        description: "先進技術で相手の動きを妨害",
-        cost: 4,
-        effect: "suda_1"
+        name: "文化人類学で論破",
+        effectText: "支持率+5%",
+        description: "東大文人類の視点が政界に新風を送る",
+        cost: 1,
+        effect: "suda_2"
       },
       {
-        name: "AI推進",
-        effectText: "支持率+5%",
-        description: "AI活用で社会の効率化を訴える",
-        cost: 3,
-        effect: "suda_2"
+        name: "まちづくりDX",
+        effectText: "相手の場のランダム1枚を次の相手のターンで使用不可",
+        description: "地方の課題をデジタルで一気に解決",
+        cost: 4,
+        effect: "suda_1"
       }
     ]
   },
@@ -353,16 +353,16 @@ const POLITICIAN_CARDS = [
     type: "politician",
     abilities: [
       {
-        name: "超党派連携",
+        name: "ビリヤードの撞き方",
         effectText: "このターンのみ、自分の全カードの能力コスト-1億",
-        description: "超党派で協力して政策を実現",
+        description: "趣味の精密さが政策立案に活きる",
         cost: 2,
         effect: "mineshima_1"
       },
       {
-        name: "多様性推進",
+        name: "マネーフォワードDX",
         effectText: "支持率+5%、相手の支持率-3%",
-        description: "多様性を推進し共感を獲得",
+        description: "バックオフィスを丸ごとデジタル化する",
         cost: 3,
         effect: "mineshima_2"
       }
@@ -799,7 +799,7 @@ const ABILITY_EFFECTS = {
     msgs.push("自分の場の全カードの次ターンコスト-2億！");
     return msgs;
   },
-  ushida_1(self, opponent) {
+  furukawa_1(self, opponent) {
     const msgs = [];
     const m1 = changeApproval(opponent, -8);
     if (m1) msgs.push(m1);
@@ -807,7 +807,7 @@ const ABILITY_EFFECTS = {
     msgs.push("政治資金+7億円を獲得！");
     return msgs;
   },
-  ushida_2(self, opponent) {
+  furukawa_2(self, _opponent) {
     const msgs = [];
     const m1 = changeApproval(self, 8);
     if (m1) msgs.push(m1);
@@ -1121,7 +1121,7 @@ function startPlayerTurn() {
 
   // ① 資金フェーズ
   const bonus = p.nextTurnBonuses.fundBonus;
-  const income = 3 + bonus;
+  const income = 1 + bonus;
   p.funds += income;
   p._fundsFlash = { dir: "up", delta: income };
   p.nextTurnBonuses.fundBonus = 0;
@@ -1275,9 +1275,9 @@ function startCpuTurn() {
 
   // ① 資金フェーズ
   const bonus = c.nextTurnBonuses.fundBonus;
-  c.funds += 3 + bonus;
+  c.funds += 1 + bonus;
   c.nextTurnBonuses.fundBonus = 0;
-  console.log(`[ターン${gameState.turn}] CPUのターン開始 - 資金+${3 + bonus}億 (合計${c.funds}億)`);
+  console.log(`[ターン${gameState.turn}] CPUのターン開始 - 資金+${1 + bonus}億 (合計${c.funds}億)`);
 
   // ② ドローフェーズ
   let cpuDrew = false;
