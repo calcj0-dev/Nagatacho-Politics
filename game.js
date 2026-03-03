@@ -3029,12 +3029,6 @@ function createCardElement(card) {
   img.onerror = () => el.classList.add("no-image");
   imgArea.appendChild(img);
 
-  // 名前バー（画像上端オーバーレイ）
-  const nameBar = document.createElement("div");
-  nameBar.className = "card-name-bar";
-  nameBar.textContent = card.name;
-  imgArea.appendChild(nameBar);
-
   el.appendChild(imgArea);
 
   // 能力パネル（政治家カードのみ）
