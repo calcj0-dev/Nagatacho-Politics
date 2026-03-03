@@ -21,7 +21,7 @@ const POLITICIAN_CARDS = [
       },
       {
         name: "ゲル顔プレス",
-        effectText: "相手の支持率-8%、【次ターン】相手の能力コスト+1億",
+        effectText: "相手の場のカード1枚を次ターン使用不可（ランダム）",
         description: "圧倒的な表情圧で記者会見の場が一瞬にして凍りつく",
         cost: 3,
         effect: "ishiba_2"
@@ -69,7 +69,7 @@ const POLITICIAN_CARDS = [
       },
       {
         name: "レジ袋有料化",
-        effectText: "相手の支持率-5%、自分の支持率-3%、政治資金+6億",
+        effectText: "相手の手札をランダム1枚捨て札に、政治資金+3億",
         description: "日本のプラごみ削減に一石を投じた勇気ある一手",
         cost: 2,
         effect: "koizumi_2"
@@ -93,7 +93,7 @@ const POLITICIAN_CARDS = [
       },
       {
         name: "ハンコ廃止！",
-        effectText: "支持率+9%、【次ターン】自分の資金収入+3億",
+        effectText: "支持率+6%、山札から1枚ドロー",
         description: "日本のハンコ文化に終止符、デジタル行政の扉を開く",
         cost: 2,
         effect: "kono_2"
@@ -143,7 +143,7 @@ const POLITICIAN_CARDS = [
       },
       {
         name: "手取りを増やす！",
-        effectText: "支持率+10%、政治資金+5億",
+        effectText: "相手の支持率が自分の場のカード枚数×4%DOWN",
         description: "シンプルな一言が有権者の心に刺さる",
         cost: 3,
         effect: "tamaki_2"
@@ -191,7 +191,7 @@ const POLITICIAN_CARDS = [
       },
       {
         name: "永田町の根回し王",
-        effectText: "支持率+6%、【次ターン】自分の場の全カードのコスト-2億",
+        effectText: "相手の政治家カードの能力2を全て次ターン封印",
         description: "誰も気づかないうちに話がまとまっている",
         cost: 4,
         effect: "shinba_2"
@@ -239,7 +239,7 @@ const POLITICIAN_CARDS = [
       },
       {
         name: "ママ目線の予算追及",
-        effectText: "支持率+9%、相手の支持率-3%",
+        effectText: "支持率が自分の手札のカード枚数×2%UP",
         description: "子育て世代の声を国会へ届ける",
         cost: 4,
         effect: "ito_2"
@@ -258,7 +258,7 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "未来への投資",
-        effectText: "支持率+5%",
+        effectText: "5ターン後に政治資金+10億を取得",
         description: "スタートアップ精神で政界に風穴",
         cost: 1,
         effect: "anno_1"
@@ -289,7 +289,7 @@ const POLITICIAN_CARDS = [
       },
       {
         name: "BCGメソッド炸裂",
-        effectText: "支持率+7%",
+        effectText: "支持率が自分の場のカード枚数×4%UP",
         description: "コンサル仕込みの戦略で議会を制す",
         cost: 3,
         effect: "takayama_2"
@@ -337,7 +337,7 @@ const POLITICIAN_CARDS = [
       },
       {
         name: "まちづくりDX",
-        effectText: "相手の場のランダム1枚を次の相手のターンで使用不可",
+        effectText: "相手の支持率が自分の手札のカード枚数×2%DOWN",
         description: "地方の課題をデジタルで一気に解決",
         cost: 4,
         effect: "suda_1"
@@ -555,7 +555,8 @@ const gameState = {
   currentPlayer: "player", // player | cpu
   player: createPlayerState(),
   cpu: createPlayerState(),
-  instanceIdCounter: 0
+  instanceIdCounter: 0,
+  pendingEffects: []       // 遅延効果（5ターン後投資返却など）
 };
 
 // カードインスタンスを生成（同じカード定義から複数インスタンスを作る）
@@ -564,7 +565,8 @@ function createCardInstance(cardDef) {
   return {
     ...cardDef,
     instanceId: gameState.instanceIdCounter,
-    disabled: false // 能力使用不可フラグ
+    disabled: false,       // 能力使用不可フラグ
+    sealedAbility2: false  // 能力2封印フラグ
   };
 }
 
@@ -671,10 +673,13 @@ const ABILITY_EFFECTS = {
   },
   ishiba_2(self, opponent) {
     const msgs = [];
-    const m1 = changeApproval(opponent, -8);
-    if (m1) msgs.push(m1);
-    opponent.nextTurnBonuses.costReduction -= 1; // コスト増加 = マイナスの軽減
-    msgs.push("相手の次ターンの能力コスト+1億！");
+    if (opponent.field.length > 0) {
+      const target = opponent.field[Math.floor(Math.random() * opponent.field.length)];
+      target.disabled = true;
+      msgs.push(`${target.name}の能力を次ターン封印！`);
+    } else {
+      msgs.push("相手の場にカードがなく空振り…");
+    }
     return msgs;
   },
   takaichi_1(self, opponent) {
@@ -706,12 +711,16 @@ const ABILITY_EFFECTS = {
   },
   koizumi_2(self, opponent) {
     const msgs = [];
-    const m1 = changeApproval(opponent, -5);
-    if (m1) msgs.push(m1);
-    const m2 = changeApproval(self, -3);
-    if (m2) msgs.push(m2);
-    changeFunds(self, 6);
-    msgs.push("政治資金+6億円を獲得！");
+    if (opponent.hand.length > 0) {
+      const idx = Math.floor(Math.random() * opponent.hand.length);
+      const discarded = opponent.hand.splice(idx, 1)[0];
+      opponent.discard.push(discarded);
+      msgs.push("相手の手札から1枚を捨て札にした！");
+    } else {
+      msgs.push("相手の手札がなく空振り…");
+    }
+    changeFunds(self, 3);
+    msgs.push("政治資金+3億円を獲得！");
     return msgs;
   },
   kono_1(self, opponent) {
@@ -726,10 +735,15 @@ const ABILITY_EFFECTS = {
   },
   kono_2(self, opponent) {
     const msgs = [];
-    const m1 = changeApproval(self, 9);
+    const m1 = changeApproval(self, 6);
     if (m1) msgs.push(m1);
-    self.nextTurnBonuses.fundBonus += 3;
-    msgs.push("次のターンの資金収入+3億！");
+    if (self.deck.length > 0) {
+      const drawn = self.deck.shift();
+      self.hand.push(drawn);
+      msgs.push(`${drawn.name}を手札に加えた！`);
+    } else {
+      msgs.push("山札がなくドロー不可…");
+    }
     return msgs;
   },
   suga_1(self, opponent) {
@@ -761,10 +775,14 @@ const ABILITY_EFFECTS = {
   },
   tamaki_2(self, opponent) {
     const msgs = [];
-    const m1 = changeApproval(self, 10);
+    if (self.field.length === 0) {
+      msgs.push("場にカードがなく効果なし…");
+      return msgs;
+    }
+    const down = self.field.length * 4;
+    const m1 = changeApproval(opponent, -down);
     if (m1) msgs.push(m1);
-    changeFunds(self, 5);
-    msgs.push("政治資金+5億円を獲得！");
+    msgs.push(`自分の場${self.field.length}枚×4%=${down}%DOWN！`);
     return msgs;
   },
   mori_1(self, opponent) {
@@ -793,10 +811,13 @@ const ABILITY_EFFECTS = {
   },
   shinba_2(self, opponent) {
     const msgs = [];
-    self.nextTurnBonuses.costReduction += 2;
-    const m1 = changeApproval(self, 6);
-    if (m1) msgs.push(m1);
-    msgs.push("自分の場の全カードの次ターンコスト-2億！");
+    const politicians = opponent.field.filter(c => c.type === "politician");
+    if (politicians.length === 0) {
+      msgs.push("相手の場に政治家カードがなく空振り…");
+      return msgs;
+    }
+    politicians.forEach(c => { c.sealedAbility2 = true; });
+    msgs.push("相手の全政治家カードの能力2を封印！");
     return msgs;
   },
   furukawa_1(self, opponent) {
@@ -829,26 +850,33 @@ const ABILITY_EFFECTS = {
   },
   ito_2(self, opponent) {
     const msgs = [];
-    const m1 = changeApproval(self, 9);
+    if (self.hand.length === 0) {
+      msgs.push("手札がなく効果なし…");
+      return msgs;
+    }
+    const up = self.hand.length * 2;
+    const m1 = changeApproval(self, up);
     if (m1) msgs.push(m1);
-    const m2 = changeApproval(opponent, -3);
-    if (m2) msgs.push(m2);
+    msgs.push(`手札${self.hand.length}枚×2%=${up}%UP！`);
     return msgs;
   },
 
   // --- チームみらい ---
   anno_1(self, opponent) {
     const msgs = [];
-    let bonus = 0;
-    if (self.field.length >= 3) bonus = 4;
-    const m1 = changeApproval(self, 6 + bonus);
-    if (m1) msgs.push(m1);
+    const returnTurn = gameState.turn + 5;
+    const isPlayer = self === gameState.player;
+    gameState.pendingEffects.push({ type: "anno_invest", player: isPlayer ? "player" : "cpu", returnTurn, amount: 10 });
+    msgs.push(`投資完了！5ターン後（第${returnTurn}ターン）に+10億で返却！`);
     return msgs;
   },
   anno_2(self, opponent) {
     const msgs = [];
-    const m1 = changeApproval(self, 5);
+    let bonus = 0;
+    if (self.field.length >= 3) bonus = 4;
+    const m1 = changeApproval(self, 6 + bonus);
     if (m1) msgs.push(m1);
+    if (bonus > 0) msgs.push("場のカードが3枚で追加+4%！");
     return msgs;
   },
   takayama_1(self, opponent) {
@@ -859,8 +887,14 @@ const ABILITY_EFFECTS = {
   },
   takayama_2(self, opponent) {
     const msgs = [];
-    const m1 = changeApproval(self, 7);
+    if (self.field.length === 0) {
+      msgs.push("場にカードがなく効果なし…");
+      return msgs;
+    }
+    const up = self.field.length * 4;
+    const m1 = changeApproval(self, up);
     if (m1) msgs.push(m1);
+    msgs.push(`自分の場${self.field.length}枚×4%=${up}%UP！`);
     return msgs;
   },
   muto_1(self, opponent) {
@@ -879,13 +913,14 @@ const ABILITY_EFFECTS = {
   },
   suda_1(self, opponent) {
     const msgs = [];
-    if (opponent.field.length > 0) {
-      const target = opponent.field[Math.floor(Math.random() * opponent.field.length)];
-      target.disabled = true;
-      msgs.push(`${target.name}の能力を次ターン封印！`);
-    } else {
-      msgs.push("相手の場にカードがなく空振り…");
+    if (self.hand.length === 0) {
+      msgs.push("手札がなく効果なし…");
+      return msgs;
     }
+    const down = self.hand.length * 2;
+    const m1 = changeApproval(opponent, -down);
+    if (m1) msgs.push(m1);
+    msgs.push(`自分の手札${self.hand.length}枚×2%=${down}%DOWN！`);
     return msgs;
   },
   suda_2(self, opponent) {
@@ -1097,6 +1132,19 @@ function executeEffect(effectId, executor) {
 // ターンループ
 // ============================================================
 
+// 遅延効果の処理（anno_1の投資返却など）
+function processPendingEffects() {
+  gameState.pendingEffects = gameState.pendingEffects.filter(e => {
+    if (e.returnTurn === gameState.turn) {
+      const target = e.player === "player" ? gameState.player : gameState.cpu;
+      changeFunds(target, e.amount);
+      console.log(`  [投資返却] ${e.player} +${e.amount}億 (ターン${gameState.turn})`);
+      return false;
+    }
+    return true;
+  });
+}
+
 function startPlayerTurn() {
   const p = gameState.player;
   gameState.currentPlayer = "player";
@@ -1106,8 +1154,11 @@ function startPlayerTurn() {
   p.usedAbilities = {};
   p.usedOptionThisTurn = false;
 
-  // disabled解除（前ターンで封印されたカードを復帰）
-  p.field.forEach(c => { c.disabled = false; });
+  // disabled解除・sealedAbility2解除（前ターンで封印されたカードを復帰）
+  p.field.forEach(c => { c.disabled = false; c.sealedAbility2 = false; });
+
+  // 遅延効果の処理
+  processPendingEffects();
 
   // 次ターンボーナスの支持率ボーナスを適用
   if (p.nextTurnBonuses.approvalBonus) {
@@ -1263,7 +1314,7 @@ function startCpuTurn() {
   c.placedThisTurn = false;
   c.usedAbilities = {};
   c.usedOptionThisTurn = false;
-  c.field.forEach(card => { card.disabled = false; });
+  c.field.forEach(card => { card.disabled = false; card.sealedAbility2 = false; });
 
   if (c.nextTurnBonuses.approvalBonus) {
     changeApproval(c, c.nextTurnBonuses.approvalBonus);
@@ -1428,7 +1479,7 @@ function cpuPhaseAbilities() {
     if (c.usedAbilities[card.instanceId] || card.disabled) continue;
     const costs = card.abilities.map(a => Math.max(0, a.cost - cr));
     const afford0 = c.funds >= costs[0];
-    const afford1 = c.funds >= costs[1];
+    const afford1 = !card.sealedAbility2 && c.funds >= costs[1];
     let chosen = -1;
     if (afford0 && afford1) {
       chosen = costs[1] >= costs[0] ? 1 : 0;
@@ -1454,8 +1505,21 @@ function cpuExecuteNextAbility(abilityActions, idx) {
     const cr = c.currentTurnCostReduction || 0;
     let abilityIdx = action.abilityIdx;
     let effectiveCost = Math.max(0, action.card.abilities[abilityIdx].cost - cr);
-    if (c.funds < effectiveCost) {
+    // 能力2が封印されている場合は能力1にフォールバック
+    if (abilityIdx === 1 && action.card.sealedAbility2) {
+      const altCost = Math.max(0, action.card.abilities[0].cost - cr);
+      if (c.funds >= altCost) {
+        abilityIdx = 0;
+        effectiveCost = altCost;
+      } else {
+        idx++; continue;
+      }
+    } else if (c.funds < effectiveCost) {
       const altIdx = 1 - abilityIdx;
+      // 代替能力が封印されていないか確認
+      if (altIdx === 1 && action.card.sealedAbility2) {
+        idx++; continue;
+      }
       const altCost = Math.max(0, action.card.abilities[altIdx].cost - cr);
       if (c.funds >= altCost) {
         abilityIdx = altIdx;
@@ -1725,6 +1789,7 @@ function useAbility(fieldIndex, abilityIndex) {
 
   if (!card) return;
   if (card.disabled) return;
+  if (abilityIndex === 1 && card.sealedAbility2) return;
   if (p.usedAbilities[card.instanceId]) return;
 
   const ability = card.abilities[abilityIndex];
@@ -2289,11 +2354,17 @@ function showCardZoom(card, context, index) {
         const item = document.createElement("div");
         item.className = "zoom-ability-item";
 
+        // 能力2封印判定
+        const isSealed = isFieldPlayer && aIdx === 1 && card.sealedAbility2;
+
         // スタイル判定
         if (isFieldPlayer) {
           if (usedIdx >= 0) {
             // 使用済み能力として表示
             item.classList.add("ability-used");
+          } else if (isSealed) {
+            // 能力2封印中: グレーアウト
+            item.classList.add("inactive");
           } else if (p.funds < effectiveCost) {
             // 資金不足: グレーアウト（非表示にはしない）
             item.classList.add("inactive");
@@ -2302,18 +2373,22 @@ function showCardZoom(card, context, index) {
 
         const nameRow = document.createElement("div");
         nameRow.className = "zoom-ability-name";
-        nameRow.innerHTML = `${ability.name}（${fundsToHtml(effectiveCost)}）`;
+        if (isSealed) {
+          nameRow.innerHTML = `${ability.name}（封印中）`;
+        } else {
+          nameRow.innerHTML = `${ability.name}（${fundsToHtml(effectiveCost)}）`;
+        }
         item.appendChild(nameRow);
 
         if (ability.effectText) {
           const effectRow = document.createElement("div");
           effectRow.className = "zoom-ability-effect";
-          effectRow.textContent = ability.effectText;
+          effectRow.textContent = isSealed ? "【封印中】次のターンまで使用不可" : ability.effectText;
           item.appendChild(effectRow);
         }
 
-        // 場のプレイヤーカード: クリックで確認ダイアログ（未使用・資金十分時のみ）
-        if (isFieldPlayer && usedIdx < 0 && p.funds >= effectiveCost) {
+        // 場のプレイヤーカード: クリックで確認ダイアログ（未使用・資金十分・封印なしの時のみ）
+        if (isFieldPlayer && usedIdx < 0 && !isSealed && p.funds >= effectiveCost) {
           item.addEventListener("click", (e) => {
             e.stopPropagation();
             overlay.remove();
