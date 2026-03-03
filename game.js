@@ -2810,13 +2810,8 @@ function renderFieldCards(containerId, cards, isPlayer) {
       }
       el.addEventListener("click", () => {
         clearHandSelection();
-        const isMobile = window.matchMedia("(pointer: coarse)").matches;
         if (isPlayer && gameState.currentPlayer === "player") {
-          if (isMobile) {
-            showCardActionMenu(card, idx, true, el);
-          } else {
-            showCardZoom(card, "field", idx);
-          }
+          showCardZoom(card, "field", idx);
         } else {
           showCardZoom(card, "view");
         }
@@ -2825,29 +2820,6 @@ function renderFieldCards(containerId, cards, isPlayer) {
     } else {
       const empty = document.createElement("div");
       empty.className = "field-empty-slot";
-      // プレイヤーの場: 未配置ならドロップターゲットにする
-      if (isPlayer && gameState.currentPlayer === "player" && !gameState.player.placedThisTurn) {
-        empty.addEventListener("dragover", (e) => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = "move";
-          empty.classList.add("drag-over");
-        });
-        empty.addEventListener("dragleave", () => empty.classList.remove("drag-over"));
-        empty.addEventListener("drop", (e) => {
-          e.preventDefault();
-          empty.classList.remove("drag-over");
-          const handIdx = parseInt(e.dataTransfer.getData("text/plain"), 10);
-          if (isNaN(handIdx)) return;
-          const draggedCard = gameState.player.hand[handIdx];
-          if (!draggedCard || draggedCard.type !== "politician") return; // オプションカードは弾く
-          const srcEl = document.querySelectorAll("#player-hand .card")[handIdx];
-          if (srcEl) {
-            animateCardFly(srcEl, empty, true, () => playCardToField(handIdx));
-          } else {
-            playCardToField(handIdx);
-          }
-        });
-      }
       container.appendChild(empty);
     }
   }
@@ -2865,50 +2837,7 @@ function renderCpuHand() {
   });
 }
 
-let _handTooltipEl = null;
 let selectedHandIndex = null; // タップ選択中の手札インデックス
-
-function showHandTooltip(card, cardEl) {
-  hideHandTooltip();
-  const tip = document.createElement("div");
-  tip.className = "card-tooltip";
-
-  if (card.type === "politician" && card.abilities) {
-    let html = `<div class="tip-card-name">${card.name}</div>`;
-    card.abilities.forEach(ab => {
-      html += `<div class="tip-ability">
-        <span class="tip-ability-name">${ab.name}</span>
-        <span class="tip-ability-cost">${ab.cost}億</span>
-        <div class="tip-ability-effect">${ab.effectText || ""}</div>
-      </div>`;
-    });
-    tip.innerHTML = html;
-  } else {
-    tip.innerHTML = `<div class="tip-card-name">${card.name}</div>
-      ${card.effectText ? `<div class="tip-ability-effect">${card.effectText}</div>` : ""}
-      ${card.description ? `<div class="tip-desc">${card.description}</div>` : ""}`;
-  }
-
-  document.body.appendChild(tip);
-  _handTooltipEl = tip;
-
-  const rect = cardEl.getBoundingClientRect();
-  const tipH = tip.offsetHeight;
-  const tipW = tip.offsetWidth;
-  let top = rect.top - tipH - 10;
-  if (top < 4) top = rect.bottom + 10;
-  let left = rect.left + rect.width / 2 - tipW / 2;
-  left = Math.max(4, Math.min(left, window.innerWidth - tipW - 4));
-  tip.style.top = `${top}px`;
-  tip.style.left = `${left}px`;
-}
-
-function hideHandTooltip() {
-  if (_handTooltipEl) {
-    _handTooltipEl.remove();
-    _handTooltipEl = null;
-  }
-}
 
 // タッチD&D（モバイル向け）: 政治家→空スロット / オプション→ドロップゾーン
 function addTouchDrag(el, idx, canPlace, canUseOption) {
@@ -2941,7 +2870,6 @@ function addTouchDrag(el, idx, canPlace, canUseOption) {
     // 8px 以上動いたらドラッグ開始
     if (!ts.moved && Math.hypot(dx, dy) > 8) {
       ts.moved = true;
-      hideHandTooltip();
       el.style.opacity = "0.3";
       const clone = el.cloneNode(true);
       Object.assign(clone.style, {
@@ -3049,90 +2977,6 @@ function selectHandCard(idx, el, canPlace) {
   }
 }
 
-// フィールドカードタップ時のアクションメニュー
-function showCardActionMenu(card, fieldIndex, isPlayer, anchorEl) {
-  document.querySelectorAll(".card-action-menu").forEach(el => el.remove());
-
-  const menu = document.createElement("div");
-  menu.className = "card-action-menu";
-
-  if (isPlayer && gameState.currentPlayer === "player" && card.type === "politician") {
-    const p = gameState.player;
-    const costReduction = p.currentTurnCostReduction || 0;
-    const usedVal = p.usedAbilities[card.instanceId];
-
-    if (card.disabled) {
-      const msg = document.createElement("div");
-      msg.className = "cam-status-msg";
-      msg.textContent = "封印中";
-      menu.appendChild(msg);
-    } else if (usedVal) {
-      const msg = document.createElement("div");
-      msg.className = "cam-status-msg";
-      msg.textContent = "使用済み";
-      menu.appendChild(msg);
-    } else if (card.abilities) {
-      card.abilities.forEach((ability, aIdx) => {
-        const effectiveCost = Math.max(0, ability.cost - costReduction);
-        const canUse = p.funds >= effectiveCost;
-        const btn = document.createElement("button");
-        btn.className = "cam-btn" + (canUse ? "" : " cam-btn-disabled");
-        const nameSpan = document.createElement("span");
-        nameSpan.textContent = ability.name;
-        const costSpan = document.createElement("span");
-        costSpan.className = "cam-cost";
-        costSpan.textContent = effectiveCost + "億";
-        btn.appendChild(nameSpan);
-        btn.appendChild(costSpan);
-        if (canUse) {
-          btn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            menu.remove();
-            useAbility(fieldIndex, aIdx);
-          });
-        }
-        menu.appendChild(btn);
-      });
-    }
-  }
-
-  const detailBtn = document.createElement("button");
-  detailBtn.className = "cam-btn cam-btn-detail";
-  detailBtn.textContent = "詳細確認";
-  detailBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    menu.remove();
-    showCardZoom(card, isPlayer && gameState.currentPlayer === "player" ? "field" : "view", fieldIndex);
-  });
-  menu.appendChild(detailBtn);
-
-  // いったん非表示で追加してサイズ計測
-  menu.style.visibility = "hidden";
-  document.body.appendChild(menu);
-  const menuRect = menu.getBoundingClientRect();
-  const cardRect = anchorEl.getBoundingClientRect();
-
-  let left = cardRect.left + cardRect.width / 2;
-  let top = cardRect.top - menuRect.height - 10;
-  if (top < 8) top = cardRect.bottom + 10;
-
-  const halfW = menuRect.width / 2;
-  left = Math.max(halfW + 8, Math.min(window.innerWidth - halfW - 8, left));
-  top  = Math.max(8, Math.min(window.innerHeight - menuRect.height - 8, top));
-
-  menu.style.left = left + "px";
-  menu.style.top  = top  + "px";
-  menu.style.visibility = "";
-
-  // 外側クリックで閉じる
-  const dismiss = (e) => {
-    if (!menu.contains(e.target)) {
-      menu.remove();
-      document.removeEventListener("click", dismiss, true);
-    }
-  };
-  setTimeout(() => document.addEventListener("click", dismiss, true), 0);
-}
 
 function renderHand() {
   const container = document.getElementById("player-hand");
@@ -3160,72 +3004,34 @@ function renderHand() {
       && gameState.currentPlayer === "player"
       && !gameState.player.usedOptionThisTurn;
 
-    const isTouch = window.matchMedia("(pointer: coarse)").matches;
+    // タップ選択方式
+    if (selectedHandIndex === idx) el.classList.add("card-selected");
 
-    if (isTouch) {
-      // モバイル: タップ選択方式
-      // 選択中であれば選択状態を復元
-      if (selectedHandIndex === idx) el.classList.add("card-selected");
-
-      el.addEventListener("click", (e) => {
-        e.stopPropagation();
-        hideHandTooltip();
-        if (gameState.currentPlayer !== "player") {
-          showCardZoom(card, "view");
-          return;
-        }
-        if (canUseOption && !canPlace) {
-          // オプション: タップで即使用
-          clearHandSelection();
-          useOptionCard(idx);
-        } else if (canPlace) {
-          // 政治家: タップ選択切り替え
-          if (selectedHandIndex === idx) {
-            clearHandSelection();
-          } else {
-            selectHandCard(idx, el, canPlace);
-          }
-        } else {
-          showCardZoom(card, "view");
-        }
-      });
-    } else {
-      // デスクトップ: ホバーツールチップ + クリック詳細 + ドラッグ操作
-      el.addEventListener("mouseenter", () => showHandTooltip(card, el));
-      el.addEventListener("mouseleave", hideHandTooltip);
-      let _dragged = false;
-      el.addEventListener("click", () => {
-        if (_dragged) return;
-        hideHandTooltip();
-        if (gameState.currentPlayer !== "player") return;
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (gameState.currentPlayer !== "player") {
         showCardZoom(card, "view");
-      });
-      if (canPlace || canUseOption) {
-        el.draggable = true;
-        el.addEventListener("dragstart", (e) => {
-          _dragged = true;
-          e.dataTransfer.setData("text/plain", String(idx));
-          e.dataTransfer.effectAllowed = "move";
-          hideHandTooltip();
-          setTimeout(() => el.classList.add("dragging"), 0);
-          if (canUseOption) showOptionDropZone(idx);
-        });
-        el.addEventListener("dragend", () => {
-          el.classList.remove("dragging");
-          document.querySelectorAll(".field-empty-slot.drag-over")
-            .forEach(s => s.classList.remove("drag-over"));
-          hideOptionDropZone();
-          setTimeout(() => { _dragged = false; }, 0);
-        });
+        return;
       }
-    }
+      if (canUseOption && !canPlace) {
+        // オプション: タップで即使用
+        clearHandSelection();
+        useOptionCard(idx);
+      } else if (canPlace) {
+        // 政治家: タップ選択切り替え
+        if (selectedHandIndex === idx) {
+          clearHandSelection();
+        } else {
+          selectHandCard(idx, el, canPlace);
+        }
+      } else {
+        showCardZoom(card, "view");
+      }
+    });
     container.appendChild(el);
   });
 
-  // モバイルのみファン効果を適用
-  if (window.matchMedia("(pointer: coarse)").matches) {
-    applyHandFan(container);
-  }
+  applyHandFan(container);
 }
 
 // 手札ファン（扇形）レイアウト

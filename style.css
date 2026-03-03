@@ -1304,58 +1304,6 @@ h1 {
    手札ホバートゥールチップ
    ============================================================ */
 
-.card-tooltip {
-  position: fixed;
-  z-index: 400;
-  background: rgba(10, 10, 30, 0.97);
-  border: 1px solid rgba(255, 215, 0, 0.5);
-  border-radius: 8px;
-  padding: 10px 14px;
-  min-width: 180px;
-  max-width: 260px;
-  pointer-events: none;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
-}
-
-.tip-card-name {
-  font-size: 0.85rem;
-  font-weight: bold;
-  color: #ffd700;
-  margin-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
-  padding-bottom: 4px;
-}
-
-.tip-ability {
-  margin-top: 6px;
-}
-
-.tip-ability-name {
-  font-size: 0.78rem;
-  font-weight: bold;
-  color: #eee;
-}
-
-.tip-ability-cost {
-  font-size: 0.7rem;
-  color: #ffd700;
-  margin-left: 6px;
-}
-
-.tip-ability-effect {
-  font-size: 0.72rem;
-  color: #e94560;
-  margin-top: 2px;
-  line-height: 1.35;
-}
-
-.tip-desc {
-  font-size: 0.72rem;
-  color: #aaa;
-  margin-top: 4px;
-  line-height: 1.4;
-}
-
 /* ============================================================
    終了画面: セカンダリボタン
    ============================================================ */
@@ -1548,73 +1496,6 @@ h1 {
   50%       { box-shadow: 0 0 22px 7px rgba(74, 171, 240, 0.65); }
 }
 
-/* カードアクションメニュー */
-.card-action-menu {
-  position: fixed;
-  z-index: 500;
-  background: rgba(8, 8, 28, 0.97);
-  border: 1px solid rgba(74, 171, 240, 0.4);
-  border-radius: 12px;
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 155px;
-  max-width: 230px;
-  box-shadow: 0 6px 32px rgba(0, 0, 0, 0.75);
-  animation: cam-appear 0.14s ease-out;
-}
-
-@keyframes cam-appear {
-  from { opacity: 0; transform: translateX(-50%) scale(0.86); }
-  to   { opacity: 1; transform: translateX(-50%) scale(1); }
-}
-
-.cam-btn {
-  background: rgba(74, 171, 240, 0.1);
-  border: 1px solid rgba(74, 171, 240, 0.3);
-  border-radius: 8px;
-  color: #eee;
-  padding: 10px 12px;
-  font-size: 0.82rem;
-  font-family: inherit;
-  cursor: pointer;
-  text-align: left;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-}
-
-.cam-btn:active { background: rgba(74, 171, 240, 0.28); }
-
-.cam-btn-disabled {
-  opacity: 0.4;
-  pointer-events: none;
-}
-
-.cam-btn-detail {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.15);
-  color: #999;
-  font-size: 0.75rem;
-  justify-content: center;
-}
-
-.cam-cost {
-  font-size: 0.72rem;
-  color: #ffd700;
-  font-weight: bold;
-  white-space: nowrap;
-}
-
-.cam-status-msg {
-  color: #888;
-  font-size: 0.78rem;
-  text-align: center;
-  padding: 8px 12px;
-}
-
 /* ============================================================
    能力発動時カード発光
    ============================================================ */
@@ -1715,6 +1596,9 @@ h1 {
   .player-area > .field-row   { flex-shrink: 0; }
   .player-area > .player-info { flex-shrink: 0; }
 
+  /* プレイヤーエリア: field-row を伸縮可にして player-info（政治資金）が常に表示されるよう保証 */
+  .player-area-self > .field-row { flex: 1 1 0; min-height: 0; overflow: hidden; }
+
   /* =====================================================
      Step3: カードサイズを vh 基準に統一
      ===================================================== */
@@ -1753,9 +1637,6 @@ h1 {
   .active-effects {
     display: none;
   }
-
-  /* カード上のテキスト説明を非表示（画像＋能力名のみ表示） */
-  .card-desc { display: none; }
 
   /* 手札カード */
   .card {
