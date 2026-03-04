@@ -1716,47 +1716,85 @@ function checkWinCondition() {
 // 手札→場カードフライアニメーション
 // isPlayer=true → 青グロー / false → 橙グロー
 function animateCardFly(srcEl, destEl, isPlayer, onDone) {
-  const srcRect = srcEl.getBoundingClientRect();
+  const srcRect  = srcEl.getBoundingClientRect();
   const destRect = destEl.getBoundingClientRect();
 
   const clone = srcEl.cloneNode(true);
-  clone.style.position = "fixed";
-  clone.style.left = srcRect.left + "px";
-  clone.style.top = srcRect.top + "px";
-  clone.style.width = srcRect.width + "px";
-  clone.style.height = srcRect.height + "px";
-  clone.style.margin = "0";
-  clone.style.zIndex = "500";
-  clone.style.pointerEvents = "none";
-  clone.style.transition = "none";
-  clone.style.transform = "none";
+  Object.assign(clone.style, {
+    position: "fixed", margin: "0", zIndex: "500",
+    pointerEvents: "none", transition: "none",
+    transformOrigin: "center center",
+    left: srcRect.left + "px", top: srcRect.top + "px",
+    width: srcRect.width + "px", height: srcRect.height + "px",
+  });
   document.body.appendChild(clone);
 
-  clone.getBoundingClientRect(); // force layout
+  const glowRgb = isPlayer ? "74,171,240" : "240,160,32";
 
-  requestAnimationFrame(() => {
-    clone.style.transition = [
-      "left 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-      "top 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
-      "width 0.33s ease",
-      "height 0.33s ease",
-      "box-shadow 0.38s ease",
-      "transform 0.38s ease"
-    ].join(", ");
-    clone.style.left = destRect.left + "px";
-    clone.style.top = destRect.top + "px";
-    clone.style.width = destRect.width + "px";
-    clone.style.height = destRect.height + "px";
-    clone.style.transform = "scale(1.04)";
-    clone.style.boxShadow = isPlayer
-      ? "0 8px 28px rgba(74, 171, 240, 0.65)"
-      : "0 8px 28px rgba(240, 160, 32, 0.65)";
-  });
+  // 弧の制御点: 画面中央に向かって膨らむ
+  const startX = srcRect.left  + srcRect.width  / 2;
+  const startY = srcRect.top   + srcRect.height / 2;
+  const endX   = destRect.left + destRect.width  / 2;
+  const endY   = destRect.top  + destRect.height / 2;
+  const midY   = (startY + endY) / 2;
+  const vCenterY = window.innerHeight / 2;
+  const bulge  = Math.abs(endY - startY) * 0.55 + 60;
+  const ctrlX  = (startX + endX) / 2;
+  const ctrlY  = midY > vCenterY ? midY - bulge : midY + bulge;
 
-  setTimeout(() => {
-    clone.remove();
-    onDone();
-  }, 410);
+  const DURATION = 530;
+  const startW = srcRect.width,  startH = srcRect.height;
+  const endW   = destRect.width, endH   = destRect.height;
+  const t0 = performance.now();
+
+  function easeInOut(t) { return t < 0.5 ? 2*t*t : -1 + (4-2*t)*t; }
+
+  function frame(now) {
+    const raw = Math.min((now - t0) / DURATION, 1);
+    const t   = easeInOut(raw);
+    const inv = 1 - t;
+
+    // 二次ベジェ曲線
+    const bx = inv*inv*startX + 2*inv*t*ctrlX + t*t*endX;
+    const by = inv*inv*startY + 2*inv*t*ctrlY + t*t*endY;
+
+    // サイズ補間
+    const w = startW + (endW - startW) * t;
+    const h = startH + (endH - startH) * t;
+
+    // 弧の頂点(raw=0.5)でエフェクト最大
+    const arc    = Math.sin(Math.PI * raw);
+    const scale  = 1 + arc * 0.38;
+    const glow   = Math.round(arc * 32);
+    const bright = 1 + arc * 0.6;
+
+    clone.style.left      = (bx - w / 2) + "px";
+    clone.style.top       = (by - h / 2) + "px";
+    clone.style.width     = w + "px";
+    clone.style.height    = h + "px";
+    clone.style.transform = `scale(${scale.toFixed(3)})`;
+    clone.style.boxShadow = `0 0 ${glow}px ${Math.round(glow/2)}px rgba(${glowRgb},${(arc * 0.9).toFixed(2)})`;
+    clone.style.filter    = `brightness(${bright.toFixed(2)})`;
+
+    if (raw < 1) {
+      requestAnimationFrame(frame);
+    } else {
+      // 着地バースト
+      const burst = document.createElement("div");
+      burst.className = `card-land-burst ${isPlayer ? "burst-player" : "burst-cpu"}`;
+      Object.assign(burst.style, {
+        position: "fixed",
+        left: (endX - 55) + "px", top: (endY - 55) + "px",
+        pointerEvents: "none", zIndex: "499",
+      });
+      document.body.appendChild(burst);
+      burst.addEventListener("animationend", () => burst.remove(), { once: true });
+      clone.remove();
+      onDone();
+    }
+  }
+
+  requestAnimationFrame(frame);
 }
 
 // 手札から政治家カードを場に出す
@@ -2103,36 +2141,83 @@ function showResultOverlay(title, messages, onClose) {
 function showSurveyOverlay(onClose) {
   const pa = gameState.player.approval;
   const ca = gameState.cpu.approval;
+  const surveyNum = gameState.turn / 5;
+
+  // 前回調査との差（5ターン前の履歴を参照）
+  const hist = gameState.approvalHistory;
+  const prevEntry = surveyNum > 1 ? hist.find(h => h.turn === gameState.turn - 4) : null;
+  const paDelta = prevEntry != null ? pa - prevEntry.player : null;
+  const caDelta = prevEntry != null ? ca - prevEntry.cpu    : null;
+
+  const deltaHtml = (d) => {
+    if (d === null) return "";
+    if (d > 0) return `<div class="surv-delta surv-delta-up">▲ +${d}%</div>`;
+    if (d < 0) return `<div class="surv-delta surv-delta-down">▼ ${d}%</div>`;
+    return `<div class="surv-delta surv-delta-same">→ 変化なし</div>`;
+  };
+
+  const diff = pa - ca;
+  const summaryHtml = diff > 0
+    ? `<div class="surv-summary surv-lead">あなたが <strong>${diff}%</strong> リード</div>`
+    : diff < 0
+    ? `<div class="surv-summary surv-behind">CPU が <strong>${Math.abs(diff)}%</strong> リード</div>`
+    : `<div class="surv-summary surv-even">同率</div>`;
+
+  const playerParty = gameState.player.party || "あなた";
+
   showOverlay(`
-    <h2>情勢調査結果</h2>
-    <div class="survey-bar">
-      <div class="survey-row">
-        <span>あなた:</span>
-        <div class="bar-container"><div class="bar bar-player" style="width:0%"></div></div>
-        <span>${pa}%</span>
-      </div>
-      <div class="survey-row">
-        <span>CPU:</span>
-        <div class="bar-container"><div class="bar bar-cpu" style="width:0%"></div></div>
-        <span>${ca}%</span>
-      </div>
+    <div class="surv-header">
+      <div class="surv-num">第 ${surveyNum} 回&nbsp;情勢調査</div>
+      <div class="surv-subtitle">ターン ${gameState.turn} 終了時点</div>
     </div>
+    <div class="surv-block ${diff > 0 ? "surv-block-leading" : ""}">
+      <div class="surv-block-label">${playerParty}</div>
+      <div class="surv-block-row">
+        <div class="surv-bar-wrap"><div class="surv-bar surv-bar-player" id="surv-bar-p"></div></div>
+        <div class="surv-pct surv-pct-player" id="surv-pct-p">0%</div>
+      </div>
+      ${deltaHtml(paDelta)}
+    </div>
+    <div class="surv-block ${diff < 0 ? "surv-block-leading" : ""}">
+      <div class="surv-block-label">CPU</div>
+      <div class="surv-block-row">
+        <div class="surv-bar-wrap"><div class="surv-bar surv-bar-cpu" id="surv-bar-c"></div></div>
+        <div class="surv-pct surv-pct-cpu" id="surv-pct-c">0%</div>
+      </div>
+      ${deltaHtml(caDelta)}
+    </div>
+    ${summaryHtml}
     <div class="overlay-buttons">
       <button id="survey-ok" class="overlay-btn btn-confirm">続ける</button>
     </div>
   `);
-  // オーバーレイコンテンツ スライドイン
+
   const content = document.getElementById("overlay-content");
   content.classList.remove("survey-overlay-enter");
   void content.offsetWidth;
   content.classList.add("survey-overlay-enter");
-  // バーを0%から実値へアニメーション（スライドイン後）
-  setTimeout(() => {
-    const barPlayer = document.querySelector(".bar-player");
-    const barCpu = document.querySelector(".bar-cpu");
-    if (barPlayer) barPlayer.style.width = `${pa}%`;
-    if (barCpu) barCpu.style.width = `${ca}%`;
-  }, 200);
+
+  // バーとカウントアップを順番に発火
+  function animateStat(pctId, barId, target, delay) {
+    setTimeout(() => {
+      const barEl = document.getElementById(barId);
+      const pctEl = document.getElementById(pctId);
+      if (!barEl || !pctEl) return;
+      barEl.style.transition = "width 0.9s cubic-bezier(0.22,1,0.36,1)";
+      barEl.style.width = target + "%";
+      const t0 = performance.now();
+      (function frame(now) {
+        const t = Math.min((now - t0) / 900, 1);
+        const ease = 1 - Math.pow(1 - t, 3);
+        pctEl.textContent = Math.round(ease * target) + "%";
+        if (t < 1) requestAnimationFrame(frame);
+      })(t0);
+    }, delay);
+  }
+
+  animateStat("surv-pct-p", "surv-bar-p", pa, 320);
+  animateStat("surv-pct-c", "surv-bar-c", ca, 1050);
+
   document.getElementById("survey-ok").addEventListener("click", () => {
     hideOverlay();
     if (onClose) onClose();
@@ -2603,13 +2688,13 @@ function animateCardToDiscard(card, isPlayer, onDone) {
 }
 
 // 共通: 大型フローティング数値 + プレイヤーエリアフラッシュ
-function showStatBigDelta(text, dir, offsetX = 0) {
+function showStatBigDelta(text, textClass, flashClass, anchorEl) {
   // プレイヤーエリアフラッシュ
   const playerArea = document.querySelector(".player-area-self");
   if (playerArea) {
     const areaRect = playerArea.getBoundingClientRect();
     const flash = document.createElement("div");
-    flash.className = `player-area-flash player-area-flash-${dir}`;
+    flash.className = `player-area-flash ${flashClass}`;
     Object.assign(flash.style, {
       position: "fixed",
       left: areaRect.left + "px", top: areaRect.top + "px",
@@ -2620,14 +2705,21 @@ function showStatBigDelta(text, dir, offsetX = 0) {
     flash.addEventListener("animationend", () => flash.remove(), { once: true });
   }
 
-  // 大型フローティング数値（プレイヤーinfo中央の上に出す）
-  const infoEl = document.querySelector(".player-area-self .player-info");
-  const infoRect = infoEl ? infoEl.getBoundingClientRect() : null;
-  const cx = (infoRect ? infoRect.left + infoRect.width / 2 : window.innerWidth / 2) + offsetX;
-  const cy = infoRect ? infoRect.top - 8 : window.innerHeight * 0.58;
+  // アンカー要素の中央を起点にする
+  let cx, cy;
+  if (anchorEl) {
+    const r = anchorEl.getBoundingClientRect();
+    cx = r.left + r.width / 2;
+    cy = r.top;
+  } else {
+    const infoEl = document.querySelector(".player-area-self .player-info");
+    const infoRect = infoEl ? infoEl.getBoundingClientRect() : null;
+    cx = infoRect ? infoRect.left + infoRect.width / 2 : window.innerWidth / 2;
+    cy = infoRect ? infoRect.top - 8 : window.innerHeight * 0.58;
+  }
 
   const el = document.createElement("div");
-  el.className = `stat-big-delta stat-big-delta-${dir}`;
+  el.className = `stat-big-delta ${textClass}`;
   el.textContent = text;
   el.style.left = cx + "px";
   el.style.top  = cy + "px";
@@ -2635,14 +2727,59 @@ function showStatBigDelta(text, dir, offsetX = 0) {
   el.addEventListener("animationend", () => el.remove(), { once: true });
 }
 
-// 政治資金変動（左寄せ）
+// 政治資金: UP=バウンス上昇(金色) / DOWN=重力落下(赤)
 function showFundsDelta(delta, x, y, dir) {
-  showStatBigDelta((delta > 0 ? "+" : "") + delta + "億", dir, -40);
+  const text      = (delta > 0 ? "+" : "") + delta + "億";
+  const textClass  = dir === "up" ? "stat-big-delta-funds-up" : "stat-big-delta-funds-down";
+  const flashClass = dir === "up" ? "player-area-flash-funds-up" : "player-area-flash-down";
+  showStatBigDelta(text, textClass, flashClass, document.getElementById("player-funds"));
 }
 
-// 支持率変動（右寄せ）
+// 支持率: UP/DOWN ともに上昇フロート(緑/赤)
 function showApprovalDelta(delta, x, y, dir) {
-  showStatBigDelta((delta > 0 ? "+" : "") + delta + "%", dir, +40);
+  const text       = (delta > 0 ? "+" : "") + delta + "%";
+  const textClass  = `stat-big-delta-${dir}`;
+  const flashClass = `player-area-flash-${dir}`;
+  showStatBigDelta(text, textClass, flashClass, document.getElementById("player-approval"));
+}
+
+// CPU側: エリアフラッシュ + 下方向フローティングデルタ
+function showCpuStatDelta(text, dir, isFunds) {
+  const cpuArea = document.querySelector(".cpu-area");
+  if (cpuArea) {
+    const areaRect = cpuArea.getBoundingClientRect();
+    const flash = document.createElement("div");
+    const flashClass = dir === "up"
+      ? (isFunds ? "player-area-flash-funds-up" : "player-area-flash-up")
+      : "player-area-flash-down";
+    flash.className = `player-area-flash ${flashClass}`;
+    Object.assign(flash.style, {
+      position: "fixed",
+      left: areaRect.left + "px", top: areaRect.top + "px",
+      width: areaRect.width + "px", height: areaRect.height + "px",
+      pointerEvents: "none", zIndex: "349",
+    });
+    document.body.appendChild(flash);
+    flash.addEventListener("animationend", () => flash.remove(), { once: true });
+  }
+
+  // CPU info の下端を起点に下方向へ浮かせる
+  const infoEl = document.querySelector(".cpu-area .player-info");
+  const infoRect = infoEl ? infoEl.getBoundingClientRect() : null;
+  const cx = infoRect ? infoRect.left + infoRect.width / 2 : window.innerWidth / 2;
+  const cy = infoRect ? infoRect.bottom + 4 : window.innerHeight * 0.2;
+
+  const colorClass = dir === "up"
+    ? (isFunds ? "stat-big-delta-funds-up" : "stat-big-delta-up")
+    : (isFunds ? "stat-big-delta-funds-down" : "stat-big-delta-down");
+
+  const el = document.createElement("div");
+  el.className = `stat-big-delta cpu-stat-delta ${colorClass}`;
+  el.textContent = text;
+  el.style.left = cx + "px";
+  el.style.top  = cy + "px";
+  document.body.appendChild(el);
+  el.addEventListener("animationend", () => el.remove(), { once: true });
 }
 
 function renderGame() {
@@ -2676,6 +2813,20 @@ function renderGame() {
   document.getElementById("cpu-party").textContent = gameState.cpu.party || "???";
   document.getElementById("cpu-funds").innerHTML = fundsToHtml(gameState.cpu.funds);
   document.getElementById("cpu-approval").textContent = "???";
+  if (gameState.cpu._fundsFlash) {
+    const { dir, delta } = gameState.cpu._fundsFlash;
+    delete gameState.cpu._fundsFlash;
+    requestAnimationFrame(() => {
+      showCpuStatDelta((delta > 0 ? "+" : "") + delta + "億", dir, true);
+    });
+  }
+  if (gameState.cpu._approvalFlash) {
+    const { dir, delta } = gameState.cpu._approvalFlash;
+    delete gameState.cpu._approvalFlash;
+    requestAnimationFrame(() => {
+      showCpuStatDelta((delta > 0 ? "+" : "") + delta + "%", dir, false);
+    });
+  }
   renderFieldCards("cpu-field", gameState.cpu.field, false);
   renderDeckSlot("cpu-deck", gameState.cpu.deck.length);
   renderDiscardSlot("cpu-discard", gameState.cpu.discard);
@@ -2766,7 +2917,6 @@ function renderDiscardSlot(slotId, pile) {
   const topCard = pile[pile.length - 1];
   const preview = document.createElement("div");
   preview.className = `discard-slot-preview ${topCard.type === "politician" ? "discard-slot-politician" : "discard-slot-option"}`;
-  preview.textContent = topCard.name;
   slot.appendChild(preview);
 
   const countEl = document.createElement("div");

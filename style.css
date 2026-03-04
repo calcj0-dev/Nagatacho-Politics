@@ -651,12 +651,30 @@ h1 {
    大型フローティング数値（A案）+ プレイヤーエリアフラッシュ（C案）
    ============================================================ */
 
-/* 大型フローティング数値 */
+/* ---- 支持率: 上昇フロート（緑/赤ともに上へ） ---- */
 @keyframes stat-float-up {
   0%   { opacity: 0; transform: translateX(-50%) translateY(0)    scale(0.45); }
   12%  { opacity: 1; transform: translateX(-50%) translateY(-10px) scale(1.22); }
   50%  { opacity: 1; transform: translateX(-50%) translateY(-30px) scale(1.0); }
   100% { opacity: 0; transform: translateX(-50%) translateY(-75px) scale(0.82); }
+}
+
+/* ---- 政治資金UP: バウンス上昇（金色） ---- */
+@keyframes funds-bounce-up {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(10px)  scale(0.3); }
+  10%  { opacity: 1; transform: translateX(-50%) translateY(-40px) scale(1.3); }
+  28%  { opacity: 1; transform: translateX(-50%) translateY(-18px) scale(0.95); }
+  45%  { opacity: 1; transform: translateX(-50%) translateY(-32px) scale(1.1); }
+  65%  { opacity: 1; transform: translateX(-50%) translateY(-25px) scale(1.0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-60px) scale(0.85); }
+}
+
+/* ---- 政治資金DOWN: 重力落下（赤） ---- */
+@keyframes funds-drop-down {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(0.5); }
+  14%  { opacity: 1; transform: translateX(-50%) translateY(4px)   scale(1.12); }
+  35%  { opacity: 1; transform: translateX(-50%) translateY(0px)   scale(1.0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(65px)  scale(0.75); }
 }
 
 .stat-big-delta {
@@ -666,17 +684,46 @@ h1 {
   pointer-events: none;
   z-index: 460;
   white-space: nowrap;
-  animation: stat-float-up 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
+/* 支持率UP: 緑・上昇フロート */
 .stat-big-delta-up {
   color: #2ecc71;
   text-shadow: 0 0 28px rgba(46, 204, 113, 0.9), 0 2px 10px rgba(0, 0, 0, 0.55);
+  animation: stat-float-up 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
+/* 支持率DOWN: 赤・上昇フロート */
 .stat-big-delta-down {
   color: #e94560;
   text-shadow: 0 0 28px rgba(233, 69, 96, 0.9), 0 2px 10px rgba(0, 0, 0, 0.55);
+  animation: stat-float-up 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* 政治資金UP: 金色・バウンス上昇 */
+.stat-big-delta-funds-up {
+  color: #ffd700;
+  text-shadow: 0 0 28px rgba(255, 215, 0, 0.9), 0 2px 10px rgba(0, 0, 0, 0.55);
+  animation: funds-bounce-up 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* 政治資金DOWN: 赤・重力落下 */
+.stat-big-delta-funds-down {
+  color: #e94560;
+  text-shadow: 0 0 28px rgba(233, 69, 96, 0.9), 0 2px 10px rgba(0, 0, 0, 0.55);
+  animation: funds-drop-down 1.3s ease-in forwards;
+}
+
+/* CPU側デルタ: 下方向にフロート（画面上部から中央へ） */
+@keyframes cpu-stat-float-down {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(0)    scale(0.45); }
+  12%  { opacity: 1; transform: translateX(-50%) translateY(10px)  scale(1.22); }
+  50%  { opacity: 1; transform: translateX(-50%) translateY(32px)  scale(1.0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(78px)  scale(0.82); }
+}
+
+.cpu-stat-delta {
+  animation: cpu-stat-float-down 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
 }
 
 /* プレイヤーエリアフラッシュ */
@@ -691,8 +738,9 @@ h1 {
   animation: area-flash 0.65s ease-out forwards;
 }
 
-.player-area-flash-up   { background: rgba(46, 204, 113, 0.26); }
-.player-area-flash-down { background: rgba(233, 69, 96,  0.26); }
+.player-area-flash-up        { background: rgba(46,  204, 113, 0.26); }
+.player-area-flash-down      { background: rgba(233,  69,  96, 0.26); }
+.player-area-flash-funds-up  { background: rgba(255, 215,   0, 0.22); }
 
 /* (旧) 小さいデルタ — 互換用に残すが使われない */
 .approval-delta, .funds-delta { display: none; }
@@ -843,45 +891,128 @@ h1 {
   color: #eee;
 }
 
-/* 情勢調査バー */
-.survey-bar {
-  margin: 16px 0;
+/* ============================================================
+   情勢調査オーバーレイ リデザイン
+   ============================================================ */
+
+.surv-header {
+  text-align: center;
+  margin-bottom: 18px;
 }
 
-.survey-row {
+.surv-num {
+  font-size: 1.35rem;
+  font-weight: bold;
+  color: #ffd700;
+  letter-spacing: 0.06em;
+}
+
+.surv-subtitle {
+  font-size: 0.75rem;
+  color: #777;
+  margin-top: 3px;
+}
+
+.surv-block {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+
+.surv-block-leading {
+  border-color: rgba(255, 215, 0, 0.5);
+  background: rgba(255, 215, 0, 0.06);
+}
+
+.surv-block-label {
+  font-size: 0.78rem;
+  color: #aaa;
+  margin-bottom: 8px;
+}
+
+.surv-block-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 8px 0;
-  font-size: 0.9rem;
+  gap: 12px;
 }
 
-.survey-row > span:first-child {
-  width: 60px;
-  text-align: right;
-}
-
-.bar-container {
+.surv-bar-wrap {
   flex: 1;
-  height: 20px;
-  background: #2a2a4a;
-  border-radius: 4px;
+  height: 16px;
+  background: #1a1a3a;
+  border-radius: 8px;
   overflow: hidden;
 }
 
-.bar {
+.surv-bar {
   height: 100%;
-  border-radius: 4px;
-  transition: width 0.8s ease;
+  border-radius: 8px;
+  width: 0%;
 }
 
-.bar-player {
+.surv-bar-player {
   background: linear-gradient(90deg, #0f3460, #3498db);
+  box-shadow: 0 0 8px rgba(52, 152, 219, 0.5);
 }
 
-.bar-cpu {
-  background: linear-gradient(90deg, #e94560, #c0392b);
+.surv-bar-cpu {
+  background: linear-gradient(90deg, #7a1a1a, #e94560);
+  box-shadow: 0 0 8px rgba(233, 69, 96, 0.5);
 }
+
+.surv-pct {
+  font-size: 1.6rem;
+  font-weight: bold;
+  min-width: 54px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.surv-pct-player { color: #3498db; }
+.surv-pct-cpu    { color: #e94560; }
+
+.surv-delta {
+  font-size: 0.73rem;
+  margin-top: 5px;
+}
+
+.surv-delta-up   { color: #2ecc71; }
+.surv-delta-down { color: #e94560; }
+.surv-delta-same { color: #777; }
+
+.surv-summary {
+  text-align: center;
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  margin: 2px 0 16px;
+}
+
+.surv-lead   { background: rgba(46,204,113,0.12); color: #2ecc71; }
+.surv-behind { background: rgba(233,69,96,0.12);  color: #e94560; }
+.surv-even   { background: rgba(255,255,255,0.06); color: #aaa; }
+
+/* ============================================================
+   カード配置 着地バースト
+   ============================================================ */
+
+@keyframes card-land-burst {
+  0%   { transform: scale(0.3); opacity: 0.9; }
+  100% { transform: scale(3.0); opacity: 0; }
+}
+
+.card-land-burst {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: card-land-burst 0.38s ease-out forwards;
+}
+
+.burst-player { background: radial-gradient(circle, rgba(74,171,240,0.75) 0%, transparent 68%); }
+.burst-cpu    { background: radial-gradient(circle, rgba(240,160,32,0.75) 0%, transparent 68%); }
 
 /* 捨て札選択 */
 .discard-list {
