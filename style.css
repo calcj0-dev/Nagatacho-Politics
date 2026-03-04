@@ -1197,26 +1197,26 @@ h1 {
 }
 
 .discard-slot-empty {
-  width: 110px;
-  height: 155px;
+  width: 55px;
+  height: 78px;
   border: 2px dashed rgba(120, 120, 120, 0.25);
-  border-radius: 8px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #555;
-  font-size: 1.2rem;
+  font-size: 0.9rem;
 }
 
 .discard-slot-preview {
-  width: 110px;
-  height: 155px;
-  border-radius: 8px;
+  width: 55px;
+  height: 78px;
+  border-radius: 6px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 6px;
-  font-size: 0.65rem;
+  padding: 3px;
+  font-size: 0.5rem;
   font-weight: bold;
   text-align: center;
   line-height: 1.3;
@@ -1643,8 +1643,8 @@ h1 {
 
   .discard-slot-empty,
   .discard-slot-preview {
-    height: 14vh;
-    width: calc(14vh * 0.714);
+    height: 7vh;
+    width: calc(7vh * 0.714);
   }
 
   .active-effects {
