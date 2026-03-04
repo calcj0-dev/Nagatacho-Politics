@@ -2602,26 +2602,47 @@ function animateCardToDiscard(card, isPlayer, onDone) {
   setTimeout(() => { clone.remove(); onDone(); }, 380);
 }
 
-// 政治資金変動フローティングテキスト
-function showFundsDelta(delta, x, y, dir) {
+// 共通: 大型フローティング数値 + プレイヤーエリアフラッシュ
+function showStatBigDelta(text, dir, offsetX = 0) {
+  // プレイヤーエリアフラッシュ
+  const playerArea = document.querySelector(".player-area-self");
+  if (playerArea) {
+    const areaRect = playerArea.getBoundingClientRect();
+    const flash = document.createElement("div");
+    flash.className = `player-area-flash player-area-flash-${dir}`;
+    Object.assign(flash.style, {
+      position: "fixed",
+      left: areaRect.left + "px", top: areaRect.top + "px",
+      width: areaRect.width + "px", height: areaRect.height + "px",
+      pointerEvents: "none", zIndex: "349",
+    });
+    document.body.appendChild(flash);
+    flash.addEventListener("animationend", () => flash.remove(), { once: true });
+  }
+
+  // 大型フローティング数値（プレイヤーinfo中央の上に出す）
+  const infoEl = document.querySelector(".player-area-self .player-info");
+  const infoRect = infoEl ? infoEl.getBoundingClientRect() : null;
+  const cx = (infoRect ? infoRect.left + infoRect.width / 2 : window.innerWidth / 2) + offsetX;
+  const cy = infoRect ? infoRect.top - 8 : window.innerHeight * 0.58;
+
   const el = document.createElement("div");
-  el.className = `funds-delta funds-delta-${dir}`;
-  el.textContent = (delta > 0 ? "+" : "") + delta + "億";
-  el.style.left = x + "px";
-  el.style.top = y + "px";
+  el.className = `stat-big-delta stat-big-delta-${dir}`;
+  el.textContent = text;
+  el.style.left = cx + "px";
+  el.style.top  = cy + "px";
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 1100);
+  el.addEventListener("animationend", () => el.remove(), { once: true });
 }
 
-// 支持率変動フローティングテキスト
+// 政治資金変動（左寄せ）
+function showFundsDelta(delta, x, y, dir) {
+  showStatBigDelta((delta > 0 ? "+" : "") + delta + "億", dir, -40);
+}
+
+// 支持率変動（右寄せ）
 function showApprovalDelta(delta, x, y, dir) {
-  const el = document.createElement("div");
-  el.className = `approval-delta approval-delta-${dir}`;
-  el.textContent = (delta > 0 ? "+" : "") + delta + "%";
-  el.style.left = x + "px";
-  el.style.top = y + "px";
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 1100);
+  showStatBigDelta((delta > 0 ? "+" : "") + delta + "%", dir, +40);
 }
 
 function renderGame() {

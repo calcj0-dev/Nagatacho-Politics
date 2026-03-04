@@ -647,23 +647,55 @@ h1 {
 .approval-num-up   { animation: approval-num-up   0.65s ease-out; }
 .approval-num-down { animation: approval-num-down 0.65s ease-out; }
 
-/* フローティングデルタ（+X% / -X%） */
-@keyframes approval-delta-float {
-  0%   { opacity: 1; transform: translateY(0)    scale(1); }
-  15%  { opacity: 1; transform: translateY(-6px)  scale(1.15); }
-  100% { opacity: 0; transform: translateY(-32px) scale(0.9); }
+/* ============================================================
+   大型フローティング数値（A案）+ プレイヤーエリアフラッシュ（C案）
+   ============================================================ */
+
+/* 大型フローティング数値 */
+@keyframes stat-float-up {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(0)    scale(0.45); }
+  12%  { opacity: 1; transform: translateX(-50%) translateY(-10px) scale(1.22); }
+  50%  { opacity: 1; transform: translateX(-50%) translateY(-30px) scale(1.0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-75px) scale(0.82); }
 }
-.approval-delta {
+
+.stat-big-delta {
   position: fixed;
-  font-size: 1.05rem;
+  font-size: 2.8rem;
   font-weight: bold;
   pointer-events: none;
-  z-index: 410;
-  animation: approval-delta-float 1.1s ease-out forwards;
+  z-index: 460;
   white-space: nowrap;
+  animation: stat-float-up 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
-.approval-delta-up   { color: #2ecc71; text-shadow: 0 0 8px rgba(46,204,113,0.7); }
-.approval-delta-down { color: #e94560; text-shadow: 0 0 8px rgba(233,69,96,0.7); }
+
+.stat-big-delta-up {
+  color: #2ecc71;
+  text-shadow: 0 0 28px rgba(46, 204, 113, 0.9), 0 2px 10px rgba(0, 0, 0, 0.55);
+}
+
+.stat-big-delta-down {
+  color: #e94560;
+  text-shadow: 0 0 28px rgba(233, 69, 96, 0.9), 0 2px 10px rgba(0, 0, 0, 0.55);
+}
+
+/* プレイヤーエリアフラッシュ */
+@keyframes area-flash {
+  0%   { opacity: 0; }
+  8%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.player-area-flash {
+  border-radius: 8px;
+  animation: area-flash 0.65s ease-out forwards;
+}
+
+.player-area-flash-up   { background: rgba(46, 204, 113, 0.26); }
+.player-area-flash-down { background: rgba(233, 69, 96,  0.26); }
+
+/* (旧) 小さいデルタ — 互換用に残すが使われない */
+.approval-delta, .funds-delta { display: none; }
 
 .approval-num {
   font-size: 0.85rem;
@@ -1369,28 +1401,7 @@ h1 {
   color: #666;
 }
 
-/* ============================================================
-   政治資金 フローティングデルタ
-   ============================================================ */
-
-@keyframes funds-delta-float {
-  0%   { opacity: 1; transform: translateY(0); }
-  20%  { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-24px); }
-}
-
-.funds-delta {
-  position: fixed;
-  font-size: 0.9rem;
-  font-weight: bold;
-  pointer-events: none;
-  z-index: 410;
-  animation: funds-delta-float 1.1s ease-out forwards;
-  white-space: nowrap;
-}
-
-.funds-delta-up   { color: #f0d060; }
-.funds-delta-down { color: #e94560; }
+/* 政治資金 フローティングデルタ — stat-big-delta に統合済み */
 
 /* ============================================================
    ゲーム終了演出
