@@ -1,4 +1,9 @@
 // ============================================================
+// バージョン
+// ============================================================
+const APP_VERSION = "0.1.0";
+
+// ============================================================
 // カードデータ定義
 // ============================================================
 
@@ -3450,6 +3455,9 @@ function selectParty(party) {
 // ============================================================
 
 document.addEventListener("DOMContentLoaded", () => {
+  const verEl = document.getElementById("app-version");
+  if (verEl) verEl.textContent = `ver ${APP_VERSION}`;
+
   document.querySelectorAll(".party-btn").forEach(btn => {
     btn.addEventListener("click", () => selectParty(btn.dataset.party));
   });

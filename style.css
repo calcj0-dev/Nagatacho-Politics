@@ -172,6 +172,7 @@ body {
    ============================================================ */
 
 .screen {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -194,6 +195,15 @@ h1 {
   gap: 16px;
   flex-wrap: wrap;
   justify-content: center;
+}
+
+.app-version {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 0.7rem;
+  color: rgba(255, 215, 0, 0.5);
+  letter-spacing: 0.05em;
 }
 
 .party-btn {
