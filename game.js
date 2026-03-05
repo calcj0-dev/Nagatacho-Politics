@@ -3303,19 +3303,26 @@ function renderHand() {
 
 // 手札エリアのスワイプでフォーカスカードを切り替え（一度だけ設定）
 function setupHandSwipe() {
-  const container = document.getElementById("player-hand");
-  if (!container || container.dataset.swipeSetup) return;
-  container.dataset.swipeSetup = "1";
+  const area = document.getElementById("hand-area");
+  if (!area || area.dataset.swipeSetup) return;
+  area.dataset.swipeSetup = "1";
 
-  let startX = null;
-  container.addEventListener("touchstart", e => {
-    if (e.touches.length === 1) startX = e.touches[0].clientX;
+  let sx = null, sy = null;
+
+  // pointerdown/pointerup を使用（touch-action や overflow の影響を受けにくい）
+  area.addEventListener("pointerdown", e => {
+    sx = e.clientX;
+    sy = e.clientY;
   }, { passive: true });
-  container.addEventListener("touchend", e => {
-    if (startX === null) return;
-    const dx = e.changedTouches[0].clientX - startX;
-    startX = null;
-    if (Math.abs(dx) < 25 || gameState.currentPlayer !== "player") return;
+
+  area.addEventListener("pointerup", e => {
+    if (sx === null) return;
+    const dx = e.clientX - sx;
+    const dy = e.clientY - sy;
+    sx = sy = null;
+    // 横方向が縦方向より優勢で、かつ最低 20px 以上動いた場合のみスワイプと判定
+    if (Math.abs(dx) < 20 || Math.abs(dx) < Math.abs(dy)) return;
+    if (gameState.currentPlayer !== "player") return;
     const n = gameState.player.hand.length;
     if (!n) return;
     focusedHandIndex = dx < 0

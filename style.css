@@ -338,14 +338,19 @@ h1 {
 }
 
 
-/* 下部：能力パネル */
+/* 下部：能力パネル（フローティング） */
 .card-abilities-panel {
-  flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.85);
-  border-top: 1px solid rgba(0, 0, 0, 0.15);
+  position: absolute;
+  bottom: 3px;
+  left: 3px;
+  right: 3px;
+  height: 45%;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 3px;
   padding: 1px 2px;
   display: flex;
   flex-direction: column;
+  justify-content: space-evenly;
   overflow: hidden;
 }
 
@@ -358,15 +363,20 @@ h1 {
 }
 
 .ability-cost-icons {
-  font-size: 0.28rem;
+  font-size: 0.07rem;
   line-height: 1;
   flex-shrink: 0;
   letter-spacing: -1px;
   padding-top: 1px;
 }
 
+.ability-cost-icons .coin-icon {
+  width: 2px;
+  height: 2px;
+}
+
 .ability-name-text {
-  font-size: 0.36rem;
+  font-size: 0.09rem;
   color: #222;
   line-height: 1.25;
   word-break: break-all;
@@ -1890,18 +1900,10 @@ h1 {
     padding: 4px 0 8px;
   }
 
-  /* 手札・場のカード: 能力パネルをさらにコンパクトに */
+  /* 手札・場のカード: 能力パネル */
   #player-hand > .card .card-abilities-panel,
   #player-field > .card .card-abilities-panel {
     padding: 1px 2px;
-  }
-  #player-hand > .card .ability-name-text,
-  #player-field > .card .ability-name-text {
-    font-size: 0.3rem;
-  }
-  #player-hand > .card .ability-cost-icons,
-  #player-field > .card .ability-cost-icons {
-    font-size: 0.24rem;
   }
 
   /* =====================================================
