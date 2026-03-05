@@ -343,7 +343,7 @@ h1 {
   flex-shrink: 0;
   background: rgba(255, 255, 255, 0.85);
   border-top: 1px solid rgba(0, 0, 0, 0.15);
-  padding: 2px 3px;
+  padding: 1px 2px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -351,28 +351,25 @@ h1 {
 
 .card-ability-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 2px;
-  padding: 1px 0;
+  padding: 0;
   min-height: 0;
-  overflow: hidden;
 }
 
 .ability-cost-icons {
-  font-size: 0.36rem;
+  font-size: 0.28rem;
   line-height: 1;
   flex-shrink: 0;
   letter-spacing: -1px;
-  min-width: 0;
+  padding-top: 1px;
 }
 
 .ability-name-text {
-  font-size: 0.44rem;
+  font-size: 0.36rem;
   color: #222;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.25;
+  word-break: break-all;
   flex: 1;
   min-width: 0;
 }
@@ -1383,6 +1380,42 @@ h1 {
 }
 
 /* ============================================================
+   捨て札ファン（イラスト重ね表示）
+   ============================================================ */
+
+.discard-fan {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: nowrap;
+}
+
+.discard-fan-card {
+  flex-shrink: 0;
+  width: 36px;
+  height: 50px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  background: #111;
+  transition: transform 0.12s;
+}
+
+.discard-fan-card:hover,
+.discard-fan-card:active {
+  transform: translateY(-8px);
+  z-index: 99 !important;
+}
+
+.discard-fan-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ============================================================
    捨て札オーバーレイ
    ============================================================ */
 
@@ -1790,6 +1823,11 @@ h1 {
     width: calc(7vh * 0.714);
   }
 
+  .discard-fan-card {
+    width: calc(7vh * 0.714);
+    height: 7vh;
+  }
+
   .active-effects {
     display: none;
   }
@@ -1853,23 +1891,18 @@ h1 {
     padding: 4px 0 8px;
   }
 
-  /* 手札・場のカード: 能力パネルのフォントを小さく */
+  /* 手札・場のカード: 能力パネルをさらにコンパクトに */
   #player-hand > .card .card-abilities-panel,
   #player-field > .card .card-abilities-panel {
     padding: 1px 2px;
   }
   #player-hand > .card .ability-name-text,
   #player-field > .card .ability-name-text {
-    font-size: 0.38rem;
+    font-size: 0.3rem;
   }
-  #player-hand > .card .ability-cost-icons .coin-icon,
-  #player-field > .card .ability-cost-icons .coin-icon {
-    width: 0.75em;
-    height: 0.75em;
-  }
-  #player-hand > .card .card-ability-row,
-  #player-field > .card .card-ability-row {
-    padding: 0;
+  #player-hand > .card .ability-cost-icons,
+  #player-field > .card .ability-cost-icons {
+    font-size: 0.24rem;
   }
 
   /* =====================================================

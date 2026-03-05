@@ -2930,6 +2930,8 @@ function renderDiscardSlot(slotId, pile) {
   const slot = document.getElementById(slotId);
   if (!slot) return;
   slot.innerHTML = "";
+  slot.style.cursor = "default";
+  slot.onclick = null;
 
   const label = document.createElement("div");
   label.className = "discard-label";
@@ -2944,18 +2946,43 @@ function renderDiscardSlot(slotId, pile) {
     return;
   }
 
-  const topCard = pile[pile.length - 1];
-  const preview = document.createElement("div");
-  preview.className = `discard-slot-preview ${topCard.type === "politician" ? "discard-slot-politician" : "discard-slot-option"}`;
-  slot.appendChild(preview);
+  const fan = document.createElement("div");
+  fan.className = "discard-fan";
 
-  const countEl = document.createElement("div");
-  countEl.className = "deck-count";
-  countEl.textContent = `${pile.length}枚`;
-  slot.appendChild(countEl);
+  // 枚数に応じてカード同士の重なり幅を計算（全体が CARD_W〜MAX_FAN_W に収まるよう）
+  const CARD_W = 36;
+  const MAX_FAN_W = 90;
+  const n = pile.length;
+  const negMargin = n > 1
+    ? Math.min(0, Math.round((MAX_FAN_W - CARD_W * n) / (n - 1)))
+    : 0;
 
-  slot.style.cursor = "pointer";
-  slot.onclick = () => showDiscardOverlay(pile, slotId === "player-discard");
+  pile.forEach((card, i) => {
+    const cardEl = document.createElement("div");
+    cardEl.className = "discard-fan-card";
+    if (i > 0) cardEl.style.marginLeft = `${negMargin}px`;
+    cardEl.style.zIndex = String(i + 1);
+
+    const img = document.createElement("img");
+    img.className = "discard-fan-img";
+    img.src = card.image;
+    img.alt = card.name;
+    img.onerror = () => {
+      img.style.display = "none";
+      cardEl.style.background = card.type === "politician"
+        ? "linear-gradient(160deg, #2a0a18 0%, #4a1a28 100%)"
+        : "linear-gradient(160deg, #0a1a2e 0%, #0f2a4a 100%)";
+    };
+    cardEl.appendChild(img);
+
+    cardEl.addEventListener("click", e => {
+      e.stopPropagation();
+      showCardZoom(card, "view");
+    });
+    fan.appendChild(cardEl);
+  });
+
+  slot.appendChild(fan);
 }
 
 function showDiscardOverlay(pile, isPlayer) {
