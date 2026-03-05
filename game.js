@@ -1212,6 +1212,8 @@ function startPlayerTurn() {
 
   showTurnBanner(true, () => {
     if (drawnCard) p.hand.push(drawnCard); // バナー後に手札へ追加
+    focusedHandIndex = Math.floor(p.hand.length / 2); // 中央カードをフォーカス
+    setupHandSwipe();
     renderGame(); // ← バナー後にフラッシュ発火（手札反映済み）
     if (drawnCard) {
       animateDrawCard(true, () => setMainPhaseUI(true));
@@ -3110,6 +3112,7 @@ function renderCpuHand() {
 }
 
 let selectedHandIndex = null; // タップ選択中の手札インデックス
+let focusedHandIndex  = 0;    // 拡大表示中の手札インデックス
 
 // タッチD&D（モバイル向け）: 政治家→空スロット / オプション→ドロップゾーン
 function addTouchDrag(el, idx, canPlace, canUseOption) {
@@ -3254,6 +3257,10 @@ function renderHand() {
   const container = document.getElementById("player-hand");
   container.innerHTML = "";
   container.classList.toggle("hand-locked", gameState.currentPlayer !== "player");
+
+  // focusedHandIndex を手札枚数内にクランプ
+  const hn = gameState.player.hand.length;
+  if (hn > 0) focusedHandIndex = Math.max(0, Math.min(focusedHandIndex, hn - 1));
   gameState.player.hand.forEach((card, idx) => {
     const el = createCardElement(card);
     const canPlace = card.type === "politician"
@@ -3294,6 +3301,30 @@ function renderHand() {
   applyHandFan(container);
 }
 
+// 手札エリアのスワイプでフォーカスカードを切り替え（一度だけ設定）
+function setupHandSwipe() {
+  const container = document.getElementById("player-hand");
+  if (!container || container.dataset.swipeSetup) return;
+  container.dataset.swipeSetup = "1";
+
+  let startX = null;
+  container.addEventListener("touchstart", e => {
+    if (e.touches.length === 1) startX = e.touches[0].clientX;
+  }, { passive: true });
+  container.addEventListener("touchend", e => {
+    if (startX === null) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    startX = null;
+    if (Math.abs(dx) < 25 || gameState.currentPlayer !== "player") return;
+    const n = gameState.player.hand.length;
+    if (!n) return;
+    focusedHandIndex = dx < 0
+      ? Math.min(n - 1, focusedHandIndex + 1)  // 左スワイプ → 次のカード
+      : Math.max(0,     focusedHandIndex - 1);  // 右スワイプ → 前のカード
+    renderHand();
+  });
+}
+
 // 手札ファン（扇形）レイアウト
 function applyHandFan(container) {
   const cards = [...container.querySelectorAll(".card")];
@@ -3307,20 +3338,26 @@ function applyHandFan(container) {
   const spacing = n > 1 ? Math.max(4, Math.min(cardW, (availW - cardW) / (n - 1))) : cardW;
   const overlap = cardW - spacing;
 
+  const isPlayerTurn = gameState.currentPlayer === "player";
+  const focusIdx = isPlayerTurn ? Math.min(focusedHandIndex, n - 1) : -1;
+
   cards.forEach((card, i) => {
+    const isFocused = i === focusIdx;
     if (n < 2) {
-      card.style.transform = "";
-      card.style.marginLeft = "";
-      card.style.zIndex = "";
+      card.style.transform    = isFocused ? "scale(1.22) translateY(-6px)" : "";
+      card.style.marginLeft   = "";
+      card.style.zIndex       = isFocused ? "20" : "";
+      card.style.transformOrigin = "bottom center";
       return;
     }
-    const t = (i / (n - 1)) - 0.5;          // -0.5 〜 0.5
-    const angle = t * Math.min(16, n * 2.5); // 枚数に応じた最大角度
-    const yOffset = Math.abs(t) * 12;        // 端ほど下がる
-    card.style.transform = `rotate(${angle}deg) translateY(${yOffset}px)`;
+    const t = (i / (n - 1)) - 0.5;
+    const angle   = t * Math.min(16, n * 2.5);
+    const yOffset = Math.abs(t) * 12 - (isFocused ? 8 : 0); // フォーカスカードは上に浮かせる
+    const scale   = isFocused ? " scale(1.22)" : "";
+    card.style.transform       = `rotate(${angle}deg) translateY(${yOffset}px)${scale}`;
     card.style.transformOrigin = "bottom center";
-    card.style.marginLeft = i === 0 ? "0" : `-${overlap}px`;
-    card.style.zIndex = String(Math.round((1 - Math.abs(t)) * 10)); // 中央が前面
+    card.style.marginLeft      = i === 0 ? "0" : `-${overlap}px`;
+    card.style.zIndex          = isFocused ? "20" : String(Math.round((1 - Math.abs(t)) * 10));
   });
 }
 

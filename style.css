@@ -1852,11 +1852,10 @@ h1 {
     min-height: 0;
   }
 
-  /* タッチ時に拡大 */
+  /* タッチ時のフィードバック（JS transform と干渉しないよう filter を使用） */
   #player-hand > .card:active {
-    transform: scale(1.2) !important;
+    filter: brightness(1.35);
     z-index: 20 !important;
-    transition: transform 0.1s ease;
   }
 
   .card-list {
