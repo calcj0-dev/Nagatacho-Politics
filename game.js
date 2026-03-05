@@ -2293,7 +2293,7 @@ function showFinishOverlay(result) {
     <p>${subtitle}</p>
     <p>あなた: ${pa}% / CPU: ${ca}%</p>
     <div class="overlay-buttons">
-      <button id="finish-graph" class="overlay-btn btn-secondary">支持率の推移を見る</button>
+      <button id="finish-graph" class="overlay-btn btn-secondary">📈 支持率の推移を見る</button>
       <button id="finish-retry" class="overlay-btn btn-confirm">もう一度遊ぶ</button>
     </div>
   `);
@@ -3010,25 +3010,23 @@ function renderActiveEffects(slotId, ps, position = "after") {
 
   const tags = []; // { label, type }
 
-  const C = COIN_IMG;
-
   // シールド
   ps.shields.forEach(s => {
-    if (s === "block_approval_down") tags.push({ label: `${C} 支持率低下を1回無効化`, type: "shield" });
-    if (s === "block_attack")        tags.push({ label: `${C} 攻撃を1回無効化`,       type: "shield" });
+    if (s === "block_approval_down") tags.push({ label: `🛡 支持率低下を1回無効化`, type: "shield" });
+    if (s === "block_attack")        tags.push({ label: `🛡 攻撃を1回無効化`,       type: "shield" });
   });
 
   // 次ターンボーナス
   const nb = ps.nextTurnBonuses;
-  if (nb.costReduction   > 0) tags.push({ label: `${C} 次ターン コスト-${nb.costReduction}億`,    type: "buff"   });
-  if (nb.fundBonus       > 0) tags.push({ label: `${C} 次ターン 資金+${nb.fundBonus}億`,           type: "buff"   });
-  if (nb.approvalBonus   > 0) tags.push({ label: `${C} 次ターン 支持率+${nb.approvalBonus}%`,      type: "buff"   });
-  if (nb.approvalBonus   < 0) tags.push({ label: `${C} 次ターン 支持率${nb.approvalBonus}%`,       type: "debuff" });
-  if (nb.attackReduction > 0) tags.push({ label: `${C} 次ターン ダメージ-${nb.attackReduction}%`,  type: "shield" });
+  if (nb.costReduction   > 0) tags.push({ label: `🔧 次ターン コスト-${nb.costReduction}億`,                   type: "buff"   });
+  if (nb.fundBonus       > 0) tags.push({ label: `${COIN_IMG} 次ターン 資金+${nb.fundBonus}億`,                 type: "buff"   });
+  if (nb.approvalBonus   > 0) tags.push({ label: `📈 次ターン 支持率+${nb.approvalBonus}%`,                    type: "buff"   });
+  if (nb.approvalBonus   < 0) tags.push({ label: `📉 次ターン 支持率${nb.approvalBonus}%`,                     type: "debuff" });
+  if (nb.attackReduction > 0) tags.push({ label: `🛡 次ターン ダメージ-${nb.attackReduction}%`,                type: "shield" });
 
   // このターン限定コスト軽減
   if (ps.currentTurnCostReduction > 0) {
-    tags.push({ label: `${C} このターン コスト-${ps.currentTurnCostReduction}億`, type: "current" });
+    tags.push({ label: `⚡ このターン コスト-${ps.currentTurnCostReduction}億`, type: "current" });
   }
 
   if (tags.length === 0) return;
@@ -3273,6 +3271,15 @@ function renderHand() {
 function applyHandFan(container) {
   const cards = [...container.querySelectorAll(".card")];
   const n = cards.length;
+  if (n === 0) return;
+
+  // カード幅と利用可能幅を取得し、枚数が多いほど重なりを増やす
+  const cardW = cards[0].offsetWidth || 52;
+  const availW = (container.offsetWidth || window.innerWidth) - 16;
+  // n枚が availW に収まるよう間隔を計算（最低4pxは見える）
+  const spacing = n > 1 ? Math.max(4, Math.min(cardW, (availW - cardW) / (n - 1))) : cardW;
+  const overlap = cardW - spacing;
+
   cards.forEach((card, i) => {
     if (n < 2) {
       card.style.transform = "";
@@ -3281,11 +3288,11 @@ function applyHandFan(container) {
       return;
     }
     const t = (i / (n - 1)) - 0.5;          // -0.5 〜 0.5
-    const angle = t * Math.min(14, n * 3);   // 枚数に応じた最大角度
-    const yOffset = Math.abs(t) * 10;        // 端ほど下がる
+    const angle = t * Math.min(16, n * 2.5); // 枚数に応じた最大角度
+    const yOffset = Math.abs(t) * 12;        // 端ほど下がる
     card.style.transform = `rotate(${angle}deg) translateY(${yOffset}px)`;
     card.style.transformOrigin = "bottom center";
-    card.style.marginLeft = i === 0 ? "0" : "-8px";
+    card.style.marginLeft = i === 0 ? "0" : `-${overlap}px`;
     card.style.zIndex = String(Math.round((1 - Math.abs(t)) * 10)); // 中央が前面
   });
 }

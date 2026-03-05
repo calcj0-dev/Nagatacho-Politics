@@ -1800,35 +1800,23 @@ h1 {
     width: calc(15vh * 0.714);
   }
 
-  /* 手札カード: 円形トークンスタイル */
+  /* 手札カード */
   #player-hand > .card {
-    width: calc((100vw - 40px) / 5);
-    height: calc((100vw - 40px) / 5);
-    max-width: 11vh;
-    max-height: 11vh;
-    border-radius: 50% !important;
+    width: 52px;
+    height: 73px;
     flex-shrink: 0;
     flex-grow: 0;
-    /* JSファン（扇形）スタイルを無効化 */
-    transform: none !important;
-    margin-left: 0 !important;
-    z-index: auto !important;
   }
 
-  /* 手札では能力パネルを非表示（タップでズームして確認） */
-  #player-hand > .card .card-abilities-panel {
-    display: none;
-  }
-
-  /* 手札の写真エリアを全体に拡張 */
+  /* 手札の写真エリア */
   #player-hand > .card .card-img-area {
     flex: 1;
-    height: 100%;
+    min-height: 0;
   }
 
   /* タッチ時に拡大 */
   #player-hand > .card:active {
-    transform: scale(1.15) !important;
+    transform: scale(1.2) !important;
     z-index: 20 !important;
     transition: transform 0.1s ease;
   }
@@ -1845,7 +1833,7 @@ h1 {
   }
 
   /* =====================================================
-     Step4: 手札エリア（折り返しグリッド）
+     Step4: 手札エリア（固定幅・重なり扇形）
      ===================================================== */
   #hand-area {
     padding: 4px 0;
@@ -1857,13 +1845,31 @@ h1 {
 
   #player-hand {
     flex: 1;
-    flex-wrap: wrap;
-    overflow-x: hidden;
+    flex-wrap: nowrap;
+    overflow: visible;
     justify-content: center;
-    align-items: center;
-    align-content: center;
-    gap: 5px;
-    padding: 4px 8px;
+    align-items: flex-end;
+    gap: 0;
+    padding: 4px 0 8px;
+  }
+
+  /* 手札・場のカード: 能力パネルのフォントを小さく */
+  #player-hand > .card .card-abilities-panel,
+  #player-field > .card .card-abilities-panel {
+    padding: 1px 2px;
+  }
+  #player-hand > .card .ability-name-text,
+  #player-field > .card .ability-name-text {
+    font-size: 0.38rem;
+  }
+  #player-hand > .card .ability-cost-icons .coin-icon,
+  #player-field > .card .ability-cost-icons .coin-icon {
+    width: 0.75em;
+    height: 0.75em;
+  }
+  #player-hand > .card .card-ability-row,
+  #player-field > .card .card-ability-row {
+    padding: 0;
   }
 
   /* =====================================================
