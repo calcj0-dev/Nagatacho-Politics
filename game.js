@@ -737,7 +737,9 @@ const ABILITY_EFFECTS = {
     const msgs = [];
     const m1 = changeApproval(self, 6);
     if (m1) msgs.push(m1);
-    if (self.deck.length > 0) {
+    if (self.hand.length >= 7) {
+      msgs.push("手札が上限（7枚）のためドロー不可…");
+    } else if (self.deck.length > 0) {
       const drawn = self.deck.shift();
       self.hand.push(drawn);
       msgs.push(`${drawn.name}を手札に加えた！`);
@@ -1047,6 +1049,10 @@ const OPTION_EFFECTS = {
   },
   ouen_enzetsu(self, opponent) {
     const msgs = [];
+    if (self.hand.length >= 7) {
+      msgs.push("手札が上限（7枚）のためドロー不可…");
+      return msgs;
+    }
     const politicianIdx = self.deck.findIndex(c => c.type === "politician");
     if (politicianIdx >= 0) {
       const drawn = self.deck.splice(politicianIdx, 1)[0];
@@ -1058,9 +1064,7 @@ const OPTION_EFFECTS = {
     return msgs;
   },
   kinkyuu_yoron(self, opponent) {
-    const msgs = [];
-    msgs.push(`あなたの現在の支持率: ${self.approval}%`);
-    return msgs;
+    return []; // 効果はshowSurveyOverlay（kinkyuu）で表示
   },
   giinkaikan_furin(self, opponent) {
     const msgs = [];
@@ -1178,16 +1182,14 @@ function startPlayerTurn() {
   p.nextTurnBonuses.fundBonus = 0;
   console.log(`[ターン${gameState.turn}] プレイヤーのターン開始 - 資金+${income}億 (合計${p.funds}億)`);
 
-  // ② ドローフェーズ
-  let playerDrew = false;
+  // ② ドローフェーズ（山札からカードを抜くが、手札への追加はバナー後に行う）
+  let drawnCard = null;
   if (p.skipNextDraw) {
     console.log("  ドロースキップ");
     p.skipNextDraw = false;
   } else if (p.deck.length > 0) {
-    const drawn = p.deck.shift();
-    p.hand.push(drawn);
-    console.log(`  ドロー: ${drawn.name}`);
-    playerDrew = true;
+    drawnCard = p.deck.shift();
+    console.log(`  ドロー: ${drawnCard.name}`);
   } else {
     console.log("  山札なし - ドロー不可");
   }
@@ -1204,13 +1206,14 @@ function startPlayerTurn() {
   const savedApprovalFlash = gameState.player._approvalFlash;
   delete gameState.player._fundsFlash;
   delete gameState.player._approvalFlash;
-  renderGame(); // ← ここでゲーム画面へ遷移（フラッシュなし）
+  renderGame(); // ← ここでゲーム画面へ遷移（手札はまだ増えていない）
   if (savedFundsFlash)    gameState.player._fundsFlash    = savedFundsFlash;
   if (savedApprovalFlash) gameState.player._approvalFlash = savedApprovalFlash;
 
   showTurnBanner(true, () => {
-    renderGame(); // ← バナー後にフラッシュ発火
-    if (playerDrew) {
+    if (drawnCard) p.hand.push(drawnCard); // バナー後に手札へ追加
+    renderGame(); // ← バナー後にフラッシュ発火（手札反映済み）
+    if (drawnCard) {
       animateDrawCard(true, () => setMainPhaseUI(true));
     } else {
       setMainPhaseUI(true);
@@ -1567,7 +1570,13 @@ function cpuPhaseOption() {
             showActionBanner(
               [`${card.name} を使用！`, ...effectMsgs],
               false,
-              () => cpuCheckWinAndEnd()
+              () => {
+                if (card.effect === "kinkyuu_yoron") {
+                  showSurveyOverlay(() => cpuCheckWinAndEnd(), { kinkyuu: true });
+                } else {
+                  cpuCheckWinAndEnd();
+                }
+              }
             );
           }, 700);
         });
@@ -2068,7 +2077,15 @@ function useOptionCard(handIndex) {
       animateCardToDiscard(card, true, () => {
         renderGame(); // カード・捨て札アニメーション後に支持率・資金フラッシュを発火
         setTimeout(() => {
-          showActionBanner([`「${card.name}」使用！`, ...msgs], true, () => {
+          const bannerMsgs = msgs.length > 0 ? [`「${card.name}」使用！`, ...msgs] : [`「${card.name}」使用！`];
+          showActionBanner(bannerMsgs, true, () => {
+            if (card.effect === "kinkyuu_yoron") {
+              showSurveyOverlay(() => {
+                const result = checkWinCondition();
+                if (result) { gameState.phase = "finished"; showFinishOverlay(result); }
+              }, { kinkyuu: true });
+              return;
+            }
             const result = checkWinCondition();
             if (result) {
               gameState.phase = "finished";
@@ -2137,15 +2154,27 @@ function showResultOverlay(title, messages, onClose) {
   });
 }
 
-// 情勢調査オーバーレイ
-function showSurveyOverlay(onClose) {
+// 情勢調査オーバーレイ（opts.kinkyuu=true で緊急世論調査モード）
+function showSurveyOverlay(onClose, opts) {
+  opts = opts || {};
   const pa = gameState.player.approval;
   const ca = gameState.cpu.approval;
-  const surveyNum = gameState.turn / 5;
 
-  // 前回調査との差（5ターン前の履歴を参照）
-  const hist = gameState.approvalHistory;
-  const prevEntry = surveyNum > 1 ? hist.find(h => h.turn === gameState.turn - 4) : null;
+  let surveyTitle, surveySubtitle, prevEntry;
+  if (opts.kinkyuu) {
+    surveyTitle = "緊急世論調査";
+    surveySubtitle = `ターン ${gameState.turn} 現在`;
+    const hist = gameState.approvalHistory;
+    prevEntry = hist.length > 0 ? hist[hist.length - 1] : null;
+  } else {
+    const surveyNum = gameState.turn / 5;
+    surveyTitle = `第 ${surveyNum} 回&nbsp;情勢調査`;
+    surveySubtitle = `ターン ${gameState.turn} 終了時点`;
+    // 前回調査との差（5ターン前の履歴を参照）
+    const hist = gameState.approvalHistory;
+    prevEntry = surveyNum > 1 ? hist.find(h => h.turn === gameState.turn - 4) : null;
+  }
+
   const paDelta = prevEntry != null ? pa - prevEntry.player : null;
   const caDelta = prevEntry != null ? ca - prevEntry.cpu    : null;
 
@@ -2167,8 +2196,8 @@ function showSurveyOverlay(onClose) {
 
   showOverlay(`
     <div class="surv-header">
-      <div class="surv-num">第 ${surveyNum} 回&nbsp;情勢調査</div>
-      <div class="surv-subtitle">ターン ${gameState.turn} 終了時点</div>
+      <div class="surv-num">${surveyTitle}</div>
+      <div class="surv-subtitle">${surveySubtitle}</div>
     </div>
     <div class="surv-block ${diff > 0 ? "surv-block-leading" : ""}">
       <div class="surv-block-label">${playerParty}</div>
