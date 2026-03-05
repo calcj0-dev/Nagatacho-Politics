@@ -1,7 +1,7 @@
 // ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.0";
+const APP_VERSION = "0.1.1";
 
 // ============================================================
 // カードデータ定義
@@ -2497,7 +2497,8 @@ function showCardZoom(card, context, index) {
         if (isSealed) {
           nameRow.innerHTML = `${ability.name}（封印中）`;
         } else {
-          nameRow.innerHTML = `${ability.name}（${fundsToHtml(effectiveCost)}）`;
+          const coins = effectiveCost > 0 ? COIN_IMG.repeat(effectiveCost) : '<span class="funds-zero">—</span>';
+          nameRow.innerHTML = `<span class="zoom-ability-cost">${coins}</span>${ability.name}`;
         }
         item.appendChild(nameRow);
 
