@@ -20,13 +20,24 @@ body {
   display: none !important;
 }
 
-/* 💰 資金表示 */
+/* コイン画像 資金表示 */
+.coin-icon {
+  width: 1.4em;
+  height: 1.4em;
+  vertical-align: middle;
+  display: inline-block;
+}
+
 .funds-big {
   position: relative;
   display: inline-block;
-  font-size: 1.4em;
   line-height: 1;
   vertical-align: middle;
+}
+
+.funds-big .coin-icon {
+  width: 1.8em;
+  height: 1.8em;
 }
 
 .funds-num {
@@ -34,9 +45,10 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -48%);
-  font-size: 0.32em;
+  font-size: 0.42em;
   font-weight: bold;
-  color: #3a2000;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.7);
   line-height: 1;
   pointer-events: none;
 }

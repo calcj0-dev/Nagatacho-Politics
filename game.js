@@ -2646,18 +2646,19 @@ function showScreen(screenId) {
   document.getElementById(screenId).classList.remove("hidden");
 }
 
-// 政治資金を💰絵文字で表現するヘルパー
-// 10億ごとに大きな💰(内側に"10")、1億ごとに💰
+// 政治資金をコイン画像で表現するヘルパー
+// 10億ごとに大きなコイン(内側に"10")、1億ごとに通常コイン
+const COIN_IMG = '<img class="coin-icon" src="assets/icons/coin.png" alt="億">';
 function fundsToHtml(amount) {
   if (amount <= 0) return '<span class="funds-zero">—</span>';
   const groups = Math.floor(amount / 10);
   const singles = amount % 10;
   let html = '';
   for (let i = 0; i < groups; i++) {
-    html += '<span class="funds-big">💰<span class="funds-num">10</span></span>';
+    html += `<span class="funds-big">${COIN_IMG}<span class="funds-num">10</span></span>`;
   }
   for (let i = 0; i < singles; i++) {
-    html += '💰';
+    html += COIN_IMG;
   }
   return html;
 }
