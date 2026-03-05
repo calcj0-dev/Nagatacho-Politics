@@ -2293,7 +2293,7 @@ function showFinishOverlay(result) {
     <p>${subtitle}</p>
     <p>あなた: ${pa}% / CPU: ${ca}%</p>
     <div class="overlay-buttons">
-      <button id="finish-graph" class="overlay-btn btn-secondary">📈 支持率の推移を見る</button>
+      <button id="finish-graph" class="overlay-btn btn-secondary">支持率の推移を見る</button>
       <button id="finish-retry" class="overlay-btn btn-confirm">もう一度遊ぶ</button>
     </div>
   `);
@@ -3010,23 +3010,25 @@ function renderActiveEffects(slotId, ps, position = "after") {
 
   const tags = []; // { label, type }
 
+  const C = COIN_IMG;
+
   // シールド
   ps.shields.forEach(s => {
-    if (s === "block_approval_down") tags.push({ label: "🛡 支持率低下を1回無効化", type: "shield" });
-    if (s === "block_attack")        tags.push({ label: "🛡 攻撃を1回無効化",       type: "shield" });
+    if (s === "block_approval_down") tags.push({ label: `${C} 支持率低下を1回無効化`, type: "shield" });
+    if (s === "block_attack")        tags.push({ label: `${C} 攻撃を1回無効化`,       type: "shield" });
   });
 
   // 次ターンボーナス
   const nb = ps.nextTurnBonuses;
-  if (nb.costReduction   > 0) tags.push({ label: `🔧 次ターン コスト-${nb.costReduction}億`,    type: "buff"   });
-  if (nb.fundBonus       > 0) tags.push({ label: `💰 次ターン 資金+${nb.fundBonus}億`,           type: "buff"   });
-  if (nb.approvalBonus   > 0) tags.push({ label: `📈 次ターン 支持率+${nb.approvalBonus}%`,      type: "buff"   });
-  if (nb.approvalBonus   < 0) tags.push({ label: `📉 次ターン 支持率${nb.approvalBonus}%`,       type: "debuff" });
-  if (nb.attackReduction > 0) tags.push({ label: `🛡 次ターン ダメージ-${nb.attackReduction}%`,  type: "shield" });
+  if (nb.costReduction   > 0) tags.push({ label: `${C} 次ターン コスト-${nb.costReduction}億`,    type: "buff"   });
+  if (nb.fundBonus       > 0) tags.push({ label: `${C} 次ターン 資金+${nb.fundBonus}億`,           type: "buff"   });
+  if (nb.approvalBonus   > 0) tags.push({ label: `${C} 次ターン 支持率+${nb.approvalBonus}%`,      type: "buff"   });
+  if (nb.approvalBonus   < 0) tags.push({ label: `${C} 次ターン 支持率${nb.approvalBonus}%`,       type: "debuff" });
+  if (nb.attackReduction > 0) tags.push({ label: `${C} 次ターン ダメージ-${nb.attackReduction}%`,  type: "shield" });
 
   // このターン限定コスト軽減
   if (ps.currentTurnCostReduction > 0) {
-    tags.push({ label: `⚡ このターン コスト-${ps.currentTurnCostReduction}億`, type: "current" });
+    tags.push({ label: `${C} このターン コスト-${ps.currentTurnCostReduction}億`, type: "current" });
   }
 
   if (tags.length === 0) return;
@@ -3036,7 +3038,7 @@ function renderActiveEffects(slotId, ps, position = "after") {
   tags.forEach(({ label, type }) => {
     const el = document.createElement("div");
     el.className = `effect-tag effect-${type}`;
-    el.textContent = label;
+    el.innerHTML = label;
     panel.appendChild(el);
   });
   if (position === "before") {
@@ -3322,7 +3324,7 @@ function createCardElement(card) {
 
       const costEl = document.createElement("span");
       costEl.className = "ability-cost-icons";
-      costEl.textContent = "💰".repeat(ability.cost);
+      costEl.innerHTML = COIN_IMG.repeat(ability.cost);
       row.appendChild(costEl);
 
       const nameEl = document.createElement("span");
