@@ -371,18 +371,17 @@ h1 {
 
 .card-ability-row {
   display: flex;
-  align-items: flex-start;
-  gap: 2px;
+  align-items: center;
+  gap: 4px;
   padding: 0;
   min-height: 0;
 }
 
 .ability-cost-icons {
-  font-size: 0.07rem;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  gap: 1px;
   flex-shrink: 0;
-  letter-spacing: -1px;
-  padding-top: 1px;
 }
 
 .ability-cost-icons .coin-icon {
