@@ -358,10 +358,15 @@ h1 {
   background: rgba(255, 255, 255, 0.88);
   border-radius: 3px;
   padding: 2px 3px;
+  overflow: hidden;
+}
+
+.ability-panel-inner {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-evenly;
-  overflow: hidden;
 }
 
 .card-ability-row {
@@ -1934,14 +1939,14 @@ h1 {
     padding: 4px 0 8px;
   }
 
-  /* 手札カード（モバイル）: パネルごとscaleで縮小 */
-  #player-hand > .card .card-abilities-panel {
+  /* 手札カード（モバイル）: 内側コンテンツのみscaleで縮小 */
+  #player-hand > .card .ability-panel-inner {
     transform: scale(0.25);
     transform-origin: bottom center;
   }
 
-  /* 場のカード（モバイル）: パネルごとscaleで縮小 */
-  #player-field > .card .card-abilities-panel {
+  /* 場のカード（モバイル）: 内側コンテンツのみscaleで縮小 */
+  #player-field > .card .ability-panel-inner {
     transform: scale(0.47);
     transform-origin: bottom center;
   }
