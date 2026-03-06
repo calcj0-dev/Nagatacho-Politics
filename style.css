@@ -1941,13 +1941,13 @@ h1 {
 
   /* 手札カード（モバイル）: 内側コンテンツのみscaleで縮小 */
   #player-hand > .card .ability-panel-inner {
-    transform: scale(0.25);
+    transform: scale(0.52);
     transform-origin: bottom center;
   }
 
   /* 場のカード（モバイル）: 内側コンテンツのみscaleで縮小 */
   #player-field > .card .ability-panel-inner {
-    transform: scale(0.47);
+    transform: scale(0.80);
     transform-origin: bottom center;
   }
 

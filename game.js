@@ -1,7 +1,7 @@
 // ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.3";
+const APP_VERSION = "0.1.4";
 
 // ============================================================
 // カードデータ定義
@@ -1578,11 +1578,7 @@ function cpuPhaseOption() {
               [`${card.name} を使用！`, ...effectMsgs],
               false,
               () => {
-                if (card.effect === "kinkyuu_yoron") {
-                  showSurveyOverlay(() => cpuCheckWinAndEnd(), { kinkyuu: true });
-                } else {
-                  cpuCheckWinAndEnd();
-                }
+                cpuCheckWinAndEnd();
               }
             );
           }, 700);
