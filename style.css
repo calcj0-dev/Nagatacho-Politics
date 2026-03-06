@@ -1934,28 +1934,16 @@ h1 {
     padding: 4px 0 8px;
   }
 
-  /* 手札カード（モバイル） */
+  /* 手札カード（モバイル）: パネルごとscaleで縮小 */
   #player-hand > .card .card-abilities-panel {
-    padding: 1px 1px;
-  }
-  #player-hand > .card .ability-name-text {
-    font-size: 0.08rem;
-  }
-  #player-hand > .card .ability-cost-icons .coin-icon {
-    width: 2px;
-    height: 2px;
+    transform: scale(0.25);
+    transform-origin: bottom center;
   }
 
-  /* 場のカード（モバイル） */
+  /* 場のカード（モバイル）: パネルごとscaleで縮小 */
   #player-field > .card .card-abilities-panel {
-    padding: 1px 2px;
-  }
-  #player-field > .card .ability-name-text {
-    font-size: 0.15rem;
-  }
-  #player-field > .card .ability-cost-icons .coin-icon {
-    width: 3px;
-    height: 3px;
+    transform: scale(0.47);
+    transform-origin: bottom center;
   }
 
   /* =====================================================
