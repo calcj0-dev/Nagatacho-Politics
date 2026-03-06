@@ -1,7 +1,7 @@
 // ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.2";
+const APP_VERSION = "0.1.3";
 
 // ============================================================
 // カードデータ定義
@@ -1012,6 +1012,7 @@ const OPTION_EFFECTS = {
     self.discard.push(removed);
     const addIdx = self.hand.findIndex(c => c.type === "politician");
     const added = self.hand.splice(addIdx, 1)[0];
+    added.fieldSlot = removed.fieldSlot ?? removeIdx;
     self.field.push(added);
     msgs.push(`${removed.name}を捨て、${added.name}を場に出した！`);
     return msgs;
@@ -1455,6 +1456,8 @@ function cpuPhasePlace() {
       const destEl = document.querySelector("#cpu-field .field-empty-slot");
 
       const card = c.hand.splice(idx, 1)[0];
+      const usedCpuSlots = c.field.map(fc => fc.fieldSlot);
+      card.fieldSlot = [0, 1, 2].find(s => !usedCpuSlots.includes(s)) ?? c.field.length;
       c.field.push(card);
       c.placedThisTurn = true;
       console.log(`  CPU: ${card.name}を場に出した`);
@@ -1809,7 +1812,7 @@ function animateCardFly(srcEl, destEl, isPlayer, onDone) {
 }
 
 // 手札から政治家カードを場に出す
-function playCardToField(handIndex) {
+function playCardToField(handIndex, targetSlot) {
   const p = gameState.player;
   const card = p.hand[handIndex];
 
@@ -1818,6 +1821,12 @@ function playCardToField(handIndex) {
   if (p.field.length >= 3) return false;
 
   p.hand.splice(handIndex, 1);
+  // 指定スロットが空いていればそこへ、そうでなければ最初の空きスロットへ
+  const usedSlots = p.field.map(c => c.fieldSlot);
+  const freeSlots = [0, 1, 2].filter(s => !usedSlots.includes(s));
+  card.fieldSlot = (targetSlot != null && freeSlots.includes(targetSlot))
+    ? targetSlot
+    : freeSlots[0];
   p.field.push(card);
   p.placedThisTurn = true;
   console.log(`${card.name}を場に出した`);
@@ -3079,14 +3088,16 @@ function renderActiveEffects(slotId, ps, position = "after") {
 function renderFieldCards(containerId, cards, isPlayer) {
   const container = document.getElementById(containerId);
   container.innerHTML = "";
-  for (let idx = 0; idx < 3; idx++) {
-    if (idx < cards.length) {
-      const card = cards[idx];
+  for (let slotIdx = 0; slotIdx < 3; slotIdx++) {
+    const card = cards.find(c => c.fieldSlot === slotIdx)
+               ?? (cards[slotIdx] && cards[slotIdx].fieldSlot == null ? cards[slotIdx] : null);
+    if (card) {
+      const fieldIdx = cards.indexOf(card);
       const el = createCardElement(card);
       el.addEventListener("click", () => {
         clearHandSelection();
         if (isPlayer && gameState.currentPlayer === "player") {
-          showCardZoom(card, "field", idx);
+          showCardZoom(card, "field", fieldIdx);
         } else {
           showCardZoom(card, "view");
         }
@@ -3095,6 +3106,7 @@ function renderFieldCards(containerId, cards, isPlayer) {
     } else {
       const empty = document.createElement("div");
       empty.className = "field-empty-slot";
+      empty.dataset.slotIndex = slotIdx;
       container.appendChild(empty);
     }
   }
@@ -3202,10 +3214,11 @@ function addTouchDrag(el, idx, canPlace, canUseOption) {
     hideOptionDropZone();
 
     if (slot && canPlace && !gameState.player.placedThisTurn) {
+      const slotIndex = parseInt(slot.dataset.slotIndex, 10);
       const srcEl = document.querySelectorAll("#player-hand .card")[idx];
       srcEl
-        ? animateCardFly(srcEl, slot, true, () => playCardToField(idx))
-        : playCardToField(idx);
+        ? animateCardFly(srcEl, slot, true, () => playCardToField(idx, slotIndex))
+        : playCardToField(idx, slotIndex);
     } else if (zone && canUseOption) {
       useOptionCard(idx);
     }
@@ -3239,12 +3252,13 @@ function selectHandCard(idx, el, canPlace) {
       const handler = (e) => {
         e.stopPropagation();
         const handIdx = selectedHandIndex;
+        const slotIndex = parseInt(slot.dataset.slotIndex, 10);
         clearHandSelection();
         const srcEl = document.querySelectorAll("#player-hand .card")[handIdx];
         if (srcEl) {
-          animateCardFly(srcEl, slot, true, () => playCardToField(handIdx));
+          animateCardFly(srcEl, slot, true, () => playCardToField(handIdx, slotIndex));
         } else {
-          playCardToField(handIdx);
+          playCardToField(handIdx, slotIndex);
         }
       };
       slot._slotTapHandler = handler;
