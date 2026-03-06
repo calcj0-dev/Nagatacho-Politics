@@ -392,6 +392,7 @@ h1 {
 
 .ability-name-text {
   font-size: 0.32rem;
+  font-weight: bold;
   color: #222;
   line-height: 1.25;
   word-break: break-all;
@@ -1941,14 +1942,14 @@ h1 {
 
   /* 手札カード（モバイル）: 内側コンテンツのみscaleで縮小 */
   #player-hand > .card .ability-panel-inner {
-    transform: scale(0.52);
-    transform-origin: bottom center;
+    transform: scale(0.50);
+    transform-origin: bottom left;
   }
 
   /* 場のカード（モバイル）: 内側コンテンツのみscaleで縮小 */
   #player-field > .card .ability-panel-inner {
-    transform: scale(0.80);
-    transform-origin: bottom center;
+    transform: scale(0.50);
+    transform-origin: bottom left;
   }
 
   /* =====================================================
