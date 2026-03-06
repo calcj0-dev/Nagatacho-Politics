@@ -1942,17 +1942,17 @@ h1 {
 
   /* 手札カード（モバイル）: 内側コンテンツのみscaleで縮小 */
   #player-hand > .card .ability-panel-inner {
-    width: calc(100% / 0.52);
-    height: calc(100% / 0.52);
-    transform: scale(0.52);
+    width: calc(100% / 0.45);
+    height: calc(100% / 0.45);
+    transform: scale(0.45);
     transform-origin: top left;
   }
 
   /* 場のカード（モバイル）: 内側コンテンツのみscaleで縮小 */
   #player-field > .card .ability-panel-inner {
-    width: calc(100% / 0.40);
-    height: calc(100% / 0.40);
-    transform: scale(0.40);
+    width: calc(100% / 0.45);
+    height: calc(100% / 0.45);
+    transform: scale(0.45);
     transform-origin: top left;
   }
 
