@@ -1,7 +1,7 @@
 // ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.2";
+const APP_VERSION = "0.1.3";
 
 // ============================================================
 // カードデータ定義
@@ -3319,7 +3319,8 @@ function setupHandSwipe() {
   area.addEventListener("pointerdown", e => {
     sx = e.clientX;
     sy = e.clientY;
-  }, { passive: true });
+    area.setPointerCapture(e.pointerId);
+  });
 
   area.addEventListener("pointerup", e => {
     if (sx === null) return;
@@ -3397,11 +3398,13 @@ function createCardElement(card) {
   if (card.type === "politician" && card.abilities) {
     const panel = document.createElement("div");
     panel.className = "card-abilities-panel";
+    const inner = document.createElement("div");
+    inner.className = "ability-panel-inner";
     card.abilities.forEach((ability, i) => {
       if (i > 0) {
         const sep = document.createElement("div");
         sep.className = "card-ability-sep";
-        panel.appendChild(sep);
+        inner.appendChild(sep);
       }
       const row = document.createElement("div");
       row.className = "card-ability-row";
@@ -3416,8 +3419,9 @@ function createCardElement(card) {
       nameEl.textContent = ability.name;
       row.appendChild(nameEl);
 
-      panel.appendChild(row);
+      inner.appendChild(row);
     });
+    panel.appendChild(inner);
     el.appendChild(panel);
   }
 
