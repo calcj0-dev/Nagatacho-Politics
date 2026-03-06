@@ -1,7 +1,7 @@
 // ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.7";
+const APP_VERSION = "0.1.8";
 
 // ============================================================
 // カードデータ定義
@@ -1218,7 +1218,6 @@ function startPlayerTurn() {
   showTurnBanner(true, () => {
     if (drawnCard) p.hand.push(drawnCard); // バナー後に手札へ追加
     focusedHandIndex = Math.floor(p.hand.length / 2); // 中央カードをフォーカス
-    setupHandSwipe();
     renderGame(); // ← バナー後にフラッシュ発火（手札反映済み）
     if (drawnCard) {
       animateDrawCard(true, () => setMainPhaseUI(true));
@@ -3282,12 +3281,17 @@ function renderHand() {
         showCardZoom(card, "view");
         return;
       }
+      // 別のカードをタップ → フォーカス移動のみ
+      if (focusedHandIndex !== idx) {
+        focusedHandIndex = idx;
+        renderHand();
+        return;
+      }
+      // フォーカス済みのカードをタップ → アクション実行
       if (canUseOption && !canPlace) {
-        // オプション: タップで即使用
         clearHandSelection();
         useOptionCard(idx);
       } else if (canPlace) {
-        // 政治家: タップ選択切り替え
         if (selectedHandIndex === idx) {
           clearHandSelection();
         } else {
@@ -3303,37 +3307,6 @@ function renderHand() {
   applyHandFan(container);
 }
 
-// 手札エリアのスワイプでフォーカスカードを切り替え（一度だけ設定）
-function setupHandSwipe() {
-  const area = document.getElementById("hand-area");
-  if (!area || area.dataset.swipeSetup) return;
-  area.dataset.swipeSetup = "1";
-
-  let sx = null, sy = null;
-
-  // pointerdown/pointerup を使用（touch-action や overflow の影響を受けにくい）
-  area.addEventListener("pointerdown", e => {
-    sx = e.clientX;
-    sy = e.clientY;
-    area.setPointerCapture(e.pointerId);
-  });
-
-  area.addEventListener("pointerup", e => {
-    if (sx === null) return;
-    const dx = e.clientX - sx;
-    const dy = e.clientY - sy;
-    sx = sy = null;
-    // 横方向が縦方向より優勢で、かつ最低 20px 以上動いた場合のみスワイプと判定
-    if (Math.abs(dx) < 20 || Math.abs(dx) < Math.abs(dy)) return;
-    if (gameState.currentPlayer !== "player") return;
-    const n = gameState.player.hand.length;
-    if (!n) return;
-    focusedHandIndex = dx < 0
-      ? Math.min(n - 1, focusedHandIndex + 1)  // 左スワイプ → 次のカード
-      : Math.max(0,     focusedHandIndex - 1);  // 右スワイプ → 前のカード
-    renderHand();
-  });
-}
 
 // 手札ファン（扇形）レイアウト
 function applyHandFan(container) {
