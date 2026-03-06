@@ -1942,9 +1942,9 @@ h1 {
 
   /* 手札カード（モバイル）: 内側コンテンツのみscaleで縮小 */
   #player-hand > .card .ability-panel-inner {
-    width: calc(100% / 0.45);
-    height: calc(100% / 0.45);
-    transform: scale(0.45);
+    width: calc(100% / 0.35);
+    height: calc(100% / 0.35);
+    transform: scale(0.35);
     transform-origin: top left;
   }
 
