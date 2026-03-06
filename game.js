@@ -1743,66 +1743,117 @@ function animateCardFly(srcEl, destEl, isPlayer, onDone) {
   });
   document.body.appendChild(clone);
 
-  const glowRgb = isPlayer ? "74,171,240" : "240,160,32";
+  const glowRgb  = isPlayer ? "74,171,240" : "240,160,32";
+  const glowRgba = (a) => `rgba(${glowRgb},${a.toFixed(2)})`;
 
-  // 弧の制御点: 画面中央に向かって膨らむ
   const startX = srcRect.left  + srcRect.width  / 2;
   const startY = srcRect.top   + srcRect.height / 2;
   const endX   = destRect.left + destRect.width  / 2;
   const endY   = destRect.top  + destRect.height / 2;
-  const midY   = (startY + endY) / 2;
-  const vCenterY = window.innerHeight / 2;
-  const bulge  = Math.abs(endY - startY) * 0.55 + 60;
-  const ctrlX  = (startX + endX) / 2;
-  const ctrlY  = midY > vCenterY ? midY - bulge : midY + bulge;
+  const cx = window.innerWidth  / 2;
+  const cy = window.innerHeight / 2;
 
-  const DURATION = 530;
   const startW = srcRect.width,  startH = srcRect.height;
   const endW   = destRect.width, endH   = destRect.height;
+  const peakScale = 2.4;
+  const peakW  = endW * peakScale, peakH = endH * peakScale;
+
+  const P1 = 350, P2 = 380, P3 = 280;
+  const TOTAL = P1 + P2 + P3;
   const t0 = performance.now();
 
-  function easeInOut(t) { return t < 0.5 ? 2*t*t : -1 + (4-2*t)*t; }
+  function easeOut(t) { return 1 - (1-t)*(1-t)*(1-t); }
+  function easeIn(t)  { return t*t*t; }
+
+  function spawnRing(x, y, r, g, b) {
+    const ring = document.createElement("div");
+    Object.assign(ring.style, {
+      position: "fixed", borderRadius: "50%", pointerEvents: "none", zIndex: "498",
+      width: "60px", height: "60px",
+      left: (x - 30) + "px", top: (y - 30) + "px",
+      border: `3px solid rgba(${r},${g},${b},0.85)`,
+      animation: "card-ring-expand 0.55s ease-out forwards",
+    });
+    document.body.appendChild(ring);
+    ring.addEventListener("animationend", () => ring.remove(), { once: true });
+  }
+
+  let ringsFired = false;
 
   function frame(now) {
-    const raw = Math.min((now - t0) / DURATION, 1);
-    const t   = easeInOut(raw);
-    const inv = 1 - t;
+    const elapsed = now - t0;
 
-    // 二次ベジェ曲線
-    const bx = inv*inv*startX + 2*inv*t*ctrlX + t*t*endX;
-    const by = inv*inv*startY + 2*inv*t*ctrlY + t*t*endY;
-
-    // サイズ補間
-    const w = startW + (endW - startW) * t;
-    const h = startH + (endH - startH) * t;
-
-    // 弧の頂点(raw=0.5)でエフェクト最大
-    const arc    = Math.sin(Math.PI * raw);
-    const scale  = 1 + arc * 0.38;
-    const glow   = Math.round(arc * 32);
-    const bright = 1 + arc * 0.6;
-
-    clone.style.left      = (bx - w / 2) + "px";
-    clone.style.top       = (by - h / 2) + "px";
-    clone.style.width     = w + "px";
-    clone.style.height    = h + "px";
-    clone.style.transform = `scale(${scale.toFixed(3)})`;
-    clone.style.boxShadow = `0 0 ${glow}px ${Math.round(glow/2)}px rgba(${glowRgb},${(arc * 0.9).toFixed(2)})`;
-    clone.style.filter    = `brightness(${bright.toFixed(2)})`;
-
-    if (raw < 1) {
+    if (elapsed < P1) {
+      // フェーズ1: ズームアップ → 画面中央へ
+      const t = easeOut(elapsed / P1);
+      const x = startX + (cx - startX) * t;
+      const y = startY + (cy - startY) * t;
+      const w = startW + (peakW - startW) * t;
+      const h = startH + (peakH - startH) * t;
+      const glow   = Math.round(t * 50);
+      const bright = 1 + t * 1.0;
+      clone.style.left      = (x - w/2) + "px";
+      clone.style.top       = (y - h/2) + "px";
+      clone.style.width     = w + "px";
+      clone.style.height    = h + "px";
+      clone.style.boxShadow = `0 0 ${glow}px ${Math.round(glow/2)}px ${glowRgba(t * 0.85)}`;
+      clone.style.filter    = `brightness(${bright.toFixed(2)})`;
       requestAnimationFrame(frame);
+
+    } else if (elapsed < P1 + P2) {
+      // フェーズ2: 発光パルス（中央で3回）
+      const t = (elapsed - P1) / P2;
+      const pulse  = Math.sin(t * Math.PI * 3);
+      const glow   = 50 + pulse * 28;
+      const bright = 2.0 + pulse * 0.5;
+      clone.style.left      = (cx - peakW/2) + "px";
+      clone.style.top       = (cy - peakH/2) + "px";
+      clone.style.width     = peakW + "px";
+      clone.style.height    = peakH + "px";
+      clone.style.boxShadow = `0 0 ${glow}px ${Math.round(glow/2)}px ${glowRgba(0.92)}`;
+      clone.style.filter    = `brightness(${bright.toFixed(2)})`;
+      // パルス頂点ごとにリングを発生
+      if (!ringsFired && t > 0.1) {
+        const [r,g,b] = isPlayer ? [74,171,240] : [240,160,32];
+        spawnRing(cx, cy, r, g, b);
+        setTimeout(() => spawnRing(cx, cy, r, g, b), 130);
+        setTimeout(() => spawnRing(cx, cy, r, g, b), 260);
+        ringsFired = true;
+      }
+      requestAnimationFrame(frame);
+
+    } else if (elapsed < TOTAL) {
+      // フェーズ3: 場スロットへ高速スラム
+      const t = easeIn((elapsed - P1 - P2) / P3);
+      const x = cx + (endX - cx) * t;
+      const y = cy + (endY - cy) * t;
+      const w = peakW + (endW - peakW) * t;
+      const h = peakH + (endH - peakH) * t;
+      const glow   = Math.round((1-t) * 50);
+      const bright = 2.0 - t * 1.0;
+      clone.style.left      = (x - w/2) + "px";
+      clone.style.top       = (y - h/2) + "px";
+      clone.style.width     = w + "px";
+      clone.style.height    = h + "px";
+      clone.style.boxShadow = `0 0 ${glow}px ${Math.round(glow/2)}px ${glowRgba((1-t) * 0.85)}`;
+      clone.style.filter    = `brightness(${bright.toFixed(2)})`;
+      requestAnimationFrame(frame);
+
     } else {
-      // 着地バースト
-      const burst = document.createElement("div");
-      burst.className = `card-land-burst ${isPlayer ? "burst-player" : "burst-cpu"}`;
-      Object.assign(burst.style, {
-        position: "fixed",
-        left: (endX - 55) + "px", top: (endY - 55) + "px",
-        pointerEvents: "none", zIndex: "499",
-      });
-      document.body.appendChild(burst);
-      burst.addEventListener("animationend", () => burst.remove(), { once: true });
+      // 着地バースト（2重リング）
+      for (let i = 0; i < 2; i++) {
+        const burst = document.createElement("div");
+        burst.className = `card-land-burst ${isPlayer ? "burst-player" : "burst-cpu"}`;
+        Object.assign(burst.style, {
+          position: "fixed",
+          left: (endX - 70) + "px", top: (endY - 70) + "px",
+          width: "140px", height: "140px",
+          pointerEvents: "none", zIndex: "499",
+          animationDelay: `${i * 80}ms`,
+        });
+        document.body.appendChild(burst);
+        burst.addEventListener("animationend", () => burst.remove(), { once: true });
+      }
       clone.remove();
       onDone();
     }
@@ -2513,12 +2564,42 @@ function showCardZoom(card, context, index) {
           item.appendChild(effectRow);
         }
 
-        // 場のプレイヤーカード: クリックで確認ダイアログ（未使用・資金十分・封印なしの時のみ）
+        // 場のプレイヤーカード: クリックでアイテム内に確認ボタンを展開
         if (isFieldPlayer && usedIdx < 0 && !isSealed && p.funds >= effectiveCost) {
           item.addEventListener("click", (e) => {
             e.stopPropagation();
-            overlay.remove();
-            useAbility(index, aIdx);
+            // 既に確認中の場合はスキップ
+            if (item.querySelector(".zoom-confirm-btns")) return;
+            // 他の能力の確認UIをリセット
+            abilityOverlay.querySelectorAll(".zoom-confirm-btns").forEach(el => el.remove());
+            abilityOverlay.querySelectorAll(".zoom-ability-item.confirming")
+              .forEach(el => el.classList.remove("confirming"));
+
+            item.classList.add("confirming");
+            const btnWrap = document.createElement("div");
+            btnWrap.className = "zoom-confirm-btns";
+
+            const yesBtn = document.createElement("button");
+            yesBtn.className = "zoom-confirm-yes";
+            yesBtn.textContent = "使用する";
+            yesBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              overlay.remove();
+              useAbility(index, aIdx);
+            });
+
+            const noBtn = document.createElement("button");
+            noBtn.className = "zoom-confirm-no";
+            noBtn.textContent = "やめる";
+            noBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              btnWrap.remove();
+              item.classList.remove("confirming");
+            });
+
+            btnWrap.appendChild(yesBtn);
+            btnWrap.appendChild(noBtn);
+            item.appendChild(btnWrap);
           });
         }
 
