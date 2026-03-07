@@ -1,7 +1,7 @@
 // ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.6";
+const APP_VERSION = "0.1.7";
 
 // ============================================================
 // カードデータ定義
@@ -414,7 +414,7 @@ const OPTION_CARDS = [
     image: "assets/options/gaitou_enzetsu.png",
     type: "option",
     effect: "gaitou_enzetsu",
-    count:2
+    count:1
   },
   {
     id: "drill_hakai",
@@ -444,7 +444,7 @@ const OPTION_CARDS = [
     image: "assets/options/toushu_touron.png",
     type: "option",
     effect: "toushu_touron",
-    count:2
+    count:1
   },
   {
     id: "yukiguni_yukikaki",
@@ -454,7 +454,7 @@ const OPTION_CARDS = [
     image: "assets/options/yukiguni_yukikaki.png",
     type: "option",
     effect: "yukiguni_yukikaki",
-    count:2
+    count:1
   },
   {
     id: "kono_hage",
@@ -474,7 +474,7 @@ const OPTION_CARDS = [
     image: "assets/options/netenai_jiman.png",
     type: "option",
     effect: "netenai_jiman",
-    count:2
+    count:1
   },
   {
     id: "masukomi_taisaku",
@@ -484,7 +484,7 @@ const OPTION_CARDS = [
     image: "assets/options/masukomi_taisaku.png",
     type: "option",
     effect: "masukomi_taisaku",
-    count:2
+    count:1
   },
   {
     id: "ouen_enzetsu",
@@ -514,6 +514,46 @@ const OPTION_CARDS = [
     image: "assets/options/giinkaikan_furin.png",
     type: "option",
     effect: "giinkaikan_furin",
+    count:1
+  },
+  {
+    id: "yaji_gassen",
+    name: "ヤジ合戦",
+    description: "与野党入り乱れての怒鳴り合い。議長のマイクが虚しく響く。",
+    effectDescription: "相手の場の政治家カード全員の能力をこのターン封じる",
+    image: "assets/options/yaji_gassen.png",
+    type: "option",
+    effect: "yaji_gassen",
+    count:2
+  },
+  {
+    id: "gyuuho_senjutsu",
+    name: "牛歩戦術",
+    description: "採決のたびに亀より遅く投票所へ向かう。議長も失笑。",
+    effectDescription: "相手は次のターンのドローをスキップする",
+    image: "assets/options/gyuuho_senjutsu.png",
+    type: "option",
+    effect: "gyuuho_senjutsu",
+    count:2
+  },
+  {
+    id: "kokkai_inemuri",
+    name: "国会居眠り",
+    description: "ズラリと並んだ議員が全員スヤスヤ。重要法案の採決中でも爆睡。",
+    effectDescription: "山札から2枚ドロー",
+    image: "assets/options/kokkai_inemuri.png",
+    type: "option",
+    effect: "kokkai_inemuri",
+    count:2
+  },
+  {
+    id: "zouzei_megane",
+    name: "増税メガネ",
+    description: "「財源が必要です」と一言。国民の財布から素早く3億が消えた。",
+    effectDescription: "相手の政治資金から3億徴収し、自分が得る",
+    image: "assets/options/zouzei_megane.png",
+    type: "option",
+    effect: "zouzei_megane",
     count:2
   }
 ];
@@ -1100,6 +1140,43 @@ const OPTION_EFFECTS = {
     if (m1) msgs.push(m1);
     const m2 = changeApproval(self, -3);
     if (m2) msgs.push(m2);
+    return msgs;
+  },
+  yaji_gassen(_self, opponent) {
+    const msgs = [];
+    let count = 0;
+    opponent.field.forEach(card => {
+      if (!opponent.usedAbilities[card.instanceId]) {
+        opponent.usedAbilities[card.instanceId] = 99;
+        count++;
+      }
+    });
+    msgs.push(count > 0 ? `相手の政治家${count}人の能力を封じた！` : "相手の場に政治家カードがない…");
+    return msgs;
+  },
+  gyuuho_senjutsu(_self, opponent) {
+    const msgs = [];
+    opponent.skipNextDraw = true;
+    msgs.push("相手の次のターンのドローを封じた！");
+    return msgs;
+  },
+  kokkai_inemuri(self, _opponent) {
+    const msgs = [];
+    let drawn = 0;
+    for (let i = 0; i < 2; i++) {
+      if (self.deck.length === 0) break;
+      self.hand.push(self.deck.shift());
+      drawn++;
+    }
+    msgs.push(drawn > 0 ? `山札から${drawn}枚ドローした！` : "山札が空でドローできない…");
+    return msgs;
+  },
+  zouzei_megane(self, opponent) {
+    const msgs = [];
+    const amount = Math.min(3, opponent.funds);
+    changeFunds(opponent, -amount);
+    changeFunds(self, amount);
+    msgs.push(`相手から${amount}億徴収した！`);
     return msgs;
   }
 };
