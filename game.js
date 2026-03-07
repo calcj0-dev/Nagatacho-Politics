@@ -1,7 +1,7 @@
 // ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.8";
+const APP_VERSION = "0.1.9";
 
 // ============================================================
 // カードデータ定義
@@ -3556,17 +3556,25 @@ function renderHand() {
     // 上スワイプ → showCardZoom
     let swipeStartY = null;
     let didSwipe = false;
-    el.addEventListener("pointerdown", (e) => { swipeStartY = e.clientY; didSwipe = false; });
+    el.addEventListener("pointerdown", (e) => {
+      swipeStartY = e.clientY;
+      didSwipe = false;
+      el.setPointerCapture(e.pointerId); // ポインターをこの要素に固定
+    });
+    el.addEventListener("pointermove", (e) => {
+      if (swipeStartY === null) return;
+      if (swipeStartY - e.clientY > 10) e.preventDefault(); // スクロールを抑制
+    }, { passive: false });
     el.addEventListener("pointerup", (e) => {
       if (swipeStartY === null) return;
       const dy = swipeStartY - e.clientY;
       swipeStartY = null;
       if (dy > 30) {
         didSwipe = true;
-        e.stopPropagation();
         showCardZoom(card, "view");
       }
     });
+    el.addEventListener("pointercancel", () => { swipeStartY = null; });
 
     // タップ → フォーカス移動 or アクション
     el.addEventListener("click", (e) => {
