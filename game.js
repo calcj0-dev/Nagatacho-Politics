@@ -1,7 +1,7 @@
 // ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.5";
+const APP_VERSION = "0.1.6";
 
 // ============================================================
 // カードデータ定義
@@ -380,7 +380,7 @@ const OPTION_CARDS = [
     id: "trump_tariff",
     name: "トランプ関税",
     description: "外圧による経済パニック。",
-    effectDescription: "両プレイヤーの政治資金が30%没収される",
+    effectDescription: "両プレイヤーの政治資金が50%没収される",
     image: "assets/options/trump_tariff.png",
     type: "option",
     effect: "trump_tariff",
@@ -389,8 +389,8 @@ const OPTION_CARDS = [
   {
     id: "kioku_ni_gozaimasen",
     name: "記憶にございません",
-    description: "国会答弁の定番フレーズで追及をかわす。",
-    effectDescription: "次に受ける支持率低下を1回無効化。ただし次の自分のターンはドロー不可",
+    description: "国会答弁の定番フレーズで追及をかわし、無敵状態。",
+    effectDescription: "自分の場の政治家カードを指定し、現在のターンのみ能力の政治資金コストをゼロにする",
     image: "assets/options/kioku_ni_gozaimasen.png",
     type: "option",
     effect: "kioku_ni_gozaimasen",
@@ -400,7 +400,7 @@ const OPTION_CARDS = [
     id: "kenkin_party",
     name: "政治献金パーティー",
     description: "豪華ホテルの「勉強会」で資金集め。",
-    effectDescription: "政治資金+8億円を即時獲得",
+    effectDescription: "政治資金+5億円を即時獲得",
     image: "assets/options/kenkin_party.png",
     type: "option",
     effect: "kenkin_party",
@@ -410,7 +410,7 @@ const OPTION_CARDS = [
     id: "gaitou_enzetsu",
     name: "街頭演説の神対応",
     description: "厳しいヤジをユーモアで返し、聴衆を味方につける。",
-    effectDescription: "支持率+4%。場にカードが2枚以上なら代わりに+8%",
+    effectDescription: "支持率+4%。場にカードが2枚以上なら追加で+8%",
     image: "assets/options/gaitou_enzetsu.png",
     type: "option",
     effect: "gaitou_enzetsu",
@@ -420,7 +420,7 @@ const OPTION_CARDS = [
     id: "drill_hakai",
     name: "ドリル破壊",
     description: "物理的に証拠を消し去る強硬手段。",
-    effectDescription: "次に受ける支持率低下を1回スキップ。ただし政治資金-5億",
+    effectDescription: "次に受ける支持率低下を1回無効化",
     image: "assets/options/drill_hakai.png",
     type: "option",
     effect: "drill_hakai",
@@ -440,7 +440,7 @@ const OPTION_CARDS = [
     id: "toushu_touron",
     name: "党首討論",
     description: "2分割画面で映し出される、言葉の真剣勝負。",
-    effectDescription: "支持率が上がる（状況に応じて効果が変動）",
+    effectDescription: "支持率が上がる（ランダム）",
     image: "assets/options/toushu_touron.png",
     type: "option",
     effect: "toushu_touron",
@@ -460,7 +460,7 @@ const OPTION_CARDS = [
     id: "kono_hage",
     name: "このハゲェー！！",
     description: "秘書への苛烈な暴言録音がSNSで大拡散。",
-    effectDescription: "相手の支持率-5%。相手の場に女性政治家がいれば更に-7%",
+    effectDescription: "相手の支持率-5%。相手の場に女性政治家がいれば追加で-7%",
     image: "assets/options/kono_hage.png",
     type: "option",
     effect: "kono_hage",
@@ -480,7 +480,7 @@ const OPTION_CARDS = [
     id: "masukomi_taisaku",
     name: "マスコミ対策",
     description: "記者クラブとの会食や巧妙な情報操作で報道をコントロール。",
-    effectDescription: "次の相手ターンに受ける支持率低下を1回無効化",
+    effectDescription: "次の相手ターンの支持率上昇を1回無効化",
     image: "assets/options/masukomi_taisaku.png",
     type: "option",
     effect: "masukomi_taisaku",
@@ -489,7 +489,7 @@ const OPTION_CARDS = [
   {
     id: "ouen_enzetsu",
     name: "応援演説",
-    description: "「党の顔」がマイクを握り、新たな人材を呼び込む。",
+    description: "有名人がマイクを握り、新たな支持者を呼び込む。",
     effectDescription: "自分の山札から政治家カードをランダムで1枚手札に加える",
     image: "assets/options/ouen_enzetsu.png",
     type: "option",
@@ -500,7 +500,7 @@ const OPTION_CARDS = [
     id: "kinkyuu_yoron",
     name: "緊急世論調査",
     description: "リアルタイムの支持率を分析し、戦術を修正する。",
-    effectDescription: "即座に自分の支持率を確認できる",
+    effectDescription: "即座に支持率を確認できる",
     image: "assets/options/kinkyuu_yoron.png",
     type: "option",
     effect: "kinkyuu_yoron",
@@ -557,6 +557,7 @@ function createPlayerState() {
     skipNextDraw: false,
     shields: [],             // 無効化系効果
     currentTurnCostReduction: 0, // このターンのみ有効なコスト軽減（ターン開始時にnextTurnBonusesから転写）
+    zeroCostCardId: null,        // このターンのみコスト0にする政治家カードのinstanceId
     nextTurnBonuses: {
       fundBonus: 0,
       costReduction: 0,      // 次ターン開始時にcurrentTurnCostReductionへ転写してリセット
@@ -656,7 +657,16 @@ function initGame(playerParty) {
 // 支持率変更（クランプ付き）- 変動メッセージを返す
 function changeApproval(player, amount) {
   const before = player.approval;
-  if (amount < 0) amount = applyDefenses(player, amount);
+  if (amount < 0) {
+    amount = applyDefenses(player, amount);
+  } else if (amount > 0) {
+    const blockIdx = player.shields.indexOf("block_approval_up");
+    if (blockIdx >= 0) {
+      player.shields.splice(blockIdx, 1);
+      console.log("  シールド発動: 支持率上昇を無効化");
+      amount = 0;
+    }
+  }
   player.approval = clamp(player.approval + amount, 0, 100);
   const after = player.approval;
   if (after !== before) player._approvalFlash = { dir: after > before ? "up" : "down", delta: after - before };
@@ -972,40 +982,37 @@ const ABILITY_EFFECTS = {
 const OPTION_EFFECTS = {
   trump_tariff(self, opponent) {
     const msgs = [];
-    const selfLoss = Math.floor(self.funds * 0.3);
-    const oppLoss = Math.floor(opponent.funds * 0.3);
+    const selfLoss = Math.floor(self.funds * 0.5);
+    const oppLoss = Math.floor(opponent.funds * 0.5);
     changeFunds(self, -selfLoss);
     changeFunds(opponent, -oppLoss);
     msgs.push(`両者の政治資金が没収された！（自分-${selfLoss}億、相手-${oppLoss}億）`);
     return msgs;
   },
-  kioku_ni_gozaimasen(self, opponent) {
-    const msgs = [];
-    self.shields.push("block_approval_down");
-    self.skipNextDraw = true;
-    msgs.push("次に受ける支持率低下を1回無効化！");
-    msgs.push("ただし次のターンはドロー不可…");
-    return msgs;
+  kioku_ni_gozaimasen(_self, _opponent) {
+    // zeroCostCardId の設定は useOptionCard の特殊処理で行う
+    return [];
   },
   kenkin_party(self, opponent) {
     const msgs = [];
-    changeFunds(self, 8);
-    msgs.push("政治資金+8億円を獲得！");
+    changeFunds(self, 5);
+    msgs.push("政治資金+5億円を獲得！");
     return msgs;
   },
   gaitou_enzetsu(self, opponent) {
     const msgs = [];
-    const bonus = self.field.length >= 2 ? 8 : 4;
-    const m1 = changeApproval(self, bonus);
+    const m1 = changeApproval(self, 4);
     if (m1) msgs.push(m1);
+    if (self.field.length >= 2) {
+      const m2 = changeApproval(self, 8);
+      if (m2) msgs.push(m2);
+    }
     return msgs;
   },
   drill_hakai(self, opponent) {
     const msgs = [];
     self.shields.push("block_approval_down");
-    changeFunds(self, -5);
     msgs.push("次の支持率低下を一度だけスキップ！");
-    msgs.push("政治資金-5億円…");
     return msgs;
   },
   tounai_kaikaku(self, opponent) {
@@ -1062,10 +1069,10 @@ const OPTION_EFFECTS = {
     if (m1) msgs.push(m1);
     return msgs;
   },
-  masukomi_taisaku(self, opponent) {
+  masukomi_taisaku(_self, opponent) {
     const msgs = [];
-    self.shields.push("block_approval_down");
-    msgs.push("次の相手ターンに受ける支持率低下を1回無効化！");
+    opponent.shields.push("block_approval_up");
+    msgs.push("次の相手ターンの支持率上昇を1回無効化！");
     return msgs;
   },
   ouen_enzetsu(self, opponent) {
@@ -1194,6 +1201,7 @@ function startPlayerTurn() {
   // 次ターンボーナスのコスト軽減を転写してリセット（これで永久蓄積を防ぐ）
   p.currentTurnCostReduction = p.nextTurnBonuses.costReduction;
   p.nextTurnBonuses.costReduction = 0;
+  p.zeroCostCardId = null;
 
   // ① 資金フェーズ
   const bonus = p.nextTurnBonuses.fundBonus;
@@ -1917,7 +1925,9 @@ function useAbility(fieldIndex, abilityIndex) {
   if (p.usedAbilities[card.instanceId]) return;
 
   const ability = card.abilities[abilityIndex];
-  const effectiveCost = Math.max(0, ability.cost - (p.currentTurnCostReduction || 0));
+  const effectiveCost = p.zeroCostCardId === card.instanceId
+    ? 0
+    : Math.max(0, ability.cost - (p.currentTurnCostReduction || 0));
   if (p.funds < effectiveCost) return;
 
   // 確認ダイアログ表示
@@ -2165,6 +2175,30 @@ function useOptionCard(handIndex) {
     p.discard.push(card);
     p.usedOptionThisTurn = true;
     console.log(`[オプション使用] ${card.name}`);
+
+    if (card.effect === "kioku_ni_gozaimasen") {
+      showFieldCardPicker(p.field, (selected) => {
+        if (selected) {
+          p.zeroCostCardId = selected.instanceId;
+          console.log(`[記憶にございません] ${selected.name}のコストを今ターン0に`);
+        }
+        const msgs = selected ? [`${selected.name}の能力コストが今ターン0になった！`] : [];
+        playOptionCardAnimation(card, cardRect, false, () => {
+          animateCardToDiscard(card, true, () => {
+            renderGame();
+            setTimeout(() => {
+              const bannerMsgs = [`「${card.name}」使用！`, ...msgs];
+              showActionBanner(bannerMsgs, true, () => {
+                const result = checkWinCondition();
+                if (result) { gameState.phase = "finished"; showFinishOverlay(result); }
+              });
+            }, 700);
+          });
+        });
+      });
+      return;
+    }
+
     const msgs = executeEffect(card.effect, "player");
     playOptionCardAnimation(card, cardRect, false, () => {
       animateCardToDiscard(card, true, () => {
@@ -2190,6 +2224,64 @@ function useOptionCard(handIndex) {
       });
     });
   });
+}
+
+// 場の政治家カードを選択させるUI（kioku_ni_gozaimasen用）
+function showFieldCardPicker(fieldCards, callback) {
+  const wrap = document.createElement("div");
+  Object.assign(wrap.style, {
+    position: "fixed", inset: "0", background: "rgba(0,0,0,0.72)",
+    zIndex: "3000", display: "flex", flexDirection: "column",
+    alignItems: "center", justifyContent: "center", gap: "16px",
+  });
+
+  const title = document.createElement("div");
+  Object.assign(title.style, { color: "#fff", fontSize: "1rem", fontWeight: "bold", marginBottom: "4px" });
+  title.textContent = "コストを0にする政治家カードを選択";
+  wrap.appendChild(title);
+
+  if (fieldCards.length === 0) {
+    document.body.appendChild(wrap);
+    const msg = document.createElement("div");
+    msg.style.color = "#aaa";
+    msg.textContent = "場に政治家カードがありません";
+    wrap.appendChild(msg);
+    setTimeout(() => { wrap.remove(); callback(null); }, 1200);
+    return;
+  }
+
+  const list = document.createElement("div");
+  Object.assign(list.style, { display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" });
+
+  fieldCards.forEach((fc) => {
+    const btn = document.createElement("div");
+    Object.assign(btn.style, {
+      background: "rgba(255,255,255,0.12)", border: "2px solid rgba(255,255,255,0.4)",
+      borderRadius: "8px", padding: "10px 16px", color: "#fff",
+      cursor: "pointer", textAlign: "center", minWidth: "80px",
+    });
+    if (fc.image) {
+      const img = document.createElement("div");
+      Object.assign(img.style, {
+        width: "60px", height: "80px", backgroundImage: `url(${fc.image})`,
+        backgroundSize: "cover", backgroundPosition: "center",
+        borderRadius: "4px", marginBottom: "6px",
+      });
+      btn.appendChild(img);
+    }
+    const name = document.createElement("div");
+    name.style.fontSize = "0.75rem";
+    name.textContent = fc.name;
+    btn.appendChild(name);
+
+    btn.addEventListener("click", () => { wrap.remove(); callback(fc); });
+    btn.addEventListener("pointerover", () => { btn.style.borderColor = "rgba(255,220,50,0.9)"; });
+    btn.addEventListener("pointerout", () => { btn.style.borderColor = "rgba(255,255,255,0.4)"; });
+    list.appendChild(btn);
+  });
+
+  wrap.appendChild(list);
+  document.body.appendChild(wrap);
 }
 
 // ============================================================
@@ -2553,7 +2645,9 @@ function showCardZoom(card, context, index) {
       const usedIdx = usedVal ? usedVal - 1 : -1; // 使用した能力のインデックス（0 or 1）、未使用は-1
 
       card.abilities.forEach((ability, aIdx) => {
-        const effectiveCost = Math.max(0, ability.cost - costReduction);
+        const effectiveCost = (isFieldPlayer && p.zeroCostCardId === card.instanceId)
+          ? 0
+          : Math.max(0, ability.cost - costReduction);
 
         // 使用済みカード: 使った能力だけ表示、それ以外は非表示
         if (isFieldPlayer && usedIdx >= 0 && aIdx !== usedIdx) return;
@@ -3134,6 +3228,7 @@ function renderActiveEffects(slotId, ps, position = "after") {
   // シールド
   ps.shields.forEach(s => {
     if (s === "block_approval_down") tags.push({ label: `🛡 支持率低下を1回無効化`, type: "shield" });
+    if (s === "block_approval_up")   tags.push({ label: `📵 支持率上昇を1回無効化`, type: "debuff" });
     if (s === "block_attack")        tags.push({ label: `🛡 攻撃を1回無効化`,       type: "shield" });
   });
 
