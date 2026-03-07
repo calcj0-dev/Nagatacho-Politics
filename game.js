@@ -3664,6 +3664,22 @@ function createCardElement(card) {
 
   el.appendChild(imgArea);
 
+  // 情報パネル（オプションカード）
+  if (card.type === "option") {
+    const panel = document.createElement("div");
+    panel.className = "card-abilities-panel";
+    const inner = document.createElement("div");
+    inner.className = "ability-panel-inner";
+    if (card.effectDescription) {
+      const effectEl = document.createElement("div");
+      effectEl.className = "ability-name-text option-effect-text";
+      effectEl.textContent = card.effectDescription;
+      inner.appendChild(effectEl);
+    }
+    panel.appendChild(inner);
+    el.appendChild(panel);
+  }
+
   // 能力パネル（政治家カードのみ）
   if (card.type === "politician" && card.abilities) {
     const panel = document.createElement("div");

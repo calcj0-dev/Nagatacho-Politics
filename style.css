@@ -406,6 +406,15 @@ h1 {
   min-width: 0;
 }
 
+.option-effect-text {
+  white-space: normal;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+
 .card-ability-sep {
   height: 1px;
   background: rgba(0, 0, 0, 0.12);
