@@ -1147,7 +1147,7 @@ const OPTION_EFFECTS = {
     let count = 0;
     opponent.field.forEach(card => {
       if (!opponent.usedAbilities[card.instanceId]) {
-        opponent.usedAbilities[card.instanceId] = 99;
+        card.disabled = true;
         count++;
       }
     });
@@ -1582,6 +1582,7 @@ function cpuPhasePlace() {
           margin: "0",
         });
         document.body.appendChild(faceEl);
+        faceEl.style.opacity = "0"; // cloneがあるので元を非表示
         animateCardFly(faceEl, destEl, false, () => { faceEl.remove(); afterPlace(); });
       } else {
         afterPlace();
@@ -1651,7 +1652,7 @@ function cpuExecuteNextAbility(abilityActions, idx) {
       }
     }
     c.funds -= effectiveCost;
-    c.usedAbilities[action.card.instanceId] = true;
+    c.usedAbilities[action.card.instanceId] = abilityIdx + 1;
     const ability = action.card.abilities[abilityIdx];
     const effectMsgs = executeEffect(ability.effect, "cpu");
     console.log(`  CPU: ${action.card.name}「${ability.name}」（コスト${effectiveCost}億）`);
@@ -3554,13 +3555,14 @@ function renderHand() {
 
     // 上スワイプ → showCardZoom
     let swipeStartY = null;
-    el.addEventListener("pointerdown", (e) => { swipeStartY = e.clientY; });
+    let didSwipe = false;
+    el.addEventListener("pointerdown", (e) => { swipeStartY = e.clientY; didSwipe = false; });
     el.addEventListener("pointerup", (e) => {
       if (swipeStartY === null) return;
       const dy = swipeStartY - e.clientY;
       swipeStartY = null;
       if (dy > 30) {
-        // 上スワイプ: 拡大表示
+        didSwipe = true;
         e.stopPropagation();
         showCardZoom(card, "view");
       }
@@ -3568,6 +3570,7 @@ function renderHand() {
 
     // タップ → フォーカス移動 or アクション
     el.addEventListener("click", (e) => {
+      if (didSwipe) { didSwipe = false; return; } // スワイプ後のclickは無視
       e.stopPropagation();
       if (gameState.currentPlayer !== "player") {
         showCardZoom(card, "view");
