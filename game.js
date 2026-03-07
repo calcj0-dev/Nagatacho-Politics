@@ -1,7 +1,7 @@
 // ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.3";
+const APP_VERSION = "0.1.4";
 
 // ============================================================
 // カードデータ定義
@@ -1934,22 +1934,17 @@ function playAbilityAnimation(fieldIndex, abilityIndex, side, callback) {
   const container = document.getElementById(containerId);
   if (!container) { callback(); return; }
 
-  const cardEls = container.querySelectorAll(".card");
-  const cardEl = cardEls[fieldIndex];
-  if (!cardEl) { callback(); return; }
+  const ps = side === "cpu" ? gameState.cpu : gameState.player;
+  const card = ps.field[fieldIndex];
+  if (!card) { callback(); return; }
 
-  // 元カードを一瞬発光させる
-  cardEl.classList.add("card-ability-glow");
-  cardEl.addEventListener("animationend", () => cardEl.classList.remove("card-ability-glow"), { once: true });
-
-  const rect = cardEl.getBoundingClientRect();
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-
-  const targetWidth = Math.min(vw * 0.42, 420);
-  const scale = targetWidth / rect.width;
-  const tx = vw / 2 - (rect.left + rect.width / 2);
-  const ty = vh / 2 - (rect.top + rect.height / 2);
+  // 元カードを一瞬発光（スロット順でDOM検索）
+  const targetSlot = card.fieldSlot ?? fieldIndex;
+  const cardEl = container.children[targetSlot];
+  if (cardEl && cardEl.classList.contains("card")) {
+    cardEl.classList.add("card-ability-glow");
+    cardEl.addEventListener("animationend", () => cardEl.classList.remove("card-ability-glow"), { once: true });
+  }
 
   // 暗幕（クリックでスキップ）
   const backdrop = document.createElement("div");
@@ -1960,19 +1955,55 @@ function playAbilityAnimation(fieldIndex, abilityIndex, side, callback) {
   });
   document.body.appendChild(backdrop);
 
-  // カードのクローン
-  const clone = cardEl.cloneNode(true);
-  const ps = side === "cpu" ? gameState.cpu : gameState.player;
-  Object.assign(clone.style, {
-    position: "fixed",
-    left: rect.left + "px", top: rect.top + "px",
-    width: rect.width + "px", height: rect.height + "px",
-    margin: "0", zIndex: "1000", pointerEvents: "none",
-    transformOrigin: "center center", transition: "none",
+  // showCardZoom と同形式のカード表示
+  const zoomWrap = document.createElement("div");
+  Object.assign(zoomWrap.style, {
+    position: "fixed", zIndex: "1000", pointerEvents: "none",
+    opacity: "0", transition: "opacity 0.28s ease-out",
+    left: "50%", top: "50%",
+    transform: "translate(-50%, -50%) scale(0.85)",
   });
-  document.body.appendChild(clone);
 
-  const targetLine = clone.querySelectorAll(".card-ability-row")[abilityIndex]?.querySelector(".ability-name-text");
+  const imageDiv = document.createElement("div");
+  imageDiv.className = "card-zoom-image";
+  if (card.image) imageDiv.style.backgroundImage = `url(${card.image})`;
+
+  // zoom-ability-overlay を構築
+  const abilityOverlay = document.createElement("div");
+  abilityOverlay.className = "zoom-ability-overlay";
+
+  card.abilities.forEach((ability, aIdx) => {
+    const item = document.createElement("div");
+    item.className = "zoom-ability-item";
+
+    const nameRow = document.createElement("div");
+    nameRow.className = "zoom-ability-name";
+    const coins = ability.cost > 0 ? COIN_IMG.repeat(ability.cost) : '<span class="funds-zero">—</span>';
+    nameRow.innerHTML = `<span class="zoom-ability-cost">${coins}</span>${ability.name}`;
+    item.appendChild(nameRow);
+
+    if (ability.effectText) {
+      const effectRow = document.createElement("div");
+      effectRow.className = "zoom-ability-effect";
+      effectRow.textContent = ability.effectText;
+      item.appendChild(effectRow);
+    }
+
+    // 発動した能力を黄色く光らせる
+    if (aIdx === abilityIndex) {
+      item.style.background = "rgba(255,220,50,0.45)";
+      item.style.boxShadow = "0 0 18px 6px rgba(255,220,50,0.85)";
+      item.style.borderRadius = "4px";
+    } else {
+      item.style.opacity = "0.45";
+    }
+
+    abilityOverlay.appendChild(item);
+  });
+
+  imageDiv.appendChild(abilityOverlay);
+  zoomWrap.appendChild(imageDiv);
+  document.body.appendChild(zoomWrap);
 
   const timers = [];
   let finished = false;
@@ -1981,51 +2012,36 @@ function playAbilityAnimation(fieldIndex, abilityIndex, side, callback) {
     if (finished) return;
     finished = true;
     timers.forEach(t => clearTimeout(t));
-    clone.style.transition = "opacity 0.15s ease-in";
-    clone.style.opacity = "0";
+    zoomWrap.style.opacity = "0";
     backdrop.style.transition = "background 0.15s";
     backdrop.style.background = "rgba(0,0,0,0)";
-    setTimeout(() => { clone.remove(); backdrop.remove(); callback(); }, 150);
+    setTimeout(() => { zoomWrap.remove(); backdrop.remove(); callback(); }, 200);
   }
 
   backdrop.addEventListener("click", finish);
 
-  // Step 1: 画面中央へ拡大 (0 → 320ms)
+  // Step 1: フェードイン＋スケールアップ
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    backdrop.style.background = "rgba(0,0,0,0.55)";
-    clone.style.transition = "transform 0.32s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.32s";
-    clone.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
-    clone.style.boxShadow = "0 0 60px 16px rgba(255,220,50,0.35)";
+    backdrop.style.background = "rgba(0,0,0,0.65)";
+    zoomWrap.style.opacity = "1";
+    zoomWrap.style.transform = "translate(-50%, -50%) scale(1)";
+    zoomWrap.style.transition = "opacity 0.28s ease-out, transform 0.32s cubic-bezier(0.34,1.56,0.64,1)";
   }));
 
-  // Step 2: 能力行グロー（拡大完了後、3秒静止）
+  // Step 2: フェードアウト (2400ms後)
   timers.push(setTimeout(() => {
     if (finished) return;
-    clone.style.boxShadow = "0 0 80px 24px rgba(255,220,50,0.6)";
-    if (targetLine) {
-      targetLine.style.transition = "background 0.2s, box-shadow 0.2s, color 0.2s";
-      targetLine.style.background = "rgba(255,220,50,0.55)";
-      targetLine.style.boxShadow = "0 0 16px 6px rgba(255,220,50,0.9)";
-      targetLine.style.color = "#1a1a00";
-      targetLine.style.borderRadius = "3px";
-    }
-  }, 350));
-
-  // Step 3: フェードアウト (350 + 2000 = 2350ms)
-  timers.push(setTimeout(() => {
-    if (finished) return;
-    clone.style.transition = "opacity 0.25s ease-in, box-shadow 0.25s";
-    clone.style.opacity = "0";
-    clone.style.boxShadow = "none";
+    zoomWrap.style.transition = "opacity 0.25s ease-in";
+    zoomWrap.style.opacity = "0";
     backdrop.style.transition = "background 0.25s";
     backdrop.style.background = "rgba(0,0,0,0)";
-  }, 2350));
+  }, 2400));
 
-  // Step 4: 完了 (2600ms)
+  // Step 3: 完了 (2650ms)
   timers.push(setTimeout(() => {
     if (finished) return;
-    clone.remove(); backdrop.remove(); callback(); finished = true;
-  }, 2600));
+    zoomWrap.remove(); backdrop.remove(); callback(); finished = true;
+  }, 2650));
 }
 
 // オプションカードアニメーション: 拡大→3秒光って静止→フェードアウト
@@ -2564,42 +2580,12 @@ function showCardZoom(card, context, index) {
           item.appendChild(effectRow);
         }
 
-        // 場のプレイヤーカード: クリックでアイテム内に確認ボタンを展開
+        // 場のプレイヤーカード: クリックで能力発動
         if (isFieldPlayer && usedIdx < 0 && !isSealed && p.funds >= effectiveCost) {
           item.addEventListener("click", (e) => {
             e.stopPropagation();
-            // 既に確認中の場合はスキップ
-            if (item.querySelector(".zoom-confirm-btns")) return;
-            // 他の能力の確認UIをリセット
-            abilityOverlay.querySelectorAll(".zoom-confirm-btns").forEach(el => el.remove());
-            abilityOverlay.querySelectorAll(".zoom-ability-item.confirming")
-              .forEach(el => el.classList.remove("confirming"));
-
-            item.classList.add("confirming");
-            const btnWrap = document.createElement("div");
-            btnWrap.className = "zoom-confirm-btns";
-
-            const yesBtn = document.createElement("button");
-            yesBtn.className = "zoom-confirm-yes";
-            yesBtn.textContent = "使用する";
-            yesBtn.addEventListener("click", (e) => {
-              e.stopPropagation();
-              overlay.remove();
-              useAbility(index, aIdx);
-            });
-
-            const noBtn = document.createElement("button");
-            noBtn.className = "zoom-confirm-no";
-            noBtn.textContent = "やめる";
-            noBtn.addEventListener("click", (e) => {
-              e.stopPropagation();
-              btnWrap.remove();
-              item.classList.remove("confirming");
-            });
-
-            btnWrap.appendChild(yesBtn);
-            btnWrap.appendChild(noBtn);
-            item.appendChild(btnWrap);
+            overlay.remove();
+            useAbility(index, aIdx);
           });
         }
 

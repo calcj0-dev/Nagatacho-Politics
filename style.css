@@ -1251,45 +1251,6 @@ h1 {
   outline: 1px solid rgba(255, 220, 50, 0.4);
 }
 
-.zoom-ability-item.confirming {
-  background: rgba(74, 171, 240, 0.12);
-  outline: 1px solid rgba(74, 171, 240, 0.5);
-}
-
-.zoom-confirm-btns {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.zoom-confirm-yes,
-.zoom-confirm-no {
-  flex: 1;
-  padding: 5px 0;
-  border: none;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.zoom-confirm-yes {
-  background: #4aabf0;
-  color: #fff;
-}
-
-.zoom-confirm-yes:hover {
-  background: #2e8fd4;
-}
-
-.zoom-confirm-no {
-  background: rgba(0, 0, 0, 0.12);
-  color: #444;
-}
-
-.zoom-confirm-no:hover {
-  background: rgba(0, 0, 0, 0.2);
-}
 
 .zoom-ability-name {
   font-size: 0.8rem;
@@ -1996,7 +1957,8 @@ h1 {
   }
 
   /* 場のカード（モバイル）: 内側コンテンツのみscaleで縮小 */
-  #player-field > .card .ability-panel-inner {
+  #player-field > .card .ability-panel-inner,
+  #cpu-field > .card .ability-panel-inner {
     width: calc(100% / 0.45);
     height: calc(100% / 0.45);
     transform: scale(0.45);
