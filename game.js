@@ -1,7 +1,7 @@
 // ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.9";
+const APP_VERSION = "0.1.10";
 
 // ============================================================
 // カードデータ定義
@@ -1582,8 +1582,8 @@ function cpuPhasePlace() {
           margin: "0",
         });
         document.body.appendChild(faceEl);
-        faceEl.style.opacity = "0"; // cloneがあるので元を非表示
         animateCardFly(faceEl, destEl, false, () => { faceEl.remove(); afterPlace(); });
+        faceEl.style.opacity = "0"; // cloneが作られた後に元を非表示
       } else {
         afterPlace();
       }
@@ -3553,28 +3553,27 @@ function renderHand() {
 
     if (selectedHandIndex === idx) el.classList.add("card-selected");
 
-    // 上スワイプ → showCardZoom
+    // 上スワイプ → showCardZoom（touch events で確実に検知）
     let swipeStartY = null;
     let didSwipe = false;
-    el.addEventListener("pointerdown", (e) => {
-      swipeStartY = e.clientY;
+    el.addEventListener("touchstart", (e) => {
+      swipeStartY = e.touches[0].clientY;
       didSwipe = false;
-      el.setPointerCapture(e.pointerId); // ポインターをこの要素に固定
-    });
-    el.addEventListener("pointermove", (e) => {
+    }, { passive: true });
+    el.addEventListener("touchmove", (e) => {
       if (swipeStartY === null) return;
-      if (swipeStartY - e.clientY > 10) e.preventDefault(); // スクロールを抑制
+      if (swipeStartY - e.touches[0].clientY > 10) e.preventDefault();
     }, { passive: false });
-    el.addEventListener("pointerup", (e) => {
+    el.addEventListener("touchend", (e) => {
       if (swipeStartY === null) return;
-      const dy = swipeStartY - e.clientY;
+      const dy = swipeStartY - e.changedTouches[0].clientY;
       swipeStartY = null;
       if (dy > 30) {
         didSwipe = true;
         showCardZoom(card, "view");
       }
     });
-    el.addEventListener("pointercancel", () => { swipeStartY = null; });
+    el.addEventListener("touchcancel", () => { swipeStartY = null; });
 
     // タップ → フォーカス移動 or アクション
     el.addEventListener("click", (e) => {
