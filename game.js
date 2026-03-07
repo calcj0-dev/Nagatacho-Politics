@@ -1,7 +1,7 @@
 // ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.7";
+const APP_VERSION = "0.1.8";
 
 // ============================================================
 // カードデータ定義
@@ -1552,7 +1552,7 @@ function cpuPhasePlace() {
     const idx = c.hand.findIndex(card => card.type === "politician");
     if (idx >= 0) {
       // アニメーション用に配置前の位置を取得
-      const srcEl = document.querySelector("#cpu-hand .card-back");
+      const cardBackEl = document.querySelector("#cpu-hand .card-back");
       const destEl = document.querySelector("#cpu-field .field-empty-slot");
 
       const card = c.hand.splice(idx, 1)[0];
@@ -1571,8 +1571,18 @@ function cpuPhasePlace() {
         showActionBanner([`${card.name} を場に出した！`], false, () => cpuPhaseAbilities());
       };
 
-      if (srcEl && destEl) {
-        animateCardFly(srcEl, destEl, false, afterPlace);
+      if (cardBackEl && destEl) {
+        // card-back の位置に表面カード要素を一時生成してアニメーション
+        const backRect = cardBackEl.getBoundingClientRect();
+        const faceEl = createCardElement(card);
+        Object.assign(faceEl.style, {
+          position: "fixed", pointerEvents: "none", zIndex: "499",
+          left: backRect.left + "px", top: backRect.top + "px",
+          width: backRect.width + "px", height: backRect.height + "px",
+          margin: "0",
+        });
+        document.body.appendChild(faceEl);
+        animateCardFly(faceEl, destEl, false, () => { faceEl.remove(); afterPlace(); });
       } else {
         afterPlace();
       }
@@ -3540,9 +3550,23 @@ function renderHand() {
       && gameState.currentPlayer === "player"
       && !gameState.player.usedOptionThisTurn;
 
-    // タップ選択方式
     if (selectedHandIndex === idx) el.classList.add("card-selected");
 
+    // 上スワイプ → showCardZoom
+    let swipeStartY = null;
+    el.addEventListener("pointerdown", (e) => { swipeStartY = e.clientY; });
+    el.addEventListener("pointerup", (e) => {
+      if (swipeStartY === null) return;
+      const dy = swipeStartY - e.clientY;
+      swipeStartY = null;
+      if (dy > 30) {
+        // 上スワイプ: 拡大表示
+        e.stopPropagation();
+        showCardZoom(card, "view");
+      }
+    });
+
+    // タップ → フォーカス移動 or アクション
     el.addEventListener("click", (e) => {
       e.stopPropagation();
       if (gameState.currentPlayer !== "player") {
@@ -3555,8 +3579,8 @@ function renderHand() {
         renderHand();
         return;
       }
-      // フォーカス済みのカードをタップ → アクション実行
-      if (canUseOption && !canPlace) {
+      // フォーカス済み → アクション
+      if (canUseOption) {
         clearHandSelection();
         useOptionCard(idx);
       } else if (canPlace) {
@@ -3565,9 +3589,8 @@ function renderHand() {
         } else {
           selectHandCard(idx, el, canPlace);
         }
-      } else {
-        showCardZoom(card, "view");
       }
+      // 使えない場合は何もしない
     });
     container.appendChild(el);
   });
