@@ -1,7 +1,7 @@
 // ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.4";
+const APP_VERSION = "0.1.5";
 
 // ============================================================
 // カードデータ定義
@@ -383,7 +383,8 @@ const OPTION_CARDS = [
     effectDescription: "両プレイヤーの政治資金が30%没収される",
     image: "assets/options/trump_tariff.png",
     type: "option",
-    effect: "trump_tariff"
+    effect: "trump_tariff",
+    count:1
   },
   {
     id: "kioku_ni_gozaimasen",
@@ -392,7 +393,8 @@ const OPTION_CARDS = [
     effectDescription: "次に受ける支持率低下を1回無効化。ただし次の自分のターンはドロー不可",
     image: "assets/options/kioku_ni_gozaimasen.png",
     type: "option",
-    effect: "kioku_ni_gozaimasen"
+    effect: "kioku_ni_gozaimasen",
+    count:1
   },
   {
     id: "kenkin_party",
@@ -401,7 +403,8 @@ const OPTION_CARDS = [
     effectDescription: "政治資金+8億円を即時獲得",
     image: "assets/options/kenkin_party.png",
     type: "option",
-    effect: "kenkin_party"
+    effect: "kenkin_party",
+    count:2
   },
   {
     id: "gaitou_enzetsu",
@@ -410,7 +413,8 @@ const OPTION_CARDS = [
     effectDescription: "支持率+4%。場にカードが2枚以上なら代わりに+8%",
     image: "assets/options/gaitou_enzetsu.png",
     type: "option",
-    effect: "gaitou_enzetsu"
+    effect: "gaitou_enzetsu",
+    count:2
   },
   {
     id: "drill_hakai",
@@ -419,7 +423,8 @@ const OPTION_CARDS = [
     effectDescription: "次に受ける支持率低下を1回スキップ。ただし政治資金-5億",
     image: "assets/options/drill_hakai.png",
     type: "option",
-    effect: "drill_hakai"
+    effect: "drill_hakai",
+    count:1
   },
   {
     id: "tounai_kaikaku",
@@ -428,7 +433,8 @@ const OPTION_CARDS = [
     effectDescription: "自分の場の政治家カード1枚を捨て札にし、手札から別の政治家カードを場に出す",
     image: "assets/options/tounai_kaikaku.png",
     type: "option",
-    effect: "tounai_kaikaku"
+    effect: "tounai_kaikaku",
+    count:1
   },
   {
     id: "toushu_touron",
@@ -437,7 +443,8 @@ const OPTION_CARDS = [
     effectDescription: "支持率が上がる（状況に応じて効果が変動）",
     image: "assets/options/toushu_touron.png",
     type: "option",
-    effect: "toushu_touron"
+    effect: "toushu_touron",
+    count:2
   },
   {
     id: "yukiguni_yukikaki",
@@ -446,7 +453,8 @@ const OPTION_CARDS = [
     effectDescription: "相手の支持率-5%",
     image: "assets/options/yukiguni_yukikaki.png",
     type: "option",
-    effect: "yukiguni_yukikaki"
+    effect: "yukiguni_yukikaki",
+    count:2
   },
   {
     id: "kono_hage",
@@ -455,7 +463,8 @@ const OPTION_CARDS = [
     effectDescription: "相手の支持率-5%。相手の場に女性政治家がいれば更に-7%",
     image: "assets/options/kono_hage.png",
     type: "option",
-    effect: "kono_hage"
+    effect: "kono_hage",
+    count:2
   },
   {
     id: "netenai_jiman",
@@ -464,7 +473,8 @@ const OPTION_CARDS = [
     effectDescription: "自分の支持率+4%",
     image: "assets/options/netenai_jiman.png",
     type: "option",
-    effect: "netenai_jiman"
+    effect: "netenai_jiman",
+    count:2
   },
   {
     id: "masukomi_taisaku",
@@ -473,7 +483,8 @@ const OPTION_CARDS = [
     effectDescription: "次の相手ターンに受ける支持率低下を1回無効化",
     image: "assets/options/masukomi_taisaku.png",
     type: "option",
-    effect: "masukomi_taisaku"
+    effect: "masukomi_taisaku",
+    count:2
   },
   {
     id: "ouen_enzetsu",
@@ -482,7 +493,8 @@ const OPTION_CARDS = [
     effectDescription: "自分の山札から政治家カードをランダムで1枚手札に加える",
     image: "assets/options/ouen_enzetsu.png",
     type: "option",
-    effect: "ouen_enzetsu"
+    effect: "ouen_enzetsu",
+    count:2
   },
   {
     id: "kinkyuu_yoron",
@@ -491,7 +503,8 @@ const OPTION_CARDS = [
     effectDescription: "即座に自分の支持率を確認できる",
     image: "assets/options/kinkyuu_yoron.png",
     type: "option",
-    effect: "kinkyuu_yoron"
+    effect: "kinkyuu_yoron",
+    count:1
   },
   {
     id: "giinkaikan_furin",
@@ -500,7 +513,8 @@ const OPTION_CARDS = [
     effectDescription: "相手の支持率-8%。ただし自分も巻き添えで-3%",
     image: "assets/options/giinkaikan_furin.png",
     type: "option",
-    effect: "giinkaikan_furin"
+    effect: "giinkaikan_furin",
+    count:2
   }
 ];
 
@@ -582,10 +596,11 @@ function createCardInstance(cardDef) {
 function buildDeck(party) {
   const politicians = POLITICIAN_CARDS.filter(c => c.party === party).map(createCardInstance);
   const options = [];
-  // オプションカード14種 × 2枚 = 28枚
   for (const optDef of OPTION_CARDS) {
-    options.push(createCardInstance(optDef));
-    options.push(createCardInstance(optDef));
+    const count = optDef.count ?? 2;
+    for (let i = 0; i < count; i++) {
+      options.push(createCardInstance(optDef));
+    }
   }
   return { politicians, options };
 }
