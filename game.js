@@ -762,7 +762,12 @@ const ABILITY_EFFECTS = {
   ishiba_2(self, opponent) {
     const msgs = [];
     if (opponent.field.length > 0) {
-      const target = opponent.field[Math.floor(Math.random() * opponent.field.length)];
+      // CPU：最も能力コスト合計が高いカードを封印対象に選ぶ
+      const target = opponent.field.reduce((best, cur) => {
+        const bestCost = (best.abilities || []).reduce((s, a) => s + (a.cost || 0), 0);
+        const curCost  = (cur.abilities  || []).reduce((s, a) => s + (a.cost || 0), 0);
+        return curCost > bestCost ? cur : best;
+      }, opponent.field[0]);
       target.disabled = true;
       msgs.push(`${target.name}の能力を次ターン封印！`);
     } else {
@@ -910,6 +915,18 @@ const ABILITY_EFFECTS = {
   },
   ito_1(self, _opponent) {
     const msgs = [];
+    if (self.hand.length === 0) {
+      msgs.push("手札がなく効果なし…");
+      return msgs;
+    }
+    const up = self.hand.length * 2;
+    const m1 = changeApproval(self, up);
+    if (m1) msgs.push(m1);
+    msgs.push(`手札${self.hand.length}枚×2%=${up}%UP！`);
+    return msgs;
+  },
+  ito_2(self, _opponent) {
+    const msgs = [];
     if (self.hand.length >= 7) {
       msgs.push("手札が上限（7枚）のためドロー不可…");
       return msgs;
@@ -924,18 +941,6 @@ const ABILITY_EFFECTS = {
       self.hand.push(drawn);
       msgs.push(`${drawn.name}を手札に加えた！`);
     }
-    return msgs;
-  },
-  ito_2(self, _opponent) {
-    const msgs = [];
-    if (self.hand.length === 0) {
-      msgs.push("手札がなく効果なし…");
-      return msgs;
-    }
-    const up = self.hand.length * 2;
-    const m1 = changeApproval(self, up);
-    if (m1) msgs.push(m1);
-    msgs.push(`手札${self.hand.length}枚×2%=${up}%UP！`);
     return msgs;
   },
 
@@ -1153,10 +1158,8 @@ const OPTION_EFFECTS = {
     const msgs = [];
     let count = 0;
     opponent.field.forEach(card => {
-      if (!opponent.usedAbilities[card.instanceId]) {
-        card.disabled = true;
-        count++;
-      }
+      card.disabled = true;
+      count++;
     });
     msgs.push(count > 0 ? `相手の政治家${count}人の能力を封じた！` : "相手の場に政治家カードがない…");
     return msgs;
@@ -1443,7 +1446,9 @@ function startCpuTurn() {
   c.usedAbilities = {};
   c.usedOptionThisTurn = c.blockOptionNextTurn ?? false;
   c.blockOptionNextTurn = false;
+  c.zeroCostCardId = null;
   c.field.forEach(card => { card.disabled = false; card.sealedAbility2 = false; });
+  processPendingEffects();
 
   if (c.nextTurnBonuses.approvalBonus) {
     changeApproval(c, c.nextTurnBonuses.approvalBonus);
@@ -2286,6 +2291,9 @@ function playOptionCardAnimation(card, fromRect, isCpu, callback) {
 
   // オプションカード: 手札スワイプ時と同じ白枠オーバーレイを追加
   if (card.type === "option") {
+    // createCardElement が生成した card-abilities-panel を除去（二重表示防止）
+    const existingPanel = clone.querySelector(".card-abilities-panel");
+    if (existingPanel) existingPanel.remove();
     const imgDiv = clone.querySelector(".card-img-area") || clone;
     const optOverlay = document.createElement("div");
     optOverlay.className = "zoom-ability-overlay";
@@ -3631,9 +3639,11 @@ function renderActiveEffects(slotId, ps, position = "after") {
 
   // シールド
   ps.shields.forEach(s => {
-    if (s === "block_approval_down") tags.push({ label: `🛡 支持率低下を1回無効化`, type: "shield" });
-    if (s === "block_approval_up")   tags.push({ label: `📵 支持率上昇を1回無効化`, type: "debuff" });
-    if (s === "block_attack")        tags.push({ label: `🛡 攻撃を1回無効化`,       type: "shield" });
+    if (s === "block_approval_down")       tags.push({ label: `🛡 支持率低下を1回無効化`,           type: "shield" });
+    if (s === "block_approval_down_drill") tags.push({ label: `🛡 ドリル破壊：支持率低下を1回無効化`, type: "shield" });
+    if (s === "block_approval_up")         tags.push({ label: `📵 支持率上昇を1回無効化`,           type: "debuff" });
+    if (s === "block_approval_up_masukomi") tags.push({ label: `📵 マスコミ対策：支持率上昇を1回無効化`, type: "debuff" });
+    if (s === "block_attack")              tags.push({ label: `🛡 攻撃を1回無効化`,                 type: "shield" });
   });
 
   // 次ターンボーナス
