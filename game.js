@@ -1,7 +1,7 @@
 // ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.10";
+const APP_VERSION = "0.1.11";
 
 // ============================================================
 // カードデータ定義
@@ -2806,6 +2806,32 @@ function showCardZoom(card, context, index) {
     }
 
     imageDiv.appendChild(abilityOverlay);
+  }
+
+  // オプションカード: 効果テキスト + 説明を画像下部の白半透明枠に表示
+  if (card.type === "option") {
+    const optOverlay = document.createElement("div");
+    optOverlay.className = "zoom-ability-overlay";
+
+    const effectText = card.effectDescription || card.effectText || "";
+    if (effectText) {
+      const item = document.createElement("div");
+      item.className = "zoom-ability-item";
+      const row = document.createElement("div");
+      row.className = "zoom-ability-effect";
+      row.textContent = effectText;
+      item.appendChild(row);
+      optOverlay.appendChild(item);
+    }
+
+    if (card.description) {
+      const descItem = document.createElement("div");
+      descItem.className = "zoom-ability-item zoom-option-flavor";
+      descItem.textContent = card.description;
+      optOverlay.appendChild(descItem);
+    }
+
+    imageDiv.appendChild(optOverlay);
   }
 
   container.appendChild(imageDiv);

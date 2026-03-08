@@ -1295,6 +1295,23 @@ h1 {
   display: none; /* zoom-ability-overlay 内では非表示（card-zoom-info 内で使用） */
 }
 
+/* オプションカードズーム: テキストを小さく */
+.zoom-ability-overlay .zoom-ability-effect {
+  font-size: 0.4rem;
+}
+
+.zoom-option-flavor {
+  cursor: default;
+  pointer-events: none;
+  font-size: 0.4rem;
+  color: #555;
+  font-style: italic;
+  line-height: 1.4;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: 2px;
+  padding-top: 4px;
+}
+
 .card-zoom-actions {
   display: flex;
   flex-direction: column;
