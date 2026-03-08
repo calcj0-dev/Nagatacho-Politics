@@ -1,7 +1,7 @@
 // ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.14";
+const APP_VERSION = "0.1.15";
 
 // ============================================================
 // カードデータ定義
@@ -702,13 +702,26 @@ function changeApproval(player, amount) {
     const result = applyDefenses(player, amount);
     amount = result.amount;
     shieldMsg = result.shieldMsg ?? null;
+    if (result.showBanner && shieldMsg) {
+      const isPlayer = player === gameState.player;
+      setTimeout(() => showActionBanner(["🛡 ドリル破壊！", shieldMsg], isPlayer, () => {}), 200);
+    }
   } else if (amount > 0) {
-    const blockIdx = player.shields.indexOf("block_approval_up");
-    if (blockIdx >= 0) {
-      player.shields.splice(blockIdx, 1);
-      console.log("  シールド発動: 支持率上昇を無効化");
+    const masukomiIdx = player.shields.indexOf("block_approval_up_masukomi");
+    if (masukomiIdx >= 0) {
+      player.shields.splice(masukomiIdx, 1);
       amount = 0;
-      shieldMsg = "📵 シールド発動！支持率上昇を無効化！";
+      shieldMsg = "📵 マスコミ対策発動！支持率上昇を無効化！";
+      const isPlayer = player === gameState.player;
+      setTimeout(() => showActionBanner(["📵 マスコミ対策！", shieldMsg], isPlayer, () => {}), 200);
+    } else {
+      const blockIdx = player.shields.indexOf("block_approval_up");
+      if (blockIdx >= 0) {
+        player.shields.splice(blockIdx, 1);
+        console.log("  シールド発動: 支持率上昇を無効化");
+        amount = 0;
+        shieldMsg = "📵 シールド発動！支持率上昇を無効化！";
+      }
     }
   }
   player.approval = clamp(player.approval + amount, 0, 100);
@@ -1044,10 +1057,10 @@ const OPTION_EFFECTS = {
     }
     return msgs;
   },
-  drill_hakai(self, opponent) {
+  drill_hakai(self, _opponent) {
     const msgs = [];
-    self.shields.push("block_approval_down");
-    msgs.push("次の支持率低下を一度だけスキップ！");
+    self.shields.push("block_approval_down_drill");
+    msgs.push("次の支持率低下を一度だけ無効化！");
     return msgs;
   },
   tounai_kaikaku(self, opponent) {
@@ -1074,10 +1087,9 @@ const OPTION_EFFECTS = {
     msgs.push(`${removed.name}を捨て、${added.name}を場に出した！`);
     return msgs;
   },
-  toushu_touron(self, opponent) {
+  toushu_touron(self, _opponent) {
     const msgs = [];
-    // 内部処理で判定、結果は「上がった」のみ表示
-    const bonus = self.approval < opponent.approval ? 10 : 4;
+    const bonus = Math.floor(Math.random() * 10) + 1;
     const m1 = changeApproval(self, bonus);
     if (m1) msgs.push(m1);
     return msgs;
@@ -1106,7 +1118,7 @@ const OPTION_EFFECTS = {
   },
   masukomi_taisaku(_self, opponent) {
     const msgs = [];
-    opponent.shields.push("block_approval_up");
+    opponent.shields.push("block_approval_up_masukomi");
     msgs.push("次の相手ターンの支持率上昇を1回無効化！");
     return msgs;
   },
@@ -1182,6 +1194,13 @@ function applyDefenses(target, amount) {
   if (amount >= 0) return { amount };
 
   // シールドチェック（block_approval_down）
+  const drillIdx = target.shields.indexOf("block_approval_down_drill");
+  if (drillIdx >= 0) {
+    target.shields.splice(drillIdx, 1);
+    console.log("  シールド発動: ドリル破壊");
+    return { amount: 0, shieldMsg: "🛡 ドリル破壊発動！支持率低下を無効化！", showBanner: true };
+  }
+
   const shieldIdx = target.shields.indexOf("block_approval_down");
   if (shieldIdx >= 0) {
     target.shields.splice(shieldIdx, 1);
@@ -2377,6 +2396,31 @@ function useOptionCard(handIndex) {
               });
             }, 700);
           });
+        });
+      });
+      return;
+    }
+
+    if (card.effect === "toushu_touron") {
+      const outcomes = Array.from({ length: 10 }, (_, i) => ({
+        label: `+${i + 1}%`,
+        value: i + 1,
+        color: `hsl(${130 - i * 8}, 70%, 50%)`,
+      }));
+      playOptionCardAnimation(card, cardRect, false, () => {
+        animateCardToDiscard(card, true, () => {
+          renderGame();
+          showSlotAnimation(outcomes, (winner) => {
+            const { self } = getSelfAndOpponent("player");
+            const msgs = [];
+            const m = changeApproval(self, winner.value);
+            if (m) msgs.push(m);
+            renderGame();
+            setTimeout(() => showActionBanner([`「${card.name}」使用！`, ...msgs], true, () => {
+              const result = checkWinCondition();
+              if (result) { gameState.phase = "finished"; showFinishOverlay(result); }
+            }), 700);
+          }, { title: "党首討論！" });
         });
       });
       return;
