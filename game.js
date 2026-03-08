@@ -1,7 +1,7 @@
 // ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.16";
+const APP_VERSION = "0.1.17";
 
 // ============================================================
 // カードデータ定義
@@ -2279,9 +2279,12 @@ function playOptionCardAnimation(card, fromRect, isCpu, callback) {
   });
   document.body.appendChild(backdrop);
 
-  // カード要素を新規作成（オプションカードは showCardZoom と同じ card-zoom-image 構造）
+  // カード要素を新規作成
   let clone;
+  let cloneInitLeft, cloneInitTop, animTransform;
   if (card.type === "option") {
+    // showCardZoom と同じ card-zoom-image 構造・固定サイズ（スケールなし、平行移動のみ）
+    const zoomW = 250, zoomH = 350;
     clone = document.createElement("div");
     clone.className = "card-zoom-image";
     clone.style.backgroundImage = `url(${card.image})`;
@@ -2304,16 +2307,31 @@ function playOptionCardAnimation(card, fromRect, isCpu, callback) {
       optOverlay.appendChild(descItem);
     }
     clone.appendChild(optOverlay);
+    // 初期位置：元カードの中心に合わせる
+    cloneInitLeft = rect.left + rect.width / 2 - zoomW / 2;
+    cloneInitTop  = rect.top  + rect.height / 2 - zoomH / 2;
+    // 画面中央への移動量
+    const dtx = vw / 2 - (cloneInitLeft + zoomW / 2);
+    const dty = vh / 2 - (cloneInitTop  + zoomH / 2);
+    animTransform = `translate(${dtx}px, ${dty}px)`;
+    Object.assign(clone.style, {
+      position: "fixed",
+      left: cloneInitLeft + "px", top: cloneInitTop + "px",
+      width: zoomW + "px", height: zoomH + "px",
+      margin: "0", zIndex: "1000", pointerEvents: "none",
+      transformOrigin: "center center", transition: "none",
+    });
   } else {
     clone = createCardElement(card);
+    animTransform = `translate(${tx}px,${ty}px) scale(${scale})`;
+    Object.assign(clone.style, {
+      position: "fixed",
+      left: rect.left + "px", top: rect.top + "px",
+      width: rect.width + "px", height: rect.height + "px",
+      margin: "0", zIndex: "1000", pointerEvents: "none",
+      transformOrigin: "center center", transition: "none",
+    });
   }
-  Object.assign(clone.style, {
-    position: "fixed",
-    left: rect.left + "px", top: rect.top + "px",
-    width: rect.width + "px", height: rect.height + "px",
-    margin: "0", zIndex: "1000", pointerEvents: "none",
-    transformOrigin: "center center", transition: "none",
-  });
 
   document.body.appendChild(clone);
 
@@ -2337,7 +2355,7 @@ function playOptionCardAnimation(card, fromRect, isCpu, callback) {
   requestAnimationFrame(() => requestAnimationFrame(() => {
     backdrop.style.background = "rgba(0,0,0,0.55)";
     clone.style.transition = "transform 0.32s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.32s";
-    clone.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
+    clone.style.transform = animTransform;
     clone.style.boxShadow = "0 0 60px 16px rgba(255,220,50,0.35)";
   }));
 
@@ -3895,7 +3913,7 @@ function renderHand() {
       swipeStartY = null;
       if (dy > 30) {
         didSwipe = true;
-        showCardZoom(card, card.type === "option" ? "hand-option" : "view", idx);
+        showCardZoom(card, card.type === "option" ? "hand-option" : "hand-politician", idx);
       }
     });
     el.addEventListener("touchcancel", () => { swipeStartY = null; });
