@@ -1207,7 +1207,8 @@ h1 {
   padding: 8px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
+  align-items: flex-start;
   gap: 6px;
   overflow: hidden;
 }
@@ -1307,9 +1308,6 @@ h1 {
   color: #555;
   font-style: italic;
   line-height: 1.4;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  margin-top: 2px;
-  padding-top: 4px;
 }
 
 .card-zoom-actions {

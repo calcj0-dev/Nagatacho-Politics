@@ -1,7 +1,7 @@
 // ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.12";
+const APP_VERSION = "0.1.14";
 
 // ============================================================
 // カードデータ定義
@@ -19,16 +19,16 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "一口でおにぎり",
-        effectText: "支持率-5%、政治資金+7億",
-        description: "おにぎりの産地が注目され、地方団体からの献金",
+        effectText: "支持率-3%、政治資金+5億",
+        description: "おにぎりの産地が注目され、地方団体からの献金を得る",
         cost: 1,
         effect: "ishiba_1"
       },
       {
         name: "ゲル顔プレス",
-        effectText: "相手の場のカード1枚を次ターン使用不可（ランダム）",
+        effectText: "相手の場のカード1枚を選択し、次ターン使用不可",
         description: "圧倒的な表情圧で記者会見の場が一瞬にして凍りつく",
-        cost: 3,
+        cost: 2,
         effect: "ishiba_2"
       }
     ]
@@ -43,16 +43,16 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "早苗ネーム連呼",
-        effectText: "支持率+8%、政治資金-2億",
+        effectText: "支持率+8%",
         description: "自分の名前を繰り返すだけで保守クラスタがざわめく",
         cost: 2,
         effect: "takaichi_1"
       },
       {
         name: "靖国参拝決行",
-        effectText: "支持率+12%、【次ターン開始時】相手の支持率-4%",
+        effectText: "支持率+12%、相手の支持率-4%",
         description: "外交部から止められても笑顔で参拝、毎年恒例の風物詩",
-        cost: 4,
+        cost: 3,
         effect: "takaichi_2"
       }
     ]
@@ -74,7 +74,7 @@ const POLITICIAN_CARDS = [
       },
       {
         name: "レジ袋有料化",
-        effectText: "相手の手札をランダム1枚捨て札に、政治資金+3億",
+        effectText: "相手の手札をランダム1枚捨て札にする",
         description: "日本のプラごみ削減に一石を投じた勇気ある一手",
         cost: 2,
         effect: "koizumi_2"
@@ -91,7 +91,7 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "Xブロック祭り",
-        effectText: "支持率-3%、政治資金+2億、次の相手ターンの支持率低下を1回無効化",
+        effectText: "次の相手ターンによる支持率低下を無効化",
         description: "批判コメントを片っ端からブロック、タイムラインを完璧に最適化",
         cost: 1,
         effect: "kono_1"
@@ -115,14 +115,14 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "パンケーキ会食",
-        effectText: "政治資金+4億、【次ターン】最初に受ける支持率低下を4%軽減",
+        effectText: "政治資金+3億",
         description: "パンケーキで心をつかむ",
         cost: 2,
         effect: "suga_1"
       },
       {
         name: "ガースーです",
-        effectText: "支持率+8%（場が1枚以下なら追加+4%）",
+        effectText: "支持率+8%（場が1枚なら追加+4%）",
         description: "まさかの自己紹介で場が和む",
         cost: 3,
         effect: "suga_2"
@@ -141,14 +141,14 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "文春砲サバイバル",
-        effectText: "支持率-8%、政治資金+10億",
+        effectText: "相手の支持率が自分の場のカード枚数×4%DOWN",
         description: "不倫報道後に逆に知名度爆上がり",
         cost: 1,
         effect: "tamaki_1"
       },
       {
         name: "手取りを増やす！",
-        effectText: "相手の支持率が自分の場のカード枚数×4%DOWN",
+        effectText: "政治資金+5億",
         description: "シンプルな一言が有権者の心に刺さる",
         cost: 3,
         effect: "tamaki_2"
@@ -165,14 +165,14 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "国会デビュー質疑",
-        effectText: "支持率+9%、【次ターン】自分の能力コスト全て-1億",
+        effectText: "支持率+5%、このターンの能力コスト全て-1億",
         description: "初々しさが逆に好評、SNSで話題に",
         cost: 2,
         effect: "mori_1"
       },
       {
         name: "次世代の星",
-        effectText: "支持率+7%（場が2枚以下なら追加+5%）",
+        effectText: "支持率+7%（場が2枚以下なら追加+8%）",
         description: "若手ならではの突破力で党の顔へ急浮上",
         cost: 3,
         effect: "mori_2"
@@ -189,16 +189,16 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "静岡茶で一服",
-        effectText: "政治資金+6億、次の相手ターンの支持率低下を1回無効化",
+        effectText: "次の相手ターンの支持率低下を1回無効化",
         description: "お茶を一杯飲む間に根回し完了",
-        cost: 2,
+        cost: 1,
         effect: "shinba_1"
       },
       {
         name: "永田町の根回し王",
-        effectText: "相手の政治家カードの能力2を全て次ターン封印",
+        effectText: "相手の政治家カードの能力2を全てこのターン中封印",
         description: "誰も気づかないうちに話がまとまっている",
-        cost: 4,
+        cost: 2,
         effect: "shinba_2"
       }
     ]
@@ -213,16 +213,16 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "キャリア官僚の洗礼",
-        effectText: "相手の支持率-8%、政治資金+7億",
+        effectText: "相手の支持率-5%",
         description: "財務省仕込みの論理で委員会を制す",
         cost: 1,
         effect: "furukawa_1"
       },
       {
         name: "国家戦略会議召集",
-        effectText: "支持率+8% or -3%、政治資金+4億",
+        effectText: "支持率+10% or -3%",
         description: "有識者を束ね、政策を一気に動かす",
-        cost: 3,
+        cost: 2,
         effect: "furukawa_2"
       }
     ]
@@ -237,16 +237,16 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "元NHKアナの本気",
-        effectText: "支持率+10%、【次ターン開始】自分の支持率+2%",
+        effectText: "支持率が自分の手札のカード枚数×2%UP",
         description: "流暢な語り口で視聴者を魅了",
         cost: 2,
         effect: "ito_1"
       },
       {
         name: "ママ目線の予算追及",
-        effectText: "支持率が自分の手札のカード枚数×2%UP",
+        effectText: "山札から2枚ドロー",
         description: "子育て世代の声を国会へ届ける",
-        cost: 4,
+        cost: 3,
         effect: "ito_2"
       }
     ]
@@ -263,14 +263,14 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "未来への投資",
-        effectText: "5ターン後に政治資金+10億を取得",
+        effectText: "5ターン後に政治資金+5億を取得",
         description: "スタートアップ精神で政界に風穴",
         cost: 1,
         effect: "anno_1"
       },
       {
         name: "デジタル民主主義",
-        effectText: "支持率+6%（場が3枚なら追加+4%）",
+        effectText: "支持率+6%（場が3枚なら追加+10%）",
         description: "テクノロジーで民意を政治へ直結",
         cost: 3,
         effect: "anno_2"
@@ -287,7 +287,7 @@ const POLITICIAN_CARDS = [
     abilities: [
       {
         name: "社会保険料で混乱！",
-        effectText: "支持率+4%",
+        effectText: "支持率+4%、次の相手ターンのオプションカードを使用不可",
         description: "ミスを動画で謝罪、誠実さで逆に人気UP",
         cost: 1,
         effect: "takayama_1"
@@ -318,7 +318,7 @@ const POLITICIAN_CARDS = [
       },
       {
         name: "NPOから永田町へ",
-        effectText: "相手の支持率-5%、支持率+5%",
+        effectText: "相手の支持率-10%、支持率+5%",
         description: "地域支援の経験が国政レベルで開花",
         cost: 3,
         effect: "muto_2"
@@ -344,7 +344,7 @@ const POLITICIAN_CARDS = [
         name: "まちづくりDX",
         effectText: "相手の支持率が自分の手札のカード枚数×2%DOWN",
         description: "地方の課題をデジタルで一気に解決",
-        cost: 4,
+        cost: 2,
         effect: "suda_2"
       }
     ]
@@ -361,14 +361,14 @@ const POLITICIAN_CARDS = [
         name: "ビリヤードの撞き方",
         effectText: "このターンのみ、自分の全カードの能力コスト-1億",
         description: "趣味の精密さが政策立案に活きる",
-        cost: 2,
+        cost: 1,
         effect: "mineshima_1"
       },
       {
         name: "マネーフォワードDX",
-        effectText: "支持率+5%、相手の支持率-3%",
+        effectText: "支持率+15%、相手の支持率-10%",
         description: "バックオフィスを丸ごとデジタル化する",
-        cost: 3,
+        cost: 4,
         effect: "mineshima_2"
       }
     ]
@@ -697,20 +697,25 @@ function initGame(playerParty) {
 // 支持率変更（クランプ付き）- 変動メッセージを返す
 function changeApproval(player, amount) {
   const before = player.approval;
+  let shieldMsg = null;
   if (amount < 0) {
-    amount = applyDefenses(player, amount);
+    const result = applyDefenses(player, amount);
+    amount = result.amount;
+    shieldMsg = result.shieldMsg ?? null;
   } else if (amount > 0) {
     const blockIdx = player.shields.indexOf("block_approval_up");
     if (blockIdx >= 0) {
       player.shields.splice(blockIdx, 1);
       console.log("  シールド発動: 支持率上昇を無効化");
       amount = 0;
+      shieldMsg = "📵 シールド発動！支持率上昇を無効化！";
     }
   }
   player.approval = clamp(player.approval + amount, 0, 100);
   const after = player.approval;
   if (after !== before) player._approvalFlash = { dir: after > before ? "up" : "down", delta: after - before };
   const who = player === gameState.player ? "あなた" : "相手";
+  if (shieldMsg) return shieldMsg;
   if (after > before) return `${who}の支持率が上がった！`;
   if (after < before) return `${who}の支持率が下がった…`;
   return null;
@@ -733,12 +738,12 @@ function getSelfAndOpponent(executor) {
 // 能力効果マップ
 const ABILITY_EFFECTS = {
   // --- 自民党 ---
-  ishiba_1(self, opponent) {
+  ishiba_1(self, _opponent) {
     const msgs = [];
-    const m1 = changeApproval(self, -5);
+    const m1 = changeApproval(self, -3);
     if (m1) msgs.push(m1);
-    changeFunds(self, 7);
-    msgs.push("政治資金+7億円を獲得！");
+    changeFunds(self, 5);
+    msgs.push("政治資金+5億円を獲得！");
     return msgs;
   },
   ishiba_2(self, opponent) {
@@ -752,34 +757,29 @@ const ABILITY_EFFECTS = {
     }
     return msgs;
   },
-  takaichi_1(self, opponent) {
+  takaichi_1(self, _opponent) {
     const msgs = [];
     const m1 = changeApproval(self, 8);
     if (m1) msgs.push(m1);
-    changeFunds(self, -2);
-    msgs.push("政治資金-2億円…");
     return msgs;
   },
   takaichi_2(self, opponent) {
     const msgs = [];
     const m1 = changeApproval(self, 12);
     if (m1) msgs.push(m1);
-    opponent.nextTurnBonuses.approvalBonus = (opponent.nextTurnBonuses.approvalBonus || 0) - 4;
-    msgs.push("【次ターン開始時】相手の支持率-4%！");
+    const m2 = changeApproval(opponent, -4);
+    if (m2) msgs.push(m2);
     return msgs;
   },
-  koizumi_1(self, opponent) {
+  koizumi_1(self, _opponent) {
+    // CPU用: スロット演出なしでランダム判定
     const msgs = [];
-    if (Math.random() < 0.5) {
-      const m1 = changeApproval(self, 15);
-      if (m1) msgs.push(m1);
-    } else {
-      const m1 = changeApproval(self, -10);
-      if (m1) msgs.push(m1);
-    }
+    const amount = Math.random() < 0.5 ? 15 : -10;
+    const m1 = changeApproval(self, amount);
+    if (m1) msgs.push(m1);
     return msgs;
   },
-  koizumi_2(self, opponent) {
+  koizumi_2(_self, opponent) {
     const msgs = [];
     if (opponent.hand.length > 0) {
       const idx = Math.floor(Math.random() * opponent.hand.length);
@@ -789,18 +789,12 @@ const ABILITY_EFFECTS = {
     } else {
       msgs.push("相手の手札がなく空振り…");
     }
-    changeFunds(self, 3);
-    msgs.push("政治資金+3億円を獲得！");
     return msgs;
   },
-  kono_1(self, opponent) {
+  kono_1(self, _opponent) {
     const msgs = [];
     self.shields.push("block_approval_down");
-    const m1 = changeApproval(self, -3);
-    if (m1) msgs.push(m1);
-    changeFunds(self, 2);
-    msgs.push("政治資金+2億円を獲得！");
-    msgs.push("次の相手ターンに受ける支持率低下を1回無効化！");
+    msgs.push("次の相手ターンに受ける支持率低下を無効化！");
     return msgs;
   },
   kono_2(self, opponent) {
@@ -818,33 +812,24 @@ const ABILITY_EFFECTS = {
     }
     return msgs;
   },
-  suga_1(self, opponent) {
+  suga_1(self, _opponent) {
     const msgs = [];
-    self.nextTurnBonuses.attackReduction += 4;
-    changeFunds(self, 4);
-    msgs.push("政治資金+4億円を獲得！");
-    msgs.push("【次ターン】最初に受ける支持率低下を4%軽減！");
+    changeFunds(self, 3);
+    msgs.push("政治資金+3億円を獲得！");
     return msgs;
   },
-  suga_2(self, opponent) {
+  suga_2(self, _opponent) {
     const msgs = [];
     let bonus = 0;
-    if (self.field.length <= 1) bonus = 4;
+    if (self.field.length === 1) bonus = 4;
     const m1 = changeApproval(self, 8 + bonus);
     if (m1) msgs.push(m1);
+    if (bonus > 0) msgs.push("場が1枚で追加+4%！");
     return msgs;
   },
 
   // --- 国民民主党 ---
   tamaki_1(self, opponent) {
-    const msgs = [];
-    const m1 = changeApproval(self, -8);
-    if (m1) msgs.push(m1);
-    changeFunds(self, 10);
-    msgs.push("政治資金+10億円を獲得！");
-    return msgs;
-  },
-  tamaki_2(self, opponent) {
     const msgs = [];
     if (self.field.length === 0) {
       msgs.push("場にカードがなく効果なし…");
@@ -856,28 +841,33 @@ const ABILITY_EFFECTS = {
     msgs.push(`自分の場${self.field.length}枚×4%=${down}%DOWN！`);
     return msgs;
   },
-  mori_1(self, opponent) {
+  tamaki_2(self, _opponent) {
     const msgs = [];
-    const m1 = changeApproval(self, 9);
-    if (m1) msgs.push(m1);
-    self.nextTurnBonuses.costReduction += 1;
-    msgs.push("次のターンの能力コスト-1億！");
+    changeFunds(self, 5);
+    msgs.push("政治資金+5億円を獲得！");
     return msgs;
   },
-  mori_2(self, opponent) {
+  mori_1(self, _opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 5);
+    if (m1) msgs.push(m1);
+    self.currentTurnCostReduction = (self.currentTurnCostReduction || 0) + 1;
+    msgs.push("このターンの能力コスト全て-1億！");
+    return msgs;
+  },
+  mori_2(self, _opponent) {
     const msgs = [];
     let bonus = 0;
-    if (self.field.length <= 2) bonus = 5;
+    if (self.field.length <= 2) bonus = 8;
     const m1 = changeApproval(self, 7 + bonus);
     if (m1) msgs.push(m1);
+    if (bonus > 0) msgs.push("場が2枚以下で追加+8%！");
     return msgs;
   },
-  shinba_1(self, opponent) {
+  shinba_1(self, _opponent) {
     const msgs = [];
-    changeFunds(self, 6);
-    msgs.push("政治資金+6億円を獲得！");
     self.shields.push("block_approval_down");
-    msgs.push("次の相手ターンに受ける支持率低下を1回無効化！");
+    msgs.push("次の相手ターンに受ける支持率低下を無効化！");
     return msgs;
   },
   shinba_2(self, opponent) {
@@ -891,35 +881,39 @@ const ABILITY_EFFECTS = {
     msgs.push("相手の全政治家カードの能力2を封印！");
     return msgs;
   },
-  furukawa_1(self, opponent) {
+  furukawa_1(_self, opponent) {
     const msgs = [];
-    const m1 = changeApproval(opponent, -8);
+    const m1 = changeApproval(opponent, -5);
     if (m1) msgs.push(m1);
-    changeFunds(self, 7);
-    msgs.push("政治資金+7億円を獲得！");
     return msgs;
   },
   furukawa_2(self, _opponent) {
+    // CPU用: スロット演出なしでランダム判定
     const msgs = [];
-    const m1 = changeApproval(self, 8);
+    const amount = Math.random() < 0.5 ? 10 : -3;
+    const m1 = changeApproval(self, amount);
     if (m1) msgs.push(m1);
-    changeFunds(self, 4);
-    msgs.push("政治資金+4億円を獲得！");
-    if (Math.random() < 0.3) {
-      const m2 = changeApproval(self, -3);
-      if (m2) msgs.push(m2);
+    return msgs;
+  },
+  ito_1(self, _opponent) {
+    const msgs = [];
+    if (self.hand.length >= 7) {
+      msgs.push("手札が上限（7枚）のためドロー不可…");
+      return msgs;
+    }
+    const drawCount = Math.min(2, 7 - self.hand.length, self.deck.length);
+    if (drawCount === 0) {
+      msgs.push("山札がなくドロー不可…");
+      return msgs;
+    }
+    for (let i = 0; i < drawCount; i++) {
+      const drawn = self.deck.shift();
+      self.hand.push(drawn);
+      msgs.push(`${drawn.name}を手札に加えた！`);
     }
     return msgs;
   },
-  ito_1(self, opponent) {
-    const msgs = [];
-    const m1 = changeApproval(self, 10);
-    if (m1) msgs.push(m1);
-    self.nextTurnBonuses.approvalBonus = 2;
-    msgs.push("【次ターン開始】自分の支持率+2%！");
-    return msgs;
-  },
-  ito_2(self, opponent) {
+  ito_2(self, _opponent) {
     const msgs = [];
     if (self.hand.length === 0) {
       msgs.push("手札がなく効果なし…");
@@ -933,27 +927,29 @@ const ABILITY_EFFECTS = {
   },
 
   // --- チームみらい ---
-  anno_1(self, opponent) {
+  anno_1(self, _opponent) {
     const msgs = [];
     const returnTurn = gameState.turn + 5;
     const isPlayer = self === gameState.player;
-    gameState.pendingEffects.push({ type: "anno_invest", player: isPlayer ? "player" : "cpu", returnTurn, amount: 10 });
-    msgs.push(`投資完了！5ターン後（第${returnTurn}ターン）に+10億で返却！`);
+    gameState.pendingEffects.push({ type: "anno_invest", player: isPlayer ? "player" : "cpu", returnTurn, amount: 5 });
+    msgs.push(`投資完了！5ターン後（第${returnTurn}ターン）に+5億で返却！`);
     return msgs;
   },
-  anno_2(self, opponent) {
+  anno_2(self, _opponent) {
     const msgs = [];
     let bonus = 0;
-    if (self.field.length >= 3) bonus = 4;
+    if (self.field.length >= 3) bonus = 10;
     const m1 = changeApproval(self, 6 + bonus);
     if (m1) msgs.push(m1);
-    if (bonus > 0) msgs.push("場のカードが3枚で追加+4%！");
+    if (bonus > 0) msgs.push("場のカードが3枚で追加+10%！");
     return msgs;
   },
   takayama_1(self, opponent) {
     const msgs = [];
     const m1 = changeApproval(self, 4);
     if (m1) msgs.push(m1);
+    opponent.blockOptionNextTurn = true;
+    msgs.push("次の相手ターンはオプションカード使用不可！");
     return msgs;
   },
   takayama_2(self, opponent) {
@@ -976,7 +972,7 @@ const ABILITY_EFFECTS = {
   },
   muto_2(self, opponent) {
     const msgs = [];
-    const m1 = changeApproval(opponent, -5);
+    const m1 = changeApproval(opponent, -10);
     if (m1) msgs.push(m1);
     const m2 = changeApproval(self, 5);
     if (m2) msgs.push(m2);
@@ -1009,9 +1005,9 @@ const ABILITY_EFFECTS = {
   },
   mineshima_2(self, opponent) {
     const msgs = [];
-    const m1 = changeApproval(self, 5);
+    const m1 = changeApproval(self, 15);
     if (m1) msgs.push(m1);
-    const m2 = changeApproval(opponent, -3);
+    const m2 = changeApproval(opponent, -10);
     if (m2) msgs.push(m2);
     return msgs;
   }
@@ -1181,15 +1177,16 @@ const OPTION_EFFECTS = {
 };
 
 // 攻撃系の支持率低下にシールド/防御ボーナスを適用
+// 戻り値: { amount: number, shieldMsg?: string }
 function applyDefenses(target, amount) {
-  if (amount >= 0) return amount; // 上昇は防御不要
+  if (amount >= 0) return { amount };
 
   // シールドチェック（block_approval_down）
   const shieldIdx = target.shields.indexOf("block_approval_down");
   if (shieldIdx >= 0) {
     target.shields.splice(shieldIdx, 1);
     console.log("  シールド発動: 支持率低下を無効化");
-    return 0;
+    return { amount: 0, shieldMsg: "🛡 Xブロック祭り発動！支持率低下を無効化！" };
   }
 
   // block_attack シールド
@@ -1197,7 +1194,7 @@ function applyDefenses(target, amount) {
   if (blockIdx >= 0) {
     target.shields.splice(blockIdx, 1);
     console.log("  シールド発動: 攻撃を無効化");
-    return 0;
+    return { amount: 0, shieldMsg: "🛡 シールド発動！攻撃を無効化！" };
   }
 
   // immune シールド
@@ -1205,7 +1202,7 @@ function applyDefenses(target, amount) {
   if (immuneIdx >= 0) {
     target.shields.splice(immuneIdx, 1);
     console.log("  シールド発動: 免疫で無効化");
-    return 0;
+    return { amount: 0, shieldMsg: "🛡 シールド発動！無効化！" };
   }
 
   // 防御ボーナス（1回使用後リセット）
@@ -1213,17 +1210,17 @@ function applyDefenses(target, amount) {
     const reduction = Math.floor(Math.abs(amount) * target.nextTurnBonuses.defenseBonus / 100);
     target.nextTurnBonuses.defenseBonus = 0;
     console.log(`  防御ボーナス: ${reduction}%軽減`);
-    return amount + reduction;
+    return { amount: amount + reduction };
   }
 
   // 攻撃軽減
   if (target.nextTurnBonuses.attackReduction > 0) {
     const red = target.nextTurnBonuses.attackReduction;
     target.nextTurnBonuses.attackReduction = 0;
-    return amount + red;
+    return { amount: amount + red };
   }
 
-  return amount;
+  return { amount };
 }
 
 // 効果を実行して結果メッセージを返す
@@ -1261,7 +1258,9 @@ function startPlayerTurn() {
   // リセット
   p.placedThisTurn = false;
   p.usedAbilities = {};
-  p.usedOptionThisTurn = false;
+  p.usedOptionThisTurn = p.blockOptionNextTurn ?? false;
+  p.optionBlockReason = p.blockOptionNextTurn ? "takayama" : null;
+  p.blockOptionNextTurn = false;
 
   // disabled解除・sealedAbility2解除（前ターンで封印されたカードを復帰）
   p.field.forEach(c => { c.disabled = false; c.sealedAbility2 = false; });
@@ -1423,7 +1422,8 @@ function startCpuTurn() {
 
   c.placedThisTurn = false;
   c.usedAbilities = {};
-  c.usedOptionThisTurn = false;
+  c.usedOptionThisTurn = c.blockOptionNextTurn ?? false;
+  c.blockOptionNextTurn = false;
   c.field.forEach(card => { card.disabled = false; card.sealedAbility2 = false; });
 
   if (c.nextTurnBonuses.approvalBonus) {
@@ -2033,6 +2033,66 @@ function useAbility(fieldIndex, abilityIndex) {
     p.funds -= effectiveCost;
     p.usedAbilities[card.instanceId] = abilityIndex + 1; // 1 or 2 (常にtruthyで0を避ける)
     console.log(`[能力発動] ${card.name}: ${ability.name}（コスト${effectiveCost}億）`);
+
+    // ishiba_2: プレイヤーが相手の場から封印対象を選択
+    if (ability.effect === "ishiba_2") {
+      const opp = gameState.cpu;
+      if (opp.field.length === 0) {
+        playAbilityAnimation(fieldIndex, abilityIndex, "player", () => {
+          renderGame();
+          setTimeout(() => showActionBanner([`「${ability.name}」発動！`, "相手の場にカードがなく空振り…"], true, () => {
+            const result = checkWinCondition();
+            if (result) { gameState.phase = "finished"; showFinishOverlay(result); }
+          }), 700);
+        });
+        return;
+      }
+      showFieldCardPicker(opp.field, "封印する相手カードを選択", (selected) => {
+        if (!selected) return;
+        selected.disabled = true;
+        const msgs = [`${selected.name}の能力を次ターン封印！`];
+        playAbilityAnimation(fieldIndex, abilityIndex, "player", () => {
+          renderGame();
+          setTimeout(() => showActionBanner([`「${ability.name}」発動！`, ...msgs], true, () => {
+            const result = checkWinCondition();
+            if (result) { gameState.phase = "finished"; showFinishOverlay(result); }
+          }), 700);
+        });
+      });
+      return;
+    }
+
+    // スロット演出が必要な能力の共通ハンドラ
+    const slotEffects = {
+      koizumi_1: [
+        { label: "+15%", value: 15, color: "#22cc77" },
+        { label: "-10%", value: -10, color: "#ee4444" },
+      ],
+      furukawa_2: [
+        { label: "+10%", value: 10, color: "#22cc77" },
+        { label: "-3%",  value: -3,  color: "#ee4444" },
+      ],
+    };
+    if (slotEffects[ability.effect]) {
+      playAbilityAnimation(fieldIndex, abilityIndex, "player", () => {
+        showSlotAnimation(
+          slotEffects[ability.effect],
+          (winner) => {
+            const { self } = getSelfAndOpponent("player");
+            const msgs = [];
+            const m = changeApproval(self, winner.value);
+            if (m) msgs.push(m);
+            renderGame();
+            setTimeout(() => showActionBanner([`「${ability.name}」発動！`, ...msgs], true, () => {
+              const result = checkWinCondition();
+              if (result) { gameState.phase = "finished"; showFinishOverlay(result); }
+            }), 700);
+          }
+        );
+      });
+      return;
+    }
+
     const msgs = executeEffect(ability.effect, "player");
     playAbilityAnimation(fieldIndex, abilityIndex, "player", () => {
       renderGame(); // カードアニメーション後に支持率・資金フラッシュを発火
@@ -2204,6 +2264,31 @@ function playOptionCardAnimation(card, fromRect, isCpu, callback) {
     margin: "0", zIndex: "1000", pointerEvents: "none",
     transformOrigin: "center center", transition: "none",
   });
+
+  // オプションカード: 手札スワイプ時と同じ白枠オーバーレイを追加
+  if (card.type === "option") {
+    const imgDiv = clone.querySelector(".card-img-area") || clone;
+    const optOverlay = document.createElement("div");
+    optOverlay.className = "zoom-ability-overlay";
+    const effectText = card.effectDescription || card.effectText || "";
+    if (effectText) {
+      const item = document.createElement("div");
+      item.className = "zoom-ability-item";
+      const row = document.createElement("div");
+      row.className = "zoom-ability-effect";
+      row.textContent = effectText;
+      item.appendChild(row);
+      optOverlay.appendChild(item);
+    }
+    if (card.description) {
+      const descItem = document.createElement("div");
+      descItem.className = "zoom-ability-item zoom-option-flavor";
+      descItem.textContent = card.description;
+      optOverlay.appendChild(descItem);
+    }
+    imgDiv.appendChild(optOverlay);
+  }
+
   document.body.appendChild(clone);
 
   const timers = [];
@@ -2432,6 +2517,96 @@ function _showFieldCardPickerImpl(fieldCards, titleText, callback) {
 
   wrap.appendChild(list);
   document.body.appendChild(wrap);
+}
+
+// 汎用スロット演出
+// outcomes: [{ label: string, color?: string, value?: any }, ...]  ← 何個でも可
+// options:  { title?: string }  ← 省略可
+// onDone(winner) で選ばれた要素を返す
+function showSlotAnimation(outcomes, onDone, options = {}) {
+  if (!outcomes || outcomes.length === 0) return;
+
+  const titleText = options.title ?? "運命の賭け！";
+  const defaultColors = ["#22cc77","#ee4444","#4488ff","#ffaa22","#cc44cc","#22cccc"];
+  // color 未指定の場合はデフォルトパレットを順に割り当て
+  const items = outcomes.map((o, i) => ({
+    ...o,
+    color: o.color ?? defaultColors[i % defaultColors.length],
+  }));
+
+  const n = items.length;
+  const winnerIdx = Math.floor(Math.random() * n);
+
+  // スピンシーケンス: 高速で全アイテムを巡回し、減速して winner に着地
+  const totalFrames = Math.max(20, n * 4);
+  const seq = [];
+  for (let i = 0; i < totalFrames; i++) seq.push(i % n);
+  // 末尾を winner に合わせる
+  while (seq[seq.length - 1] !== winnerIdx) seq.push((seq[seq.length - 1] + 1) % n);
+
+  // 各フレームの表示時間: 指数的に増加（高速→低速）
+  const delays = seq.map((_, i) => {
+    const t = i / (seq.length - 1);
+    return Math.round(55 + t * t * 480);
+  });
+
+  // オーバーレイ
+  const overlay = document.createElement("div");
+  Object.assign(overlay.style, {
+    position: "fixed", inset: "0",
+    background: "rgba(0,0,0,0.85)",
+    zIndex: "4000",
+    display: "flex", flexDirection: "column",
+    alignItems: "center", justifyContent: "center", gap: "20px",
+  });
+
+  const titleEl = document.createElement("div");
+  titleEl.textContent = titleText;
+  Object.assign(titleEl.style, {
+    color: "#fff", fontSize: "1.1rem", fontWeight: "bold",
+    letterSpacing: "0.12em", opacity: "0.85",
+  });
+  overlay.appendChild(titleEl);
+
+  // スロット枠
+  const slotWrap = document.createElement("div");
+  Object.assign(slotWrap.style, {
+    background: "#111", border: "4px solid #555",
+    borderRadius: "14px", padding: "18px 52px",
+    minWidth: "180px", textAlign: "center",
+    boxShadow: "inset 0 0 20px rgba(0,0,0,0.6)",
+  });
+  const slotVal = document.createElement("div");
+  Object.assign(slotVal.style, {
+    fontSize: "3.2rem", fontWeight: "bold",
+    fontFamily: "monospace", transition: "color 0.06s",
+  });
+  slotWrap.appendChild(slotVal);
+  overlay.appendChild(slotWrap);
+
+  document.body.appendChild(overlay);
+
+  // アニメーション実行
+  let step = 0;
+  function tick() {
+    const cur = items[seq[step]];
+    slotVal.textContent = cur.label;
+    slotVal.style.color = cur.color;
+    step++;
+    if (step < seq.length) {
+      setTimeout(tick, delays[step - 1]);
+    } else {
+      // 着地: 枠を winner 色でフラッシュ
+      const winner = items[winnerIdx];
+      slotWrap.style.border = `4px solid ${winner.color}`;
+      slotWrap.style.boxShadow = `0 0 40px ${winner.color}88, inset 0 0 20px rgba(0,0,0,0.6)`;
+      setTimeout(() => {
+        overlay.remove();
+        onDone(winner);
+      }, 1100);
+    }
+  }
+  tick();
 }
 
 // ============================================================
@@ -2926,6 +3101,15 @@ function showCardZoom(card, context, index) {
   } else if (context === "hand-option") {
     // 手札のオプションカード → 使用ボタン
     const p = gameState.player;
+    if (p.optionBlockReason === "takayama") {
+      const msg = document.createElement("div");
+      msg.textContent = "S・タカヤマの能力により使用不可";
+      Object.assign(msg.style, {
+        fontSize: "0.78rem", color: "#c00", fontWeight: "bold",
+        textAlign: "center", padding: "6px 0",
+      });
+      actions.appendChild(msg);
+    }
     const btn = document.createElement("button");
     btn.className = "zoom-action-btn";
     btn.textContent = "使用する";
