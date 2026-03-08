@@ -1,7 +1,7 @@
 // ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.17";
+const APP_VERSION = "0.1.18";
 
 // ============================================================
 // カードデータ定義
@@ -1625,8 +1625,10 @@ function cpuPhaseAbilities() {
   for (const card of c.field) {
     if (c.usedAbilities[card.instanceId] || card.disabled) continue;
     const costs = card.abilities.map(a => Math.max(0, a.cost - cr));
-    const afford0 = c.funds >= costs[0];
-    const afford1 = !card.sealedAbility2 && c.funds >= costs[1];
+    // 相手の場が空の場合、ishiba_2 は空振りになるため除外
+    const isUseful = (effect) => effect !== "ishiba_2" || gameState.player.field.length > 0;
+    const afford0 = c.funds >= costs[0] && isUseful(card.abilities[0].effect);
+    const afford1 = !card.sealedAbility2 && c.funds >= costs[1] && isUseful(card.abilities[1].effect);
     let chosen = -1;
     if (afford0 && afford1) {
       chosen = costs[1] >= costs[0] ? 1 : 0;
