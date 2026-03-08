@@ -1,7 +1,7 @@
 // ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.15";
+const APP_VERSION = "0.1.16";
 
 // ============================================================
 // カードデータ定義
@@ -2279,22 +2279,12 @@ function playOptionCardAnimation(card, fromRect, isCpu, callback) {
   });
   document.body.appendChild(backdrop);
 
-  // カード要素を新規作成
-  const clone = createCardElement(card);
-  Object.assign(clone.style, {
-    position: "fixed",
-    left: rect.left + "px", top: rect.top + "px",
-    width: rect.width + "px", height: rect.height + "px",
-    margin: "0", zIndex: "1000", pointerEvents: "none",
-    transformOrigin: "center center", transition: "none",
-  });
-
-  // オプションカード: 手札スワイプ時と同じ白枠オーバーレイを追加
+  // カード要素を新規作成（オプションカードは showCardZoom と同じ card-zoom-image 構造）
+  let clone;
   if (card.type === "option") {
-    // createCardElement が生成した card-abilities-panel を除去（二重表示防止）
-    const existingPanel = clone.querySelector(".card-abilities-panel");
-    if (existingPanel) existingPanel.remove();
-    const imgDiv = clone.querySelector(".card-img-area") || clone;
+    clone = document.createElement("div");
+    clone.className = "card-zoom-image";
+    clone.style.backgroundImage = `url(${card.image})`;
     const optOverlay = document.createElement("div");
     optOverlay.className = "zoom-ability-overlay";
     const effectText = card.effectDescription || card.effectText || "";
@@ -2313,8 +2303,17 @@ function playOptionCardAnimation(card, fromRect, isCpu, callback) {
       descItem.textContent = card.description;
       optOverlay.appendChild(descItem);
     }
-    imgDiv.appendChild(optOverlay);
+    clone.appendChild(optOverlay);
+  } else {
+    clone = createCardElement(card);
   }
+  Object.assign(clone.style, {
+    position: "fixed",
+    left: rect.left + "px", top: rect.top + "px",
+    width: rect.width + "px", height: rect.height + "px",
+    margin: "0", zIndex: "1000", pointerEvents: "none",
+    transformOrigin: "center center", transition: "none",
+  });
 
   document.body.appendChild(clone);
 

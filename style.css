@@ -1298,13 +1298,13 @@ h1 {
 
 /* オプションカードズーム: テキストを小さく */
 .zoom-ability-overlay .zoom-ability-effect {
-  font-size: 0.4rem;
+  font-size: 0.6rem;
 }
 
 .zoom-option-flavor {
   cursor: default;
   pointer-events: none;
-  font-size: 0.4rem;
+  font-size: 0.6rem;
   color: #555;
   font-style: italic;
   line-height: 1.4;
