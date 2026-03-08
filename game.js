@@ -1,7 +1,7 @@
 // ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.11";
+const APP_VERSION = "0.1.12";
 
 // ============================================================
 // カードデータ定義
@@ -118,14 +118,14 @@ const POLITICIAN_CARDS = [
         effectText: "政治資金+4億、【次ターン】最初に受ける支持率低下を4%軽減",
         description: "パンケーキで心をつかむ",
         cost: 2,
-        effect: "suga_2"
+        effect: "suga_1"
       },
       {
         name: "ガースーです",
         effectText: "支持率+8%（場が1枚以下なら追加+4%）",
         description: "まさかの自己紹介で場が和む",
         cost: 3,
-        effect: "suga_1"
+        effect: "suga_2"
       }
     ]
   },
@@ -314,14 +314,14 @@ const POLITICIAN_CARDS = [
         effectText: "支持率+6%",
         description: "育児と仕事を両立するパワフルな行動力",
         cost: 1,
-        effect: "muto_2"
+        effect: "muto_1"
       },
       {
         name: "NPOから永田町へ",
         effectText: "相手の支持率-5%、支持率+5%",
         description: "地域支援の経験が国政レベルで開花",
         cost: 3,
-        effect: "muto_1"
+        effect: "muto_2"
       }
     ]
   },
@@ -338,14 +338,14 @@ const POLITICIAN_CARDS = [
         effectText: "支持率+5%",
         description: "東大文人類の視点が政界に新風を送る",
         cost: 1,
-        effect: "suda_2"
+        effect: "suda_1"
       },
       {
         name: "まちづくりDX",
         effectText: "相手の支持率が自分の手札のカード枚数×2%DOWN",
         description: "地方の課題をデジタルで一気に解決",
         cost: 4,
-        effect: "suda_1"
+        effect: "suda_2"
       }
     ]
   },
@@ -430,7 +430,7 @@ const OPTION_CARDS = [
     id: "tounai_kaikaku",
     name: "政党内改革",
     description: "旧弊を打破する「トカゲの尻尾切り」か「刷新」か。",
-    effectDescription: "自分の場の政治家カード1枚を捨て札にし、手札から別の政治家カードを場に出す",
+    effectDescription: "自分の場の政治家カード1枚を選択して捨て札にし、手札から別の政治家カードを場に出す",
     image: "assets/options/tounai_kaikaku.png",
     type: "option",
     effect: "tounai_kaikaku",
@@ -820,19 +820,18 @@ const ABILITY_EFFECTS = {
   },
   suga_1(self, opponent) {
     const msgs = [];
-    let bonus = 0;
-    if (self.field.length <= 1) bonus = 4;
-    const m1 = changeApproval(self, 8 + bonus);
-    if (m1) msgs.push(m1);
-    return msgs;
-  },
-  suga_2(self, opponent) {
-    const msgs = [];
-    // 【フェーズ4】applyDefenses() 統合後に attackReduction が機能予定（自分が受けるダメージを軽減）
     self.nextTurnBonuses.attackReduction += 4;
     changeFunds(self, 4);
     msgs.push("政治資金+4億円を獲得！");
     msgs.push("【次ターン】最初に受ける支持率低下を4%軽減！");
+    return msgs;
+  },
+  suga_2(self, opponent) {
+    const msgs = [];
+    let bonus = 0;
+    if (self.field.length <= 1) bonus = 4;
+    const m1 = changeApproval(self, 8 + bonus);
+    if (m1) msgs.push(m1);
     return msgs;
   },
 
@@ -969,7 +968,13 @@ const ABILITY_EFFECTS = {
     msgs.push(`自分の場${self.field.length}枚×4%=${up}%UP！`);
     return msgs;
   },
-  muto_1(self, opponent) {
+  muto_1(self, _opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 6);
+    if (m1) msgs.push(m1);
+    return msgs;
+  },
+  muto_2(self, opponent) {
     const msgs = [];
     const m1 = changeApproval(opponent, -5);
     if (m1) msgs.push(m1);
@@ -977,13 +982,13 @@ const ABILITY_EFFECTS = {
     if (m2) msgs.push(m2);
     return msgs;
   },
-  muto_2(self, opponent) {
+  suda_1(self, _opponent) {
     const msgs = [];
-    const m1 = changeApproval(self, 6);
+    const m1 = changeApproval(self, 5);
     if (m1) msgs.push(m1);
     return msgs;
   },
-  suda_1(self, opponent) {
+  suda_2(self, opponent) {
     const msgs = [];
     if (self.hand.length === 0) {
       msgs.push("手札がなく効果なし…");
@@ -993,12 +998,6 @@ const ABILITY_EFFECTS = {
     const m1 = changeApproval(opponent, -down);
     if (m1) msgs.push(m1);
     msgs.push(`自分の手札${self.hand.length}枚×2%=${down}%DOWN！`);
-    return msgs;
-  },
-  suda_2(self, opponent) {
-    const msgs = [];
-    const m1 = changeApproval(self, 5);
-    if (m1) msgs.push(m1);
     return msgs;
   },
   mineshima_1(self, opponent) {
@@ -1209,9 +1208,10 @@ function applyDefenses(target, amount) {
     return 0;
   }
 
-  // 防御ボーナス
+  // 防御ボーナス（1回使用後リセット）
   if (target.nextTurnBonuses.defenseBonus > 0) {
     const reduction = Math.floor(Math.abs(amount) * target.nextTurnBonuses.defenseBonus / 100);
+    target.nextTurnBonuses.defenseBonus = 0;
     console.log(`  防御ボーナス: ${reduction}%軽減`);
     return amount + reduction;
   }
@@ -1681,6 +1681,16 @@ function cpuPhaseOption() {
       const card = c.hand.splice(optionIdx, 1)[0];
       c.discard.push(card);
       c.usedOptionThisTurn = true;
+
+      // kioku_ni_gozaimasen: CPUは場のカード中コスト最大のものを自動選択
+      if (card.effect === "kioku_ni_gozaimasen") {
+        const cpuField = c.field.filter(Boolean);
+        if (cpuField.length > 0) {
+          const target = cpuField.reduce((best, cur) => (cur.cost || 0) > (best.cost || 0) ? cur : best, cpuField[0]);
+          gameState.zeroCostCardId = target.instanceId;
+        }
+      }
+
       const effectMsgs = executeEffect(card.effect, "cpu");
       console.log(`  CPU: ${card.name}を使用`);
       playOptionCardAnimation(card, null, true, () => {
@@ -2287,6 +2297,44 @@ function useOptionCard(handIndex) {
       return;
     }
 
+    if (card.effect === "tounai_kaikaku") {
+      const politicianInHand = p.hand.find(c => c.type === "politician");
+      if (p.field.length === 0 || !politicianInHand) {
+        const msgs = [p.field.length === 0 ? "場にカードがなく空振り…" : "手札に政治家カードがなく空振り…"];
+        playOptionCardAnimation(card, cardRect, false, () => {
+          animateCardToDiscard(card, true, () => {
+            renderGame();
+            setTimeout(() => showActionBanner([`「${card.name}」使用！`, ...msgs], true, () => {
+              const result = checkWinCondition();
+              if (result) { gameState.phase = "finished"; showFinishOverlay(result); }
+            }), 700);
+          });
+        });
+        return;
+      }
+      showFieldCardPicker(p.field, "交代させる政治家カードを選択", (selected) => {
+        if (!selected) return;
+        const removeIdx = p.field.findIndex(c => c === selected);
+        const removed = p.field.splice(removeIdx, 1)[0];
+        p.discard.push(removed);
+        const addIdx = p.hand.findIndex(c => c.type === "politician");
+        const added = p.hand.splice(addIdx, 1)[0];
+        added.fieldSlot = removed.fieldSlot ?? removeIdx;
+        p.field.push(added);
+        const msgs = [`${removed.name}を捨て、${added.name}を場に出した！`];
+        playOptionCardAnimation(card, cardRect, false, () => {
+          animateCardToDiscard(card, true, () => {
+            renderGame();
+            setTimeout(() => showActionBanner([`「${card.name}」使用！`, ...msgs], true, () => {
+              const result = checkWinCondition();
+              if (result) { gameState.phase = "finished"; showFinishOverlay(result); }
+            }), 700);
+          });
+        });
+      });
+      return;
+    }
+
     const msgs = executeEffect(card.effect, "player");
     playOptionCardAnimation(card, cardRect, false, () => {
       animateCardToDiscard(card, true, () => {
@@ -2314,8 +2362,22 @@ function useOptionCard(handIndex) {
   });
 }
 
-// 場の政治家カードを選択させるUI（kioku_ni_gozaimasen用）
-function showFieldCardPicker(fieldCards, callback) {
+// 場の政治家カードを選択させるUI
+function showFieldCardPicker(fieldCards, titleTextOrCallback, callback) {
+  // 後方互換: 引数2つの場合はtitleText省略
+  let titleText, cb;
+  if (typeof titleTextOrCallback === "function") {
+    titleText = "コストを0にする政治家カードを選択";
+    cb = titleTextOrCallback;
+  } else {
+    titleText = titleTextOrCallback;
+    cb = callback;
+  }
+  // 以下の callback を cb に置き換え
+  return _showFieldCardPickerImpl(fieldCards, titleText, cb);
+}
+
+function _showFieldCardPickerImpl(fieldCards, titleText, callback) {
   const wrap = document.createElement("div");
   Object.assign(wrap.style, {
     position: "fixed", inset: "0", background: "rgba(0,0,0,0.72)",
@@ -2325,7 +2387,7 @@ function showFieldCardPicker(fieldCards, callback) {
 
   const title = document.createElement("div");
   Object.assign(title.style, { color: "#fff", fontSize: "1rem", fontWeight: "bold", marginBottom: "4px" });
-  title.textContent = "コストを0にする政治家カードを選択";
+  title.textContent = titleText;
   wrap.appendChild(title);
 
   if (fieldCards.length === 0) {
@@ -3596,7 +3658,7 @@ function renderHand() {
       swipeStartY = null;
       if (dy > 30) {
         didSwipe = true;
-        showCardZoom(card, "view");
+        showCardZoom(card, card.type === "option" ? "hand-option" : "view", idx);
       }
     });
     el.addEventListener("touchcancel", () => { swipeStartY = null; });
@@ -3606,7 +3668,7 @@ function renderHand() {
       if (didSwipe) { didSwipe = false; return; } // スワイプ後のclickは無視
       e.stopPropagation();
       if (gameState.currentPlayer !== "player") {
-        showCardZoom(card, "view");
+        showCardZoom(card, card.type === "option" ? "hand-option" : "view", idx);
         return;
       }
       // 別のカードをタップ → フォーカス移動のみ
