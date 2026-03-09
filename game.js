@@ -1,7 +1,7 @@
 ﻿// ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.19";
+const APP_VERSION = "0.1.20";
 
 // ============================================================
 // カードデータ定義
@@ -3554,6 +3554,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch (e) {
     console.error("カードデータの読み込みに失敗:", e);
   }
+
+  // 全カード画像をプリロード（ゲーム中の遅延を防ぐ）
+  const allImages = [
+    ...POLITICIAN_CARDS.map(c => c.image),
+    ...OPTION_CARDS.map(c => c.image),
+    "assets/icons/coin.webp",
+  ];
+  await Promise.all(allImages.map(src => new Promise(resolve => {
+    const img = new Image();
+    img.onload = resolve;
+    img.onerror = resolve; // 失敗しても続行
+    img.src = src;
+  })));
+  console.log(`[プリロード完了] ${allImages.length}枚`);
 
   const verEl = document.getElementById("app-version");
   if (verEl) verEl.textContent = `ver ${APP_VERSION}`;
