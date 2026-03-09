@@ -1,0 +1,182 @@
+[
+  {
+    "id": "trump_tariff",
+    "name": "トランプ関税",
+    "description": "外圧による経済パニック。",
+    "effectDescription": "両プレイヤーの政治資金が50%没収される",
+    "image": "assets/options/trump_tariff.webp",
+    "type": "option",
+    "effect": "trump_tariff",
+    "count": 1
+  },
+  {
+    "id": "kioku_ni_gozaimasen",
+    "name": "記憶にございません",
+    "description": "国会答弁の定番フレーズで追及をかわし、無敵状態。",
+    "effectDescription": "自分の場の政治家カードを指定し、現在のターンのみ能力の政治資金コストをゼロにする",
+    "image": "assets/options/kioku_ni_gozaimasen.webp",
+    "type": "option",
+    "effect": "kioku_ni_gozaimasen",
+    "count": 1
+  },
+  {
+    "id": "kenkin_party",
+    "name": "政治献金パーティー",
+    "description": "豪華ホテルの「勉強会」で資金集め。",
+    "effectDescription": "政治資金+5億円を即時獲得",
+    "image": "assets/options/kenkin_party.webp",
+    "type": "option",
+    "effect": "kenkin_party",
+    "count": 2
+  },
+  {
+    "id": "gaitou_enzetsu",
+    "name": "街頭演説の神対応",
+    "description": "厳しいヤジをユーモアで返し、聴衆を味方につける。",
+    "effectDescription": "支持率+4%。場にカードが2枚以上なら追加で+8%",
+    "image": "assets/options/gaitou_enzetsu.webp",
+    "type": "option",
+    "effect": "gaitou_enzetsu",
+    "count": 1
+  },
+  {
+    "id": "drill_hakai",
+    "name": "ドリル破壊",
+    "description": "物理的に証拠を消し去る強硬手段。",
+    "effectDescription": "次に受ける支持率低下を1回無効化",
+    "image": "assets/options/drill_hakai.webp",
+    "type": "option",
+    "effect": "drill_hakai",
+    "count": 1
+  },
+  {
+    "id": "tounai_kaikaku",
+    "name": "政党内改革",
+    "description": "旧弊を打破する「トカゲの尻尾切り」か「刷新」か。",
+    "effectDescription": "自分の場の政治家カード1枚を選択して捨て札にし、手札から別の政治家カードを場に出す",
+    "image": "assets/options/tounai_kaikaku.webp",
+    "type": "option",
+    "effect": "tounai_kaikaku",
+    "count": 1
+  },
+  {
+    "id": "toushu_touron",
+    "name": "党首討論",
+    "description": "2分割画面で映し出される、言葉の真剣勝負。",
+    "effectDescription": "支持率が上がる（ランダム）",
+    "image": "assets/options/toushu_touron.webp",
+    "type": "option",
+    "effect": "toushu_touron",
+    "count": 1
+  },
+  {
+    "id": "yukiguni_yukikaki",
+    "name": "雪国の雪かき",
+    "description": "演説のため歩道の雪を路上に撒き散らす姿がSNSで炎上。",
+    "effectDescription": "相手の支持率-5%",
+    "image": "assets/options/yukiguni_yukikaki.webp",
+    "type": "option",
+    "effect": "yukiguni_yukikaki",
+    "count": 1
+  },
+  {
+    "id": "kono_hage",
+    "name": "このハゲェー！！",
+    "description": "秘書への苛烈な暴言録音がSNSで大拡散。",
+    "effectDescription": "相手の支持率-5%。相手の場に女性政治家がいれば追加で-7%",
+    "image": "assets/options/kono_hage.webp",
+    "type": "option",
+    "effect": "kono_hage",
+    "count": 2
+  },
+  {
+    "id": "netenai_jiman",
+    "name": "寝てない自慢",
+    "description": "災害の緊急対応で「不眠不休」をアピールし、同情と期待を買う。",
+    "effectDescription": "自分の支持率+4%",
+    "image": "assets/options/netenai_jiman.webp",
+    "type": "option",
+    "effect": "netenai_jiman",
+    "count": 1
+  },
+  {
+    "id": "masukomi_taisaku",
+    "name": "マスコミ対策",
+    "description": "記者クラブとの会食や巧妙な情報操作で報道をコントロール。",
+    "effectDescription": "次の相手ターンの支持率上昇を1回無効化",
+    "image": "assets/options/masukomi_taisaku.webp",
+    "type": "option",
+    "effect": "masukomi_taisaku",
+    "count": 1
+  },
+  {
+    "id": "ouen_enzetsu",
+    "name": "応援演説",
+    "description": "有名人がマイクを握り、新たな支持者を呼び込む。",
+    "effectDescription": "自分の山札から政治家カードをランダムで1枚手札に加える",
+    "image": "assets/options/ouen_enzetsu.webp",
+    "type": "option",
+    "effect": "ouen_enzetsu",
+    "count": 2
+  },
+  {
+    "id": "kinkyuu_yoron",
+    "name": "緊急世論調査",
+    "description": "リアルタイムの支持率を分析し、戦術を修正する。",
+    "effectDescription": "即座に支持率を確認できる",
+    "image": "assets/options/kinkyuu_yoron.webp",
+    "type": "option",
+    "effect": "kinkyuu_yoron",
+    "count": 1
+  },
+  {
+    "id": "giinkaikan_furin",
+    "name": "議員会館不倫",
+    "description": "議員宿舎での密会がスクープされ、政界に激震。",
+    "effectDescription": "相手の支持率-8%。ただし自分も巻き添えで-3%",
+    "image": "assets/options/giinkaikan_furin.webp",
+    "type": "option",
+    "effect": "giinkaikan_furin",
+    "count": 1
+  },
+  {
+    "id": "yaji_gassen",
+    "name": "ヤジ合戦",
+    "description": "与野党入り乱れての怒鳴り合い。議長のマイクが虚しく響く。",
+    "effectDescription": "相手の場の政治家カード全員の能力をこのターン封じる",
+    "image": "assets/options/yaji_gassen.webp",
+    "type": "option",
+    "effect": "yaji_gassen",
+    "count": 2
+  },
+  {
+    "id": "gyuuho_senjutsu",
+    "name": "牛歩戦術",
+    "description": "採決のたびに亀より遅く投票所へ向かう。議長も失笑。",
+    "effectDescription": "相手は次のターンのドローをスキップする",
+    "image": "assets/options/gyuuho_senjutsu.webp",
+    "type": "option",
+    "effect": "gyuuho_senjutsu",
+    "count": 2
+  },
+  {
+    "id": "kokkai_inemuri",
+    "name": "国会居眠り",
+    "description": "ズラリと並んだ議員が全員スヤスヤ。重要法案の採決中でも爆睡。",
+    "effectDescription": "山札から2枚ドロー",
+    "image": "assets/options/kokkai_inemuri.webp",
+    "type": "option",
+    "effect": "kokkai_inemuri",
+    "count": 2
+  },
+  {
+    "id": "zouzei_megane",
+    "name": "増税メガネ",
+    "description": "「財源が必要です」と一言。国民の財布から素早く3億が消えた。",
+    "effectDescription": "相手の政治資金から3億徴収し、自分が得る",
+    "image": "assets/options/zouzei_megane.webp",
+    "type": "option",
+    "effect": "zouzei_megane",
+    "count": 2
+  }
+]
