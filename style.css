@@ -10,7 +10,7 @@
 
 body {
   font-family: "Hiragino Sans", "Meiryo", sans-serif;
-  background: #1a1a2e;
+  background: #1a1a2e url("assets/item/background.webp") center center / cover no-repeat fixed;
   color: #eee;
   min-height: 100vh;
   padding-bottom: env(safe-area-inset-bottom);
