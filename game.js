@@ -1,7 +1,7 @@
 ﻿// ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.20";
+const APP_VERSION = "0.1.21";
 
 // ============================================================
 // カードデータ定義
@@ -3000,6 +3000,7 @@ function renderDeckSlot(slotId, deckCount) {
 }
 
 function renderDiscardSlot(slotId, pile) {
+  const isPlayer = slotId === "player-discard";
   const slot = document.getElementById(slotId);
   if (!slot) return;
   slot.innerHTML = "";
@@ -3019,43 +3020,44 @@ function renderDiscardSlot(slotId, pile) {
     return;
   }
 
-  const fan = document.createElement("div");
-  fan.className = "discard-fan";
+  const stack = document.createElement("div");
+  stack.className = "discard-stack";
 
-  // 枚数に応じてカード同士の重なり幅を計算（全体が CARD_W〜MAX_FAN_W に収まるよう）
-  const CARD_W = 36;
-  const MAX_FAN_W = 90;
-  const n = pile.length;
-  const negMargin = n > 1
-    ? Math.min(0, Math.round((MAX_FAN_W - CARD_W * n) / (n - 1)))
-    : 0;
+  // 影レイヤー（最大3枚分、後ろへずらして重なり感を出す）
+  const layers = Math.min(pile.length - 1, 3);
+  for (let i = layers; i >= 1; i--) {
+    const shadow = document.createElement("div");
+    shadow.className = "discard-stack-shadow";
+    shadow.style.transform = `translate(${i * 2}px, ${-i * 2}px)`;
+    stack.appendChild(shadow);
+  }
 
-  pile.forEach((card, i) => {
-    const cardEl = document.createElement("div");
-    cardEl.className = "discard-fan-card";
-    if (i > 0) cardEl.style.marginLeft = `${negMargin}px`;
-    cardEl.style.zIndex = String(i + 1);
+  // 一番上のカード（最後に捨てたカード）
+  const topCard = pile[pile.length - 1];
+  const topEl = document.createElement("div");
+  topEl.className = "discard-stack-top";
+  const img = document.createElement("img");
+  img.className = "discard-fan-img";
+  img.src = topCard.image;
+  img.alt = topCard.name;
+  img.onerror = () => {
+    img.style.display = "none";
+    topEl.style.background = topCard.type === "politician"
+      ? "linear-gradient(160deg, #2a0a18 0%, #4a1a28 100%)"
+      : "linear-gradient(160deg, #0a1a2e 0%, #0f2a4a 100%)";
+  };
+  topEl.appendChild(img);
+  stack.appendChild(topEl);
 
-    const img = document.createElement("img");
-    img.className = "discard-fan-img";
-    img.src = card.image;
-    img.alt = card.name;
-    img.onerror = () => {
-      img.style.display = "none";
-      cardEl.style.background = card.type === "politician"
-        ? "linear-gradient(160deg, #2a0a18 0%, #4a1a28 100%)"
-        : "linear-gradient(160deg, #0a1a2e 0%, #0f2a4a 100%)";
-    };
-    cardEl.appendChild(img);
+  // 枚数バッジ
+  const countEl = document.createElement("div");
+  countEl.className = "discard-stack-count";
+  countEl.textContent = `${pile.length}枚`;
+  stack.appendChild(countEl);
 
-    cardEl.addEventListener("click", e => {
-      e.stopPropagation();
-      showCardZoom(card, "view");
-    });
-    fan.appendChild(cardEl);
-  });
-
-  slot.appendChild(fan);
+  slot.appendChild(stack);
+  slot.style.cursor = "pointer";
+  slot.onclick = () => showDiscardOverlay(pile, isPlayer);
 }
 
 function showDiscardOverlay(pile, isPlayer) {
@@ -3072,25 +3074,36 @@ function showDiscardOverlay(pile, isPlayer) {
   title.textContent = `${isPlayer ? "あなた" : "CPU"}の捨て札（${pile.length}枚）`;
   box.appendChild(title);
 
-  const list = document.createElement("div");
-  list.className = "discard-overlay-list";
+  const grid = document.createElement("div");
+  grid.className = "discard-overlay-grid";
 
+  // 最後に捨てたカードを先頭に表示
   [...pile].reverse().forEach(card => {
     const item = document.createElement("div");
-    item.className = `discard-overlay-item ${card.type === "politician" ? "card-politician" : "card-option"}`;
+    item.className = "discard-overlay-card";
 
-    let html = `<div class="discard-overlay-name">${card.name}</div>`;
-    if (card.type === "politician" && card.abilities) {
-      html += card.abilities.map(ab =>
-        `<div class="discard-overlay-ability"><span class="doa-name">${ab.name}</span><span class="doa-cost">${ab.cost}億</span><span class="doa-effect">${ab.effectText || ""}</span></div>`
-      ).join("");
-    } else if (card.description) {
-      html += `<div class="discard-overlay-desc">${card.description}</div>`;
-    }
-    item.innerHTML = html;
-    list.appendChild(item);
+    const img = document.createElement("img");
+    img.src = card.image;
+    img.alt = card.name;
+    img.onerror = () => {
+      img.style.display = "none";
+      item.style.background = card.type === "politician"
+        ? "linear-gradient(160deg, #2a0a18 0%, #4a1a28 100%)"
+        : "linear-gradient(160deg, #0a1a2e 0%, #0f2a4a 100%)";
+      const nameEl = document.createElement("div");
+      nameEl.className = "discard-overlay-card-name";
+      nameEl.textContent = card.name;
+      item.appendChild(nameEl);
+    };
+    item.appendChild(img);
+
+    item.addEventListener("click", e => {
+      e.stopPropagation();
+      showCardZoom(card, "view");
+    });
+    grid.appendChild(item);
   });
-  box.appendChild(list);
+  box.appendChild(grid);
 
   const closeBtn = document.createElement("button");
   closeBtn.className = "card-zoom-close";
