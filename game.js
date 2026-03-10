@@ -1633,40 +1633,24 @@ function playAbilityAnimation(fieldIndex, abilityIndex, side, callback) {
   const _zoomSrc1 = cardImageCache.get(card.id) ?? card.image;
   if (_zoomSrc1) imageDiv.style.backgroundImage = `url(${_zoomSrc1})`;
 
-  // zoom-ability-overlay を構築
-  const abilityOverlay = document.createElement("div");
-  abilityOverlay.className = "zoom-ability-overlay";
-
-  card.abilities.forEach((ability, aIdx) => {
-    const item = document.createElement("div");
-    item.className = "zoom-ability-item";
-
-    const nameRow = document.createElement("div");
-    nameRow.className = "zoom-ability-name";
-    const coins = ability.cost > 0 ? COIN_IMG.repeat(ability.cost) : '<span class="funds-zero">—</span>';
-    nameRow.innerHTML = `<span class="zoom-ability-cost">${coins}</span>${ability.name}`;
-    item.appendChild(nameRow);
-
-    if (ability.effectText) {
-      const effectRow = document.createElement("div");
-      effectRow.className = "zoom-ability-effect";
-      effectRow.textContent = ability.effectText;
-      item.appendChild(effectRow);
-    }
-
-    // 発動した能力を黄色く光らせる
-    if (aIdx === abilityIndex) {
-      item.style.background = "rgba(255,220,50,0.45)";
-      item.style.boxShadow = "0 0 18px 6px rgba(255,220,50,0.85)";
-      item.style.borderRadius = "4px";
-    } else {
-      item.style.opacity = "0.45";
-    }
-
-    abilityOverlay.appendChild(item);
+  // 発動能力をY座標で黄色くハイライト（Canvasが能力テキストを表示済み）
+  const abilities = card.abilities;
+  const rowCount = abilities.length;
+  const rowH = (40 / rowCount); // % per row within bottom 40%
+  const highlightTop = 60 + abilityIndex * rowH;
+  const highlight = document.createElement("div");
+  Object.assign(highlight.style, {
+    position: "absolute",
+    top: `${highlightTop}%`,
+    left: "0",
+    right: "0",
+    height: `${rowH}%`,
+    background: "rgba(255,220,50,0.35)",
+    boxShadow: "0 0 18px 6px rgba(255,220,50,0.7)",
+    borderRadius: "4px",
+    pointerEvents: "none",
   });
-
-  imageDiv.appendChild(abilityOverlay);
+  imageDiv.appendChild(highlight);
   zoomWrap.appendChild(imageDiv);
   document.body.appendChild(zoomWrap);
 
@@ -2450,108 +2434,65 @@ function showCardZoom(card, context, index) {
     imageDiv.textContent = card.name;
   };
 
-  // 政治家カード: 画像上に白半透明枠で能力を配置
+  // 政治家カード: Canvas白枠下40%をY座標検出でタップ判定（HTML要素は不要）
   let infoPanel = null;
   if (card.type === "politician" && card.abilities) {
-    const abilityOverlay = document.createElement("div");
-    abilityOverlay.className = "zoom-ability-overlay";
-
     const isFieldPlayer = context === "field";
     const isCpuView = context === "view";
     const p = gameState.player;
     const costReduction = isFieldPlayer ? (p.currentTurnCostReduction || 0) : 0;
+    const abilities = card.abilities;
 
     // 相手カード閲覧時: 能力詳細パネルを用意
     if (isCpuView) {
       infoPanel = document.createElement("div");
       infoPanel.className = "card-zoom-info";
-      infoPanel.innerHTML = `<div class="card-zoom-hint">能力をクリックで詳細表示</div>`;
+      infoPanel.innerHTML = `<div class="card-zoom-hint">能力エリアをタップで詳細表示</div>`;
     }
 
-    // 封印中: 全能力を非表示にして通知のみ
-    if (isFieldPlayer && card.disabled) {
-      const notice = document.createElement("div");
-      notice.className = "ability-disabled-notice";
-      notice.textContent = "封印中 — このカードは使用できません";
-      abilityOverlay.appendChild(notice);
-    } else {
-      const usedVal = isFieldPlayer ? p.usedAbilities[card.instanceId] : 0;
-      const usedIdx = usedVal ? usedVal - 1 : -1; // 使用した能力のインデックス（0 or 1）、未使用は-1
+    // imageDiv クリックで能力判定（Canvas白枠の下40%が能力エリア）
+    if (isFieldPlayer || isCpuView) {
+      imageDiv.style.cursor = "pointer";
+      imageDiv.addEventListener("click", (e) => {
+        const rect = imageDiv.getBoundingClientRect();
+        const relY = (e.clientY - rect.top) / rect.height;
 
-      card.abilities.forEach((ability, aIdx) => {
-        const effectiveCost = (isFieldPlayer && p.zeroCostCardId === card.instanceId)
-          ? 0
-          : Math.max(0, ability.cost - costReduction);
+        // 上60%はイラストエリア → 何もしない
+        if (relY < 0.60) return;
 
-        // 使用済みカード: 使った能力だけ表示、それ以外は非表示
-        if (isFieldPlayer && usedIdx >= 0 && aIdx !== usedIdx) return;
+        if (isFieldPlayer && card.disabled) return;
 
-        const item = document.createElement("div");
-        item.className = "zoom-ability-item";
+        const usedVal = isFieldPlayer ? (p.usedAbilities[card.instanceId] || 0) : 0;
+        const usedIdx = usedVal ? usedVal - 1 : -1;
 
-        // 能力2封印判定
-        const isSealed = isFieldPlayer && aIdx === 1 && card.sealedAbility2;
+        if (isFieldPlayer && usedIdx >= 0) return; // 使用済み
 
-        // スタイル判定
+        // 能力インデックス計算
+        const panelRelY = (relY - 0.60) / 0.40;
+        let abilityIdx = Math.floor(panelRelY * abilities.length);
+        abilityIdx = Math.max(0, Math.min(abilityIdx, abilities.length - 1));
+        const ability = abilities[abilityIdx];
+
         if (isFieldPlayer) {
-          if (usedIdx >= 0) {
-            // 使用済み能力として表示
-            item.classList.add("ability-used");
-          } else if (isSealed) {
-            // 能力2封印中: グレーアウト
-            item.classList.add("inactive");
-          } else if (p.funds < effectiveCost) {
-            // 資金不足: グレーアウト（非表示にはしない）
-            item.classList.add("inactive");
-          }
-        }
+          const isSealed = abilityIdx === 1 && card.sealedAbility2;
+          if (isSealed) return;
 
-        const nameRow = document.createElement("div");
-        nameRow.className = "zoom-ability-name";
-        if (isSealed) {
-          nameRow.innerHTML = `${ability.name}（封印中）`;
-        } else {
-          const coins = effectiveCost > 0 ? COIN_IMG.repeat(effectiveCost) : '<span class="funds-zero">—</span>';
-          nameRow.innerHTML = `<span class="zoom-ability-cost">${coins}</span>${ability.name}`;
-        }
-        item.appendChild(nameRow);
+          const effectiveCost = (p.zeroCostCardId === card.instanceId)
+            ? 0
+            : Math.max(0, ability.cost - costReduction);
+          if (p.funds < effectiveCost) return;
 
-        if (ability.effectText) {
-          const effectRow = document.createElement("div");
-          effectRow.className = "zoom-ability-effect";
-          effectRow.textContent = isSealed ? "【封印中】次のターンまで使用不可" : ability.effectText;
-          item.appendChild(effectRow);
+          overlay.remove();
+          useAbility(index, abilityIdx);
+        } else if (isCpuView && infoPanel) {
+          infoPanel.innerHTML = [
+            `<div class="card-zoom-name">${ability.name}</div>`,
+            ability.effectText   ? `<div class="card-zoom-effect">${ability.effectText}</div>`   : "",
+            ability.description  ? `<div class="card-zoom-desc">${ability.description}</div>`    : "",
+          ].join("");
         }
-
-        // 場のプレイヤーカード: クリックで能力発動
-        if (isFieldPlayer && usedIdx < 0 && !isSealed && p.funds >= effectiveCost) {
-          item.addEventListener("click", (e) => {
-            e.stopPropagation();
-            overlay.remove();
-            useAbility(index, aIdx);
-          });
-        }
-
-        // 相手カード閲覧: クリックで能力名・効果・説明を表示
-        if (isCpuView && infoPanel) {
-          item.style.cursor = "pointer";
-          item.addEventListener("click", (e) => {
-            e.stopPropagation();
-            abilityOverlay.querySelectorAll(".zoom-ability-item").forEach(el => el.classList.remove("selected"));
-            item.classList.add("selected");
-            infoPanel.innerHTML = [
-              `<div class="card-zoom-name">${ability.name}</div>`,
-              ability.effectText   ? `<div class="card-zoom-effect">${ability.effectText}</div>`   : "",
-              ability.description  ? `<div class="card-zoom-desc">${ability.description}</div>`    : "",
-            ].join("");
-          });
-        }
-
-        abilityOverlay.appendChild(item);
       });
     }
-
-    imageDiv.appendChild(abilityOverlay);
   }
 
   // オプションカード: CanvasがdescriptionとeffectDescriptionを表示するため不要
