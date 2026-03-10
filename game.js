@@ -3527,7 +3527,28 @@ async function renderCardCanvas(card) {
   // ── 1. イラスト ──
   await new Promise(resolve => {
     const img = new Image();
-    img.onload = () => { ctx.drawImage(img, 0, 0, W, imgH); resolve(); };
+    img.onload = () => {
+        // object-fit: cover 相当（9:16画像を中央クロップして描画）
+        const srcW = img.naturalWidth, srcH = img.naturalHeight;
+        const destAspect = W / imgH;
+        const srcAspect  = srcW / srcH;
+        let sx, sy, sw, sh;
+        if (srcAspect > destAspect) {
+          // ソースの方が横長 → 左右をクロップ
+          sh = srcH;
+          sw = srcH * destAspect;
+          sx = (srcW - sw) / 2;
+          sy = 0;
+        } else {
+          // ソースの方が縦長（9:16など） → 上下をクロップ
+          sw = srcW;
+          sh = srcW / destAspect;
+          sx = 0;
+          sy = (srcH - sh) / 2;
+        }
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, imgH);
+        resolve();
+      };
     img.onerror = () => {
       const fbGrad = ctx.createLinearGradient(0, 0, W, imgH);
       fbGrad.addColorStop(0, isPolitician ? "#2a0a18" : "#0a1a2e");
