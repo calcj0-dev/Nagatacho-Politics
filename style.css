@@ -1201,33 +1201,31 @@ h1 {
   line-height: 1.5;
 }
 
-/* 拡大カード画像上の白半透明枠 */
+/* 拡大カード能力クリックエリア（Canvasが視覚表示するため透明化） */
 .zoom-ability-overlay {
   position: absolute;
-  bottom: 8px;
-  left: 8px;
-  right: 8px;
+  bottom: 0;
+  left: 0;
+  right: 0;
   height: 40%;
-  background: rgba(255, 255, 255, 0.85);
-  border-radius: 8px;
-  padding: 8px;
+  background: transparent;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
-  gap: 6px;
   overflow: hidden;
 }
 
 .zoom-ability-item {
-  padding: 6px 8px;
+  flex: 1;
+  padding: 4px 8px;
   border-radius: 4px;
   cursor: pointer;
+  color: transparent; /* テキストはCanvasが表示 */
   transition: background 0.15s;
 }
 
 .zoom-ability-item:hover:not(.inactive) {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .zoom-ability-item.inactive {
