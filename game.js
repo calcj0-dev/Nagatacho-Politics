@@ -3486,7 +3486,7 @@ function drawCoinCanvas(ctx, cx, cy, r) {
   ctx.lineWidth = 1;
   ctx.stroke();
   // ¥ テキスト
-  ctx.font = `bold ${Math.round(r * 1.1)}px 'Hiragino Sans', sans-serif`;
+  ctx.font = `900 ${Math.round(r * 1.1)}px 'Noto Sans JP', 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
   ctx.fillStyle = "#7a5500";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -3522,11 +3522,11 @@ async function renderCardCanvas(card) {
   const isPolitician = card.type === "politician";
 
   // レイアウト定数
-  const GAP      = 10;  // 両サイド・下の隙間
+  const GAP      = 18;  // 両サイド・下の隙間
   const PANEL_H  = Math.round(H * 0.40);  // 224px（全体の40%）
   const PANEL_Y  = H - PANEL_H;           // 336px
   const NAME_H   = 46;
-  const NAME_Y   = PANEL_Y - NAME_H;      // 290px（イラスト上に浮かぶ）
+  const NAME_Y   = GAP;                   // カード最上部（GAP分だけ内側）
   const PAD_X    = 18;
   const COIN_R   = 10;
   const COIN_STEP = COIN_R * 2 + 4;
@@ -3575,7 +3575,7 @@ async function renderCardCanvas(card) {
   ctx.roundRect(nameBarX, NAME_Y, nameBarW, NAME_H, [8, 8, 0, 0]);
   ctx.fill();
 
-  ctx.font = `bold 24px 'Hiragino Sans', 'Meiryo', sans-serif`;
+  ctx.font = `900 24px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
   ctx.fillStyle = "#111111";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -3615,14 +3615,14 @@ async function renderCardCanvas(card) {
       }
 
       const textX = startX + (cost > 0 ? cost * COIN_STEP + 8 : 0);
-      ctx.font = `bold 22px 'Hiragino Sans', 'Meiryo', sans-serif`;
+      ctx.font = `900 22px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
       ctx.fillStyle = "#111111";
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
       ctx.fillText(ability.name, textX, centerY);
     });
   } else if (!isPolitician && card.effectDescription) {
-    ctx.font = `19px 'Hiragino Sans', 'Meiryo', sans-serif`;
+    ctx.font = `900 19px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
     ctx.fillStyle = "#1a1a1a";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
