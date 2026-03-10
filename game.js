@@ -3522,13 +3522,14 @@ async function renderCardCanvas(card) {
   const isPolitician = card.type === "politician";
 
   // レイアウト定数
-  const GAP      = 18;  // 両サイド・下の隙間
-  const PANEL_H  = Math.round(H * 0.40);  // 224px（全体の40%）
-  const PANEL_Y  = H - PANEL_H;           // 336px
-  const NAME_H   = 46;
-  const NAME_Y   = GAP;                   // カード最上部（GAP分だけ内側）
-  const PAD_X    = 18;
-  const COIN_R   = 10;
+  const GAP       = 18;  // 白パネルの両サイド・下の隙間
+  const BORDER_R  = 18;  // カード角丸（グレー枠と合わせる）
+  const PANEL_H   = Math.round(H * 0.40);  // 224px（全体の40%）
+  const PANEL_Y   = H - PANEL_H;           // 336px
+  const NAME_H    = 46;
+  const NAME_Y    = 0;   // グレー枠に隙間なし（最上部）
+  const PAD_X     = 18;
+  const COIN_R    = 10;
   const COIN_STEP = COIN_R * 2 + 4;
 
   // ── 1. イラスト（全面、center-crop） ──
@@ -3568,11 +3569,15 @@ async function renderCardCanvas(card) {
     ? (PARTY_COLORS[card.party] ?? "#aaaaaa")
     : "#c0c0c0";
 
-  const nameBarX = GAP;
-  const nameBarW = W - GAP * 2;
-  ctx.fillStyle = nameColor;
+  // 上部・両サイドはグレー枠まで隙間なし
+  const nameBarX = 0;
+  const nameBarW = W;
+  const nameGrad = ctx.createLinearGradient(0, 0, nameBarW, 0);
+  nameGrad.addColorStop(0, nameColor);
+  nameGrad.addColorStop(1, "#ffffff");
+  ctx.fillStyle = nameGrad;
   ctx.beginPath();
-  ctx.roundRect(nameBarX, NAME_Y, nameBarW, NAME_H, [8, 8, 0, 0]);
+  ctx.roundRect(nameBarX, NAME_Y, nameBarW, NAME_H, [BORDER_R, BORDER_R, 0, 0]);
   ctx.fill();
 
   ctx.font = `900 24px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
@@ -3632,7 +3637,6 @@ async function renderCardCanvas(card) {
   // ── 5. グレー外枠（ポケポケ風） ──
   const BORDER_INSET = 5;
   const BORDER_W     = 9;
-  const BORDER_R     = 18;
   const borderGrad = ctx.createLinearGradient(0, 0, 0, H);
   borderGrad.addColorStop(0,   "#e4e4e4");
   borderGrad.addColorStop(0.5, "#b4b4b4");
