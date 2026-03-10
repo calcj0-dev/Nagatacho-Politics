@@ -1630,7 +1630,8 @@ function playAbilityAnimation(fieldIndex, abilityIndex, side, callback) {
 
   const imageDiv = document.createElement("div");
   imageDiv.className = "card-zoom-image";
-  if (card.image) imageDiv.style.backgroundImage = `url(${card.image})`;
+  const _zoomSrc1 = cardImageCache.get(card.id) ?? card.image;
+  if (_zoomSrc1) imageDiv.style.backgroundImage = `url(${_zoomSrc1})`;
 
   // zoom-ability-overlay を構築
   const abilityOverlay = document.createElement("div");
@@ -1744,7 +1745,7 @@ function playOptionCardAnimation(card, fromRect, isCpu, callback) {
     const zoomW = 250, zoomH = 350;
     clone = document.createElement("div");
     clone.className = "card-zoom-image";
-    clone.style.backgroundImage = `url(${card.image})`;
+    clone.style.backgroundImage = `url(${cardImageCache.get(card.id) ?? card.image})`;
     const optOverlay = document.createElement("div");
     optOverlay.className = "zoom-ability-overlay";
     const effectText = card.effectDescription || card.effectText || "";
@@ -2457,10 +2458,11 @@ function showCardZoom(card, context, index) {
   // カード画像
   const imageDiv = document.createElement("div");
   imageDiv.className = "card-zoom-image";
+  const _zoomSrc2 = cardImageCache.get(card.id) ?? card.image;
   const img = new Image();
-  img.src = card.image;
+  img.src = _zoomSrc2;
   img.onload = () => {
-    imageDiv.style.backgroundImage = `url(${card.image})`;
+    imageDiv.style.backgroundImage = `url(${_zoomSrc2})`;
   };
   img.onerror = () => {
     imageDiv.classList.add("no-image");
@@ -3084,7 +3086,7 @@ function showDiscardOverlay(pile, isPlayer) {
     item.className = "discard-overlay-card";
 
     const img = document.createElement("img");
-    img.src = card.image;
+    img.src = cardImageCache.get(card.id) ?? card.image;
     img.alt = card.name;
     img.onerror = () => {
       img.style.display = "none";
@@ -3526,7 +3528,7 @@ async function renderCardCanvas(card) {
   const BORDER_R  = 18;  // カード角丸（グレー枠と合わせる）
   const PANEL_H   = Math.round(H * 0.40);  // 224px（全体の40%）
   const PANEL_Y   = H - PANEL_H;           // 336px
-  const NAME_H    = 46;
+  const NAME_H    = 60;  // 46 × 1.3
   const NAME_Y    = 0;   // グレー枠に隙間なし（最上部）
   const PAD_X     = 18;
   const COIN_R    = 10;
@@ -3580,7 +3582,7 @@ async function renderCardCanvas(card) {
   ctx.roundRect(nameBarX, NAME_Y, nameBarW, NAME_H, [BORDER_R, BORDER_R, 0, 0]);
   ctx.fill();
 
-  ctx.font = `900 24px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
+  ctx.font = `900 31px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;  // 24 × 1.3
   ctx.fillStyle = "#111111";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
