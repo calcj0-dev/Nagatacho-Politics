@@ -9,6 +9,7 @@ const APP_VERSION = "0.1.22";
 
 let POLITICIAN_CARDS = []; // assets/data/politician_cards.json から読み込み
 let OPTION_CARDS = [];    // assets/data/option_cards.json から読み込み
+const cardImageCache = new Map(); // card.id → Canvas dataURL
 
 
 
@@ -3457,72 +3458,243 @@ function applyHandFan(container) {
   });
 }
 
+// ============================================================
+// Canvas カードレンダリング
+// ============================================================
+
+const CARD_CANVAS_W = 400;
+const CARD_CANVAS_H = 560;
+
+// 金色コインを Canvas に描画
+function drawCoinCanvas(ctx, cx, cy, r) {
+  const grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.35, r * 0.05, cx, cy, r);
+  grad.addColorStop(0,    "#fff8c0");
+  grad.addColorStop(0.45, "#ffd700");
+  grad.addColorStop(0.85, "#c8960c");
+  grad.addColorStop(1,    "#8b6914");
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = "rgba(0,0,0,0.25)";
+  ctx.stroke();
+  // 内側リム
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.65, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(0,0,0,0.18)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  // ¥ テキスト
+  ctx.font = `bold ${Math.round(r * 1.1)}px 'Hiragino Sans', sans-serif`;
+  ctx.fillStyle = "#7a5500";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("¥", cx, cy + 0.5);
+}
+
+// 折り返しテキスト描画（返値: 描画終了Y座標）
+function fillWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
+  let line = "";
+  let currentY = y;
+  for (const ch of [...text]) {
+    const test = line + ch;
+    if (ctx.measureText(test).width > maxWidth && line.length > 0) {
+      ctx.fillText(line, x, currentY);
+      line = ch;
+      currentY += lineHeight;
+    } else {
+      line = test;
+    }
+  }
+  if (line) ctx.fillText(line, x, currentY);
+  return currentY + lineHeight;
+}
+
+// カード1枚をCanvasで合成してdataURLを返す
+async function renderCardCanvas(card) {
+  const W = CARD_CANVAS_W, H = CARD_CANVAS_H;
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+
+  const isPolitician = card.type === "politician";
+  const imgH   = isPolitician ? 340 : 320;
+  const panelY = imgH;
+  const panelH = H - panelY;
+
+  // ── 1. イラスト ──
+  await new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => { ctx.drawImage(img, 0, 0, W, imgH); resolve(); };
+    img.onerror = () => {
+      const fbGrad = ctx.createLinearGradient(0, 0, W, imgH);
+      fbGrad.addColorStop(0, isPolitician ? "#2a0a18" : "#0a1a2e");
+      fbGrad.addColorStop(1, isPolitician ? "#4a1a28" : "#0f2a4a");
+      ctx.fillStyle = fbGrad;
+      ctx.fillRect(0, 0, W, imgH);
+      resolve();
+    };
+    img.src = card.image;
+  });
+
+  // ── 2. カード名バー（上部） ──
+  const BAR_H = 52;
+  ctx.fillStyle = "rgba(0,0,0,0.62)";
+  ctx.fillRect(0, 0, W, BAR_H);
+
+  ctx.font = `bold 26px 'Hiragino Sans', 'Meiryo', sans-serif`;
+  ctx.fillStyle = "#ffffff";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText(card.name, 14, BAR_H / 2);
+
+  const typeLabel = card.party ?? (isPolitician ? "" : "オプション");
+  if (typeLabel) {
+    ctx.font = `15px 'Hiragino Sans', 'Meiryo', sans-serif`;
+    ctx.fillStyle = isPolitician ? "#ffcc66" : "#88ccff";
+    ctx.textAlign = "right";
+    ctx.fillText(typeLabel, W - 12, BAR_H / 2);
+  }
+
+  // ── 3. 下部パネル ──
+  ctx.fillStyle = "rgba(240,240,255,0.13)";
+  ctx.fillRect(0, panelY, W, panelH);
+
+  ctx.strokeStyle = "rgba(255,255,255,0.25)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, panelY);
+  ctx.lineTo(W, panelY);
+  ctx.stroke();
+
+  const PAD_X    = 16;
+  const COIN_R   = 9;
+  const COIN_STEP = COIN_R * 2 + 3; // 直径 + 隙間
+
+  if (isPolitician && card.abilities) {
+    const rows = card.abilities.length;
+    const rowH = panelH / rows;
+    card.abilities.forEach((ability, i) => {
+      const rowY   = panelY + i * rowH;
+      const centerY = rowY + rowH / 2;
+
+      if (i > 0) {
+        ctx.strokeStyle = "rgba(255,255,255,0.15)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(PAD_X, rowY);
+        ctx.lineTo(W - PAD_X, rowY);
+        ctx.stroke();
+      }
+
+      const cost = ability.cost ?? 0;
+      for (let c = 0; c < cost; c++) {
+        drawCoinCanvas(ctx, PAD_X + COIN_R + c * COIN_STEP, centerY, COIN_R);
+      }
+
+      const textX = PAD_X + (cost > 0 ? cost * COIN_STEP + 8 : 0);
+      ctx.font = `bold 20px 'Hiragino Sans', 'Meiryo', sans-serif`;
+      ctx.fillStyle = "#f0f0f0";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(ability.name, textX, centerY);
+    });
+  } else if (!isPolitician && card.effectDescription) {
+    ctx.font = `20px 'Hiragino Sans', 'Meiryo', sans-serif`;
+    ctx.fillStyle = "#e8e8e8";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    fillWrappedText(ctx, card.effectDescription, PAD_X, panelY + 20, W - PAD_X * 2, 30);
+  }
+
+  return canvas.toDataURL("image/webp");
+}
+
+// 全カードをキャッシュに登録（起動時）
+async function buildAllCardImages() {
+  const allCards = [...POLITICIAN_CARDS, ...OPTION_CARDS];
+  await Promise.all(allCards.map(async card => {
+    try {
+      cardImageCache.set(card.id, await renderCardCanvas(card));
+    } catch (e) {
+      console.warn(`[Canvas] ${card.id} 生成失敗:`, e);
+    }
+  }));
+  console.log(`[Canvas] ${cardImageCache.size}枚 生成完了`);
+}
+
 function createCardElement(card) {
   const el = document.createElement("div");
   el.className = `card card-${card.type}`;
   el.dataset.instanceId = card.instanceId;
 
-  // 画像エリア
   const imgArea = document.createElement("div");
   imgArea.className = "card-img-area";
 
   const img = document.createElement("img");
   img.className = "card-photo";
   img.alt = card.name;
-  img.src = card.image;
-  img.onload = () => el.classList.add("has-image");
-  img.onerror = () => el.classList.add("no-image");
-  imgArea.appendChild(img);
 
-  el.appendChild(imgArea);
+  const cached = cardImageCache.get(card.id);
+  if (cached) {
+    // Canvasで合成済み画像を使用（HTMLパネル不要）
+    el.classList.add("canvas-rendered", "has-image");
+    img.src = cached;
+  } else {
+    // フォールバック: 生画像 + HTMLパネル
+    img.src = card.image;
+    img.onload  = () => el.classList.add("has-image");
+    img.onerror = () => el.classList.add("no-image");
 
-  // 情報パネル（オプションカード）
-  if (card.type === "option") {
-    const panel = document.createElement("div");
-    panel.className = "card-abilities-panel";
-    const inner = document.createElement("div");
-    inner.className = "ability-panel-inner";
-    if (card.effectDescription) {
-      const effectEl = document.createElement("div");
-      effectEl.className = "ability-name-text option-effect-text";
-      effectEl.textContent = card.effectDescription;
-      inner.appendChild(effectEl);
-    }
-    panel.appendChild(inner);
-    el.appendChild(panel);
-  }
-
-  // 能力パネル（政治家カードのみ）
-  if (card.type === "politician" && card.abilities) {
-    const panel = document.createElement("div");
-    panel.className = "card-abilities-panel";
-    const inner = document.createElement("div");
-    inner.className = "ability-panel-inner";
-    card.abilities.forEach((ability, i) => {
-      if (i > 0) {
-        const sep = document.createElement("div");
-        sep.className = "card-ability-sep";
-        inner.appendChild(sep);
+    // 情報パネル（オプションカード）
+    if (card.type === "option") {
+      const panel = document.createElement("div");
+      panel.className = "card-abilities-panel";
+      const inner = document.createElement("div");
+      inner.className = "ability-panel-inner";
+      if (card.effectDescription) {
+        const effectEl = document.createElement("div");
+        effectEl.className = "ability-name-text option-effect-text";
+        effectEl.textContent = card.effectDescription;
+        inner.appendChild(effectEl);
       }
-      const row = document.createElement("div");
-      row.className = "card-ability-row";
+      panel.appendChild(inner);
+      el.appendChild(panel);
+    }
 
-      const costEl = document.createElement("span");
-      costEl.className = "ability-cost-icons";
-      costEl.innerHTML = COIN_IMG.repeat(ability.cost);
-      row.appendChild(costEl);
-
-      const nameEl = document.createElement("span");
-      nameEl.className = "ability-name-text";
-      nameEl.textContent = ability.name;
-      row.appendChild(nameEl);
-
-      inner.appendChild(row);
-    });
-    panel.appendChild(inner);
-    el.appendChild(panel);
+    // 能力パネル（政治家カードのみ）
+    if (card.type === "politician" && card.abilities) {
+      const panel = document.createElement("div");
+      panel.className = "card-abilities-panel";
+      const inner = document.createElement("div");
+      inner.className = "ability-panel-inner";
+      card.abilities.forEach((ability, i) => {
+        if (i > 0) {
+          const sep = document.createElement("div");
+          sep.className = "card-ability-sep";
+          inner.appendChild(sep);
+        }
+        const row = document.createElement("div");
+        row.className = "card-ability-row";
+        const costEl = document.createElement("span");
+        costEl.className = "ability-cost-icons";
+        costEl.innerHTML = COIN_IMG.repeat(ability.cost);
+        row.appendChild(costEl);
+        const nameEl = document.createElement("span");
+        nameEl.className = "ability-name-text";
+        nameEl.textContent = ability.name;
+        row.appendChild(nameEl);
+        inner.appendChild(row);
+      });
+      panel.appendChild(inner);
+      el.appendChild(panel);
+    }
   }
 
+  imgArea.appendChild(img);
+  el.appendChild(imgArea);
   return el;
 }
 
@@ -3581,6 +3753,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     img.src = src;
   })));
   console.log(`[プリロード完了] ${allImages.length}枚`);
+
+  // フォントロード完了後にCanvasでカード画像を合成
+  await document.fonts.ready;
+  await buildAllCardImages();
 
   const verEl = document.getElementById("app-version");
   if (verEl) verEl.textContent = `ver ${APP_VERSION}`;

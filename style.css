@@ -353,6 +353,12 @@ h1 {
   display: block;
 }
 
+/* Canvas合成済みカード: imgエリアをカード全体に拡張 */
+.card.canvas-rendered .card-img-area {
+  flex: none;
+  height: 100%;
+}
+
 
 /* 下部：能力パネル（フローティング） */
 .card-abilities-panel {
