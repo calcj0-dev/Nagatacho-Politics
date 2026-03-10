@@ -3603,8 +3603,7 @@ async function renderCardCanvas(card) {
     const rowH  = panelDrawH / rows;
 
     card.abilities.forEach((ability, i) => {
-      const rowY    = PANEL_Y + i * rowH;
-      const centerY = rowY + rowH / 2;
+      const rowY = PANEL_Y + i * rowH;
 
       if (i > 0) {
         ctx.strokeStyle = "rgba(0,0,0,0.15)";
@@ -3617,23 +3616,53 @@ async function renderCardCanvas(card) {
 
       const cost   = ability.cost ?? 0;
       const startX = panelX + PAD_X;
+      const nameY  = rowY + rowH * 0.32;  // 上寄り
+      const effY   = rowY + rowH * 0.65;  // 下寄り
+
+      // コイン（能力名と同じ高さ）
       for (let c = 0; c < cost; c++) {
-        drawCoinCanvas(ctx, startX + COIN_R + c * COIN_STEP, centerY, COIN_R);
+        drawCoinCanvas(ctx, startX + COIN_R + c * COIN_STEP, nameY, COIN_R);
       }
 
       const textX = startX + (cost > 0 ? cost * COIN_STEP + 8 : 0);
-      ctx.font = `900 22px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
+
+      // 能力名：黒字
+      ctx.font = `900 20px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
       ctx.fillStyle = "#111111";
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
-      ctx.fillText(ability.name, textX, centerY);
+      ctx.fillText(ability.name, textX, nameY);
+
+      // 効果テキスト：赤字
+      if (ability.effectText) {
+        ctx.font = `900 16px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
+        ctx.fillStyle = "#cc1a1a";
+        ctx.textBaseline = "middle";
+        fillWrappedText(ctx, ability.effectText, panelX + PAD_X, effY, panelW - PAD_X * 2, 20);
+      }
     });
-  } else if (!isPolitician && card.effectDescription) {
-    ctx.font = `900 19px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
-    ctx.fillStyle = "#1a1a1a";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "top";
-    fillWrappedText(ctx, card.effectDescription, panelX + PAD_X, PANEL_Y + 16, panelW - PAD_X * 2, 28);
+  } else if (!isPolitician) {
+    const textX   = panelX + PAD_X;
+    const maxW    = panelW - PAD_X * 2;
+    let   currentY = PANEL_Y + 16;
+
+    // 説明文：黒字
+    if (card.description) {
+      ctx.font = `900 17px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
+      ctx.fillStyle = "#111111";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      currentY = fillWrappedText(ctx, card.description, textX, currentY, maxW, 24);
+      currentY += 6;
+    }
+
+    // 効果テキスト：赤字
+    if (card.effectDescription) {
+      ctx.font = `900 17px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
+      ctx.fillStyle = "#cc1a1a";
+      ctx.textBaseline = "top";
+      fillWrappedText(ctx, card.effectDescription, textX, currentY, maxW, 24);
+    }
   }
 
   // ── 5. グレー外枠（ポケポケ風） ──
@@ -3679,58 +3708,13 @@ function createCardElement(card) {
 
   const cached = cardImageCache.get(card.id);
   if (cached) {
-    // Canvasで合成済み画像を使用（HTMLパネル不要）
     el.classList.add("canvas-rendered", "has-image");
     img.src = cached;
   } else {
-    // フォールバック: 生画像 + HTMLパネル
+    // フォールバック: 生画像のみ（パネルなし）
     img.src = card.image;
     img.onload  = () => el.classList.add("has-image");
     img.onerror = () => el.classList.add("no-image");
-
-    // 情報パネル（オプションカード）
-    if (card.type === "option") {
-      const panel = document.createElement("div");
-      panel.className = "card-abilities-panel";
-      const inner = document.createElement("div");
-      inner.className = "ability-panel-inner";
-      if (card.effectDescription) {
-        const effectEl = document.createElement("div");
-        effectEl.className = "ability-name-text option-effect-text";
-        effectEl.textContent = card.effectDescription;
-        inner.appendChild(effectEl);
-      }
-      panel.appendChild(inner);
-      el.appendChild(panel);
-    }
-
-    // 能力パネル（政治家カードのみ）
-    if (card.type === "politician" && card.abilities) {
-      const panel = document.createElement("div");
-      panel.className = "card-abilities-panel";
-      const inner = document.createElement("div");
-      inner.className = "ability-panel-inner";
-      card.abilities.forEach((ability, i) => {
-        if (i > 0) {
-          const sep = document.createElement("div");
-          sep.className = "card-ability-sep";
-          inner.appendChild(sep);
-        }
-        const row = document.createElement("div");
-        row.className = "card-ability-row";
-        const costEl = document.createElement("span");
-        costEl.className = "ability-cost-icons";
-        costEl.innerHTML = COIN_IMG.repeat(ability.cost);
-        row.appendChild(costEl);
-        const nameEl = document.createElement("span");
-        nameEl.className = "ability-name-text";
-        nameEl.textContent = ability.name;
-        row.appendChild(nameEl);
-        inner.appendChild(row);
-      });
-      panel.appendChild(inner);
-      el.appendChild(panel);
-    }
   }
 
   imgArea.appendChild(img);
