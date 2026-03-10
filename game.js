@@ -274,9 +274,7 @@ const ABILITY_EFFECTS = {
     const msgs = [];
     const m1 = changeApproval(self, 6);
     if (m1) msgs.push(m1);
-    if (self.hand.length >= 7) {
-      msgs.push("手札が上限（7枚）のためドロー不可…");
-    } else if (self.deck.length > 0) {
+    if (self.deck.length > 0) {
       const drawn = self.deck.shift();
       self.hand.push(drawn);
       msgs.push(`${drawn.name}を手札に加えた！`);
@@ -382,11 +380,7 @@ const ABILITY_EFFECTS = {
   },
   ito_2(self, _opponent) {
     const msgs = [];
-    if (self.hand.length >= 7) {
-      msgs.push("手札が上限（7枚）のためドロー不可…");
-      return msgs;
-    }
-    const drawCount = Math.min(2, 7 - self.hand.length, self.deck.length);
+    const drawCount = Math.min(2, self.deck.length);
     if (drawCount === 0) {
       msgs.push("山札がなくドロー不可…");
       return msgs;
@@ -584,10 +578,6 @@ const OPTION_EFFECTS = {
   },
   ouen_enzetsu(self, opponent) {
     const msgs = [];
-    if (self.hand.length >= 7) {
-      msgs.push("手札が上限（7枚）のためドロー不可…");
-      return msgs;
-    }
     const politicianIdx = self.deck.findIndex(c => c.type === "politician");
     if (politicianIdx >= 0) {
       const drawn = self.deck.splice(politicianIdx, 1)[0];
@@ -2584,8 +2574,8 @@ function showDiscardUI(count, onComplete) {
     }).join("");
 
     showOverlay(`
-      <h2>手札が上限を超えています</h2>
-      <p>捨てるカードを選んでください（あと${remaining}枚）</p>
+      <h2>手札が8枚以上あります</h2>
+      <p>7枚になるまで捨てるカードを選んでください（あと${remaining}枚）</p>
       <div class="discard-list">${cardsHtml}</div>
     `);
 
