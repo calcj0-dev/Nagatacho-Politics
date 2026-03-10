@@ -3520,115 +3520,128 @@ async function renderCardCanvas(card) {
   const ctx = canvas.getContext("2d");
 
   const isPolitician = card.type === "politician";
-  const imgH   = isPolitician ? 340 : 320;
-  const panelY = imgH;
-  const panelH = H - panelY;
 
-  // ── 1. イラスト ──
+  // レイアウト定数
+  const GAP      = 10;  // 両サイド・下の隙間
+  const PANEL_H  = Math.round(H * 0.40);  // 224px（全体の40%）
+  const PANEL_Y  = H - PANEL_H;           // 336px
+  const NAME_H   = 46;
+  const NAME_Y   = PANEL_Y - NAME_H;      // 290px（イラスト上に浮かぶ）
+  const PAD_X    = 18;
+  const COIN_R   = 10;
+  const COIN_STEP = COIN_R * 2 + 4;
+
+  // ── 1. イラスト（全面、center-crop） ──
   await new Promise(resolve => {
     const img = new Image();
     img.onload = () => {
-        // object-fit: cover 相当（9:16画像を中央クロップして描画）
-        const srcW = img.naturalWidth, srcH = img.naturalHeight;
-        const destAspect = W / imgH;
-        const srcAspect  = srcW / srcH;
-        let sx, sy, sw, sh;
-        if (srcAspect > destAspect) {
-          // ソースの方が横長 → 左右をクロップ
-          sh = srcH;
-          sw = srcH * destAspect;
-          sx = (srcW - sw) / 2;
-          sy = 0;
-        } else {
-          // ソースの方が縦長（9:16など） → 上下をクロップ
-          sw = srcW;
-          sh = srcW / destAspect;
-          sx = 0;
-          sy = (srcH - sh) / 2;
-        }
-        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, imgH);
-        resolve();
-      };
+      const srcW = img.naturalWidth, srcH = img.naturalHeight;
+      const destAspect = W / H;
+      const srcAspect  = srcW / srcH;
+      let sx, sy, sw, sh;
+      if (srcAspect > destAspect) {
+        sh = srcH; sw = srcH * destAspect; sx = (srcW - sw) / 2; sy = 0;
+      } else {
+        sw = srcW; sh = srcW / destAspect; sx = 0; sy = (srcH - sh) / 2;
+      }
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+      resolve();
+    };
     img.onerror = () => {
-      const fbGrad = ctx.createLinearGradient(0, 0, W, imgH);
+      const fbGrad = ctx.createLinearGradient(0, 0, W, H);
       fbGrad.addColorStop(0, isPolitician ? "#2a0a18" : "#0a1a2e");
       fbGrad.addColorStop(1, isPolitician ? "#4a1a28" : "#0f2a4a");
       ctx.fillStyle = fbGrad;
-      ctx.fillRect(0, 0, W, imgH);
+      ctx.fillRect(0, 0, W, H);
       resolve();
     };
     img.src = card.image;
   });
 
-  // ── 2. カード名バー（上部） ──
-  const BAR_H = 52;
-  ctx.fillStyle = "rgba(0,0,0,0.62)";
-  ctx.fillRect(0, 0, W, BAR_H);
+  // ── 2. 名前バー（政党カラー・黒文字） ──
+  const PARTY_COLORS = {
+    "自民党":      "#d42020",
+    "国民民主党":  "#f5c400",
+    "チームみらい":"#1c9e45",
+  };
+  const nameColor = isPolitician
+    ? (PARTY_COLORS[card.party] ?? "#aaaaaa")
+    : "#c0c0c0";
 
-  ctx.font = `bold 26px 'Hiragino Sans', 'Meiryo', sans-serif`;
-  ctx.fillStyle = "#ffffff";
-  ctx.textAlign = "left";
-  ctx.textBaseline = "middle";
-  ctx.fillText(card.name, 14, BAR_H / 2);
-
-  const typeLabel = card.party ?? (isPolitician ? "" : "オプション");
-  if (typeLabel) {
-    ctx.font = `15px 'Hiragino Sans', 'Meiryo', sans-serif`;
-    ctx.fillStyle = isPolitician ? "#ffcc66" : "#88ccff";
-    ctx.textAlign = "right";
-    ctx.fillText(typeLabel, W - 12, BAR_H / 2);
-  }
-
-  // ── 3. 下部パネル ──
-  ctx.fillStyle = "rgba(240,240,255,0.13)";
-  ctx.fillRect(0, panelY, W, panelH);
-
-  ctx.strokeStyle = "rgba(255,255,255,0.25)";
-  ctx.lineWidth = 1;
+  const nameBarX = GAP;
+  const nameBarW = W - GAP * 2;
+  ctx.fillStyle = nameColor;
   ctx.beginPath();
-  ctx.moveTo(0, panelY);
-  ctx.lineTo(W, panelY);
-  ctx.stroke();
+  ctx.roundRect(nameBarX, NAME_Y, nameBarW, NAME_H, [8, 8, 0, 0]);
+  ctx.fill();
 
-  const PAD_X    = 16;
-  const COIN_R   = 9;
-  const COIN_STEP = COIN_R * 2 + 3; // 直径 + 隙間
+  ctx.font = `bold 24px 'Hiragino Sans', 'Meiryo', sans-serif`;
+  ctx.fillStyle = "#111111";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(card.name, W / 2, NAME_Y + NAME_H / 2);
 
+  // ── 3. 半透明白パネル（両サイド・下に隙間） ──
+  const panelX = GAP;
+  const panelW = W - GAP * 2;
+  const panelDrawH = PANEL_H - GAP;  // 下GAP分を引く
+  ctx.fillStyle = "rgba(255, 255, 255, 0.88)";
+  ctx.beginPath();
+  ctx.roundRect(panelX, PANEL_Y, panelW, panelDrawH, [0, 0, 10, 10]);
+  ctx.fill();
+
+  // ── 4. 能力 / 効果テキスト ──
   if (isPolitician && card.abilities) {
-    const rows = card.abilities.length;
-    const rowH = panelH / rows;
+    const rows  = card.abilities.length;
+    const rowH  = panelDrawH / rows;
+
     card.abilities.forEach((ability, i) => {
-      const rowY   = panelY + i * rowH;
+      const rowY    = PANEL_Y + i * rowH;
       const centerY = rowY + rowH / 2;
 
       if (i > 0) {
-        ctx.strokeStyle = "rgba(255,255,255,0.15)";
+        ctx.strokeStyle = "rgba(0,0,0,0.15)";
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(PAD_X, rowY);
-        ctx.lineTo(W - PAD_X, rowY);
+        ctx.moveTo(panelX + PAD_X, rowY);
+        ctx.lineTo(panelX + panelW - PAD_X, rowY);
         ctx.stroke();
       }
 
-      const cost = ability.cost ?? 0;
+      const cost   = ability.cost ?? 0;
+      const startX = panelX + PAD_X;
       for (let c = 0; c < cost; c++) {
-        drawCoinCanvas(ctx, PAD_X + COIN_R + c * COIN_STEP, centerY, COIN_R);
+        drawCoinCanvas(ctx, startX + COIN_R + c * COIN_STEP, centerY, COIN_R);
       }
 
-      const textX = PAD_X + (cost > 0 ? cost * COIN_STEP + 8 : 0);
-      ctx.font = `bold 20px 'Hiragino Sans', 'Meiryo', sans-serif`;
-      ctx.fillStyle = "#f0f0f0";
+      const textX = startX + (cost > 0 ? cost * COIN_STEP + 8 : 0);
+      ctx.font = `bold 22px 'Hiragino Sans', 'Meiryo', sans-serif`;
+      ctx.fillStyle = "#111111";
       ctx.textAlign = "left";
       ctx.textBaseline = "middle";
       ctx.fillText(ability.name, textX, centerY);
     });
   } else if (!isPolitician && card.effectDescription) {
-    ctx.font = `20px 'Hiragino Sans', 'Meiryo', sans-serif`;
-    ctx.fillStyle = "#e8e8e8";
+    ctx.font = `19px 'Hiragino Sans', 'Meiryo', sans-serif`;
+    ctx.fillStyle = "#1a1a1a";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
-    fillWrappedText(ctx, card.effectDescription, PAD_X, panelY + 20, W - PAD_X * 2, 30);
+    fillWrappedText(ctx, card.effectDescription, panelX + PAD_X, PANEL_Y + 16, panelW - PAD_X * 2, 28);
   }
+
+  // ── 5. グレー外枠（ポケポケ風） ──
+  const BORDER_INSET = 5;
+  const BORDER_W     = 9;
+  const BORDER_R     = 18;
+  const borderGrad = ctx.createLinearGradient(0, 0, 0, H);
+  borderGrad.addColorStop(0,   "#e4e4e4");
+  borderGrad.addColorStop(0.5, "#b4b4b4");
+  borderGrad.addColorStop(1,   "#888888");
+  ctx.strokeStyle = borderGrad;
+  ctx.lineWidth = BORDER_W;
+  ctx.beginPath();
+  ctx.roundRect(BORDER_INSET, BORDER_INSET, W - BORDER_INSET * 2, H - BORDER_INSET * 2, BORDER_R);
+  ctx.stroke();
 
   return canvas.toDataURL("image/webp");
 }
