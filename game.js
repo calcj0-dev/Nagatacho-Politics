@@ -3422,7 +3422,7 @@ async function renderCardCanvas(card) {
   nameGrad.addColorStop(1, "#ffffff");
   ctx.fillStyle = nameGrad;
   ctx.beginPath();
-  ctx.roundRect(nameBarX, NAME_Y, nameBarW, NAME_H, [BORDER_R, BORDER_R, 0, 0]);
+  ctx.roundRect(nameBarX, NAME_Y, nameBarW, NAME_H + 1, [BORDER_R, BORDER_R, 0, 0]);
   ctx.fill();
 
   ctx.font = `900 31px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;  // 24 × 1.3
