@@ -3365,12 +3365,14 @@ async function renderCardCanvas(card) {
   const COIN_R    = 10;
   const COIN_STEP = COIN_R * 2 + 4;
 
-  // ── 1. イラスト（全面、center-crop） ──
+  // ── 1. イラスト（名前バー下から開始、center-crop） ──
+  const imgDestY = NAME_H;
+  const imgDestH = H - NAME_H;
   await new Promise(resolve => {
     const img = new Image();
     img.onload = () => {
       const srcW = img.naturalWidth, srcH = img.naturalHeight;
-      const destAspect = W / H;
+      const destAspect = W / imgDestH;
       const srcAspect  = srcW / srcH;
       let sx, sy, sw, sh;
       if (srcAspect > destAspect) {
@@ -3378,15 +3380,15 @@ async function renderCardCanvas(card) {
       } else {
         sw = srcW; sh = srcW / destAspect; sx = 0; sy = (srcH - sh) / 2;
       }
-      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+      ctx.drawImage(img, sx, sy, sw, sh, 0, imgDestY, W, imgDestH);
       resolve();
     };
     img.onerror = () => {
-      const fbGrad = ctx.createLinearGradient(0, 0, W, H);
+      const fbGrad = ctx.createLinearGradient(0, imgDestY, W, H);
       fbGrad.addColorStop(0, isPolitician ? "#2a0a18" : "#0a1a2e");
       fbGrad.addColorStop(1, isPolitician ? "#4a1a28" : "#0f2a4a");
       ctx.fillStyle = fbGrad;
-      ctx.fillRect(0, 0, W, H);
+      ctx.fillRect(0, imgDestY, W, imgDestH);
       resolve();
     };
     img.src = card.image;
@@ -3425,7 +3427,7 @@ async function renderCardCanvas(card) {
   const panelDrawH = PANEL_H - GAP;  // 下GAP分を引く
   ctx.fillStyle = "rgba(255, 255, 255, 0.88)";
   ctx.beginPath();
-  ctx.roundRect(panelX, PANEL_Y, panelW, panelDrawH, [0, 0, 10, 10]);
+  ctx.roundRect(panelX, PANEL_Y, panelW, panelDrawH, [10, 10, 10, 10]);
   ctx.fill();
 
   // ── 4. 能力 / 効果テキスト ──
