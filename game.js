@@ -3435,7 +3435,7 @@ async function renderCardCanvas(card) {
   const panelX = GAP;
   const panelW = W - GAP * 2;
   const panelDrawH = PANEL_H - GAP;  // 下GAP分を引く
-  ctx.fillStyle = "rgba(255, 255, 255, 0.88)";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.72)";
   ctx.beginPath();
   ctx.roundRect(panelX, PANEL_Y, panelW, panelDrawH, [10, 10, 10, 10]);
   ctx.fill();
@@ -3618,19 +3618,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error("カードデータの読み込みに失敗:", e);
   }
 
-  // 全カード画像をプリロード（ゲーム中の遅延を防ぐ）
+  // 全カード画像をバックグラウンドでプリロード（完了を待たない）
   const allImages = [
     ...POLITICIAN_CARDS.map(c => c.image),
     ...OPTION_CARDS.map(c => c.image),
     "assets/icons/coin.webp",
   ];
-  await Promise.all(allImages.map(src => new Promise(resolve => {
+  Promise.all(allImages.map(src => new Promise(resolve => {
     const img = new Image();
     img.onload = resolve;
-    img.onerror = resolve; // 失敗しても続行
+    img.onerror = resolve;
     img.src = src;
-  })));
-  console.log(`[プリロード完了] ${allImages.length}枚`);
+  }))).then(() => console.log(`[プリロード完了] ${allImages.length}枚`));
 
   const verEl = document.getElementById("app-version");
   if (verEl) verEl.textContent = `ver ${APP_VERSION}`;

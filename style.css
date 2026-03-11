@@ -410,17 +410,17 @@ h1 {
 }
 
 .cpu-area {
-  background: rgba(20, 10, 10, 0.25);
-  border: 1px solid rgba(233, 69, 96, 0.25);
+  background: rgba(20, 10, 10, 0.12);
+  border: 1px solid rgba(233, 69, 96, 0.15);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
 }
 
 .player-area-self {
-  background: rgba(10, 18, 35, 0.25);
+  background: rgba(10, 18, 35, 0.12);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  border: 1px solid rgba(15, 52, 96, 0.25);
+  border: 1px solid rgba(15, 52, 96, 0.15);
 }
 
 .player-info {
@@ -520,7 +520,7 @@ h1 {
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
-  background: rgba(10, 18, 35, 0.30);
+  background: rgba(10, 18, 35, 0.15);
   border-radius: 4px;
   font-size: 0.85rem;
   backdrop-filter: blur(6px);
