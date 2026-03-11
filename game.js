@@ -2824,7 +2824,6 @@ function renderGame() {
   renderFieldCards("cpu-field", gameState.cpu.field, false);
   renderDeckSlot("cpu-deck", gameState.cpu.deck.length);
   renderDiscardSlot("cpu-discard", gameState.cpu.discard);
-  renderActiveEffects("cpu-deck", gameState.cpu, "before");
 
   // プレイヤー情報
   document.getElementById("player-party").textContent = gameState.player.party || "???";
@@ -2866,7 +2865,6 @@ function renderGame() {
   renderFieldCards("player-field", gameState.player.field, true);
   renderDeckSlot("player-deck", gameState.player.deck.length);
   renderDiscardSlot("player-discard", gameState.player.discard);
-  renderActiveEffects("player-deck", gameState.player);
 
   // CPU手札（裏向き）
   renderCpuHand();
@@ -2998,51 +2996,6 @@ function showDiscardOverlay(pile, isPlayer) {
   document.body.appendChild(overlay);
 }
 
-// 特殊効果バッジを描画。position="before" で先頭挿入（CPU用）、省略で末尾追加（プレイヤー用）
-function renderActiveEffects(slotId, ps, position = "after") {
-  const slot = document.getElementById(slotId);
-  if (!slot) return;
-
-  const tags = []; // { label, type }
-
-  // シールド
-  ps.shields.forEach(s => {
-    if (s === "block_approval_down")       tags.push({ label: `🛡 支持率低下を1回無効化`,           type: "shield" });
-    if (s === "block_approval_down_drill") tags.push({ label: `🛡 ドリル破壊：支持率低下を1回無効化`, type: "shield" });
-    if (s === "block_approval_up")         tags.push({ label: `📵 支持率上昇を1回無効化`,           type: "debuff" });
-    if (s === "block_approval_up_masukomi") tags.push({ label: `📵 マスコミ対策：支持率上昇を1回無効化`, type: "debuff" });
-    if (s === "block_attack")              tags.push({ label: `🛡 攻撃を1回無効化`,                 type: "shield" });
-  });
-
-  // 次ターンボーナス
-  const nb = ps.nextTurnBonuses;
-  if (nb.costReduction   > 0) tags.push({ label: `🔧 次ターン コスト-${nb.costReduction}億`,                   type: "buff"   });
-  if (nb.fundBonus       > 0) tags.push({ label: `${COIN_IMG} 次ターン 資金+${nb.fundBonus}億`,                 type: "buff"   });
-  if (nb.approvalBonus   > 0) tags.push({ label: `📈 次ターン 支持率+${nb.approvalBonus}%`,                    type: "buff"   });
-  if (nb.approvalBonus   < 0) tags.push({ label: `📉 次ターン 支持率${nb.approvalBonus}%`,                     type: "debuff" });
-  if (nb.attackReduction > 0) tags.push({ label: `🛡 次ターン ダメージ-${nb.attackReduction}%`,                type: "shield" });
-
-  // このターン限定コスト軽減
-  if (ps.currentTurnCostReduction > 0) {
-    tags.push({ label: `⚡ このターン コスト-${ps.currentTurnCostReduction}億`, type: "current" });
-  }
-
-  if (tags.length === 0) return;
-
-  const panel = document.createElement("div");
-  panel.className = "active-effects";
-  tags.forEach(({ label, type }) => {
-    const el = document.createElement("div");
-    el.className = `effect-tag effect-${type}`;
-    el.innerHTML = label;
-    panel.appendChild(el);
-  });
-  if (position === "before") {
-    slot.insertBefore(panel, slot.firstChild);
-  } else {
-    slot.appendChild(panel);
-  }
-}
 
 function renderFieldCards(containerId, cards, isPlayer) {
   const container = document.getElementById(containerId);

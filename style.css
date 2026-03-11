@@ -403,17 +403,17 @@ h1 {
 }
 
 .cpu-area {
-  background: rgba(20, 10, 10, 0.55);
-  border: 1px solid rgba(233, 69, 96, 0.35);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(20, 10, 10, 0.25);
+  border: 1px solid rgba(233, 69, 96, 0.25);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .player-area-self {
-  background: rgba(10, 18, 35, 0.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(15, 52, 96, 0.4);
+  background: rgba(10, 18, 35, 0.25);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(15, 52, 96, 0.25);
 }
 
 .player-info {
@@ -513,16 +513,16 @@ h1 {
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
-  background: rgba(10, 18, 35, 0.70);
+  background: rgba(10, 18, 35, 0.30);
   border-radius: 4px;
   font-size: 0.85rem;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 #turn-num {
-  color: #aaa;
+  color: #fff;
   min-width: 56px;
 }
 
@@ -535,7 +535,7 @@ h1 {
 
 .survey-label {
   font-size: 0.72rem;
-  color: #888;
+  color: #fff;
   letter-spacing: 0.05em;
   white-space: nowrap;
 }
@@ -614,7 +614,7 @@ h1 {
 
 .approval-label {
   font-size: 0.85rem;
-  color: #aaa;
+  color: #fff;
   flex-shrink: 0;
 }
 
@@ -1212,47 +1212,6 @@ h1 {
    ============================================================ */
 
 /* 山札下（プレイヤー）: 縦並び */
-.active-effects {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  width: 110px;
-  margin-top: 6px;
-}
-
-
-.effect-tag {
-  font-size: 0.6rem;
-  padding: 3px 5px;
-  border-radius: 4px;
-  text-align: center;
-  line-height: 1.4;
-  word-break: break-all;
-}
-
-.effect-shield {
-  background: rgba(100, 180, 255, 0.2);
-  border: 1px solid rgba(100, 180, 255, 0.55);
-  color: #aaddff;
-}
-
-.effect-buff {
-  background: rgba(80, 200, 120, 0.2);
-  border: 1px solid rgba(80, 200, 120, 0.55);
-  color: #aaeecc;
-}
-
-.effect-debuff {
-  background: rgba(220, 80, 80, 0.2);
-  border: 1px solid rgba(220, 80, 80, 0.55);
-  color: #ffaaaa;
-}
-
-.effect-current {
-  background: rgba(255, 200, 50, 0.2);
-  border: 1px solid rgba(255, 200, 50, 0.55);
-  color: #ffdd88;
-}
 
 /* ============================================================
    捨て札スロット（山札横）
@@ -1735,10 +1694,6 @@ h1 {
   .discard-stack-shadow,
   .discard-stack-top {
     border-radius: 4px;
-  }
-
-  .active-effects {
-    display: none;
   }
 
   /* 手札カード（デフォルトサイズ：場のカード用） */
