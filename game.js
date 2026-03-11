@@ -3366,7 +3366,7 @@ async function renderCardCanvas(card) {
   const COIN_STEP = COIN_R * 2 + 4;
 
   // ── 1. イラスト（名前バー下から開始、center-crop） ──
-  const imgDestY  = NAME_H;
+  const imgDestY  = NAME_H + 20;
   const imgDestH  = H - imgDestY;
   await new Promise(resolve => {
     const img = new Image();
