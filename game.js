@@ -3365,6 +3365,16 @@ async function renderCardCanvas(card) {
   const COIN_R    = 10;
   const COIN_STEP = COIN_R * 2 + 4;
 
+  // ── 0. キャンバス全体をグレーで塗りつぶし（枠外隙間をグレーに） ──
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0,   "#e4e4e4");
+  bgGrad.addColorStop(0.5, "#b4b4b4");
+  bgGrad.addColorStop(1,   "#888888");
+  ctx.fillStyle = bgGrad;
+  ctx.beginPath();
+  ctx.roundRect(0, 0, W, H, BORDER_R);
+  ctx.fill();
+
   // ── 1. イラスト（名前バー下から開始、center-crop） ──
   const imgDestY  = NAME_H;
   const imgDestH  = H - imgDestY;
