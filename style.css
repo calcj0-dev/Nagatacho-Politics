@@ -380,6 +380,11 @@ h1 {
   height: 100%;
 }
 
+/* canvas描画済みカードはCSS枠を無効化（canvas内に枠が焼き込み済み） */
+.card.canvas-rendered {
+  box-shadow: none;
+}
+
 
 /* card-abilities-panel, ability-panel-inner, card-ability-row 等は
    Canvas化により廃止済み（JSからも削除）*/
