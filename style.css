@@ -180,6 +180,36 @@ body {
   min-height: 100vh;
 }
 
+#loading-screen {
+  justify-content: center;
+}
+
+.loading-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid rgba(255, 215, 0, 0.3);
+  border-top-color: #ffd700;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: #ffd700;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
 h1 {
   font-size: 1.5rem;
   margin-bottom: 24px;
@@ -251,22 +281,11 @@ h1 {
 .card-back {
   width: 60px;
   height: 84px;
-  border: 2px solid #555;
   border-radius: 6px;
-  background: repeating-linear-gradient(
-    135deg,
-    #1a1a3e 0px,
-    #1a1a3e 6px,
-    #0f0f2a 6px,
-    #0f0f2a 12px
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  color: #4466aa;
+  background: url("assets/item/card_back.webp") center/cover no-repeat;
   cursor: default;
   flex-shrink: 0;
+  font-size: 0;
 }
 
 /* ============================================================
@@ -384,12 +403,16 @@ h1 {
 }
 
 .cpu-area {
-  background: rgba(233, 69, 96, 0.1);
-  border: 1px solid rgba(233, 69, 96, 0.3);
+  background: rgba(20, 10, 10, 0.55);
+  border: 1px solid rgba(233, 69, 96, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .player-area-self {
-  background: rgba(15, 52, 96, 0.2);
+  background: rgba(10, 18, 35, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border: 1px solid rgba(15, 52, 96, 0.4);
 }
 
@@ -472,20 +495,9 @@ h1 {
 .deck-card-back {
   width: 110px;
   height: 155px;
-  border: 2px solid #555;
   border-radius: 8px;
-  background: repeating-linear-gradient(
-    135deg,
-    #1a1a3e 0px,
-    #1a1a3e 8px,
-    #0f0f2a 8px,
-    #0f0f2a 16px
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2.5rem;
-  color: #4466aa;
+  background: url("assets/item/card_back.webp") center/cover no-repeat;
+  font-size: 0;
 }
 
 .deck-count {
@@ -501,9 +513,12 @@ h1 {
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
-  background: #16213e;
+  background: rgba(10, 18, 35, 0.70);
   border-radius: 4px;
   font-size: 0.85rem;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 #turn-num {

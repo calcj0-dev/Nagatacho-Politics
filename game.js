@@ -2882,12 +2882,8 @@ function renderDeckSlot(slotId, deckCount) {
   slot.innerHTML = "";
   const back = document.createElement("div");
   back.className = "deck-card-back";
-  back.textContent = deckCount > 0 ? "🂠" : "";
-  const countEl = document.createElement("div");
-  countEl.className = "deck-count";
-  countEl.textContent = `${deckCount}枚`;
+  if (deckCount === 0) back.style.visibility = "hidden";
   slot.appendChild(back);
-  slot.appendChild(countEl);
 }
 
 function renderDiscardSlot(slotId, pile) {
@@ -2897,11 +2893,6 @@ function renderDiscardSlot(slotId, pile) {
   slot.innerHTML = "";
   slot.style.cursor = "default";
   slot.onclick = null;
-
-  const label = document.createElement("div");
-  label.className = "discard-label";
-  label.textContent = "捨て札";
-  slot.appendChild(label);
 
   if (pile.length === 0) {
     const empty = document.createElement("div");
@@ -3087,7 +3078,6 @@ function renderCpuHand() {
   gameState.cpu.hand.forEach(() => {
     const el = document.createElement("div");
     el.className = "card-back";
-    el.textContent = "🂠";
     container.appendChild(el);
   });
 }
@@ -3633,7 +3623,18 @@ function logState() {
 // 画面遷移: 政党選択
 // ============================================================
 
-function selectParty(party) {
+async function selectParty(party) {
+  // ローディング画面表示
+  document.getElementById("party-select-screen").classList.add("hidden");
+  document.getElementById("loading-screen").classList.remove("hidden");
+
+  // Canvas カード画像を未生成なら生成
+  if (cardImageCache.size === 0) {
+    await document.fonts.ready;
+    await buildAllCardImages();
+  }
+
+  document.getElementById("loading-screen").classList.add("hidden");
   initGame(party);
 }
 
@@ -3665,10 +3666,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     img.src = src;
   })));
   console.log(`[プリロード完了] ${allImages.length}枚`);
-
-  // フォントロード完了後にCanvasでカード画像を合成
-  await document.fonts.ready;
-  await buildAllCardImages();
 
   const verEl = document.getElementById("app-version");
   if (verEl) verEl.textContent = `ver ${APP_VERSION}`;
