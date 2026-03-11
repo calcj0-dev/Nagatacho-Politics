@@ -3366,7 +3366,7 @@ async function renderCardCanvas(card) {
   const COIN_STEP = COIN_R * 2 + 4;
 
   // ── 1. イラスト（名前バー下から開始、center-crop） ──
-  const imgDestY  = NAME_H + 20;
+  const imgDestY  = NAME_H;
   const imgDestH  = H - imgDestY;
   await new Promise(resolve => {
     const img = new Image();
@@ -3378,7 +3378,7 @@ async function renderCardCanvas(card) {
       if (srcAspect > destAspect) {
         sh = srcH; sw = srcH * destAspect; sx = (srcW - sw) / 2; sy = 0;
       } else {
-        sw = srcW; sh = srcW / destAspect; sx = 0; sy = (srcH - sh) / 2;
+        sw = srcW; sh = srcW / destAspect; sx = 0; sy = 0;
       }
       ctx.drawImage(img, sx, sy, sw, sh, 0, imgDestY, W, imgDestH);
       resolve();
