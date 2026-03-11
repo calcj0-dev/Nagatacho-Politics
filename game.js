@@ -3366,8 +3366,7 @@ async function renderCardCanvas(card) {
   const COIN_STEP = COIN_R * 2 + 4;
 
   // ── 1. イラスト（名前バー下から開始、center-crop） ──
-  const NAME_GAP  = 8;                    // 名前バーとイラストの隙間
-  const imgDestY  = NAME_H + NAME_GAP;
+  const imgDestY  = NAME_H;
   const imgDestH  = H - imgDestY;
   await new Promise(resolve => {
     const img = new Image();
@@ -3413,7 +3412,7 @@ async function renderCardCanvas(card) {
   nameGrad.addColorStop(1, "#ffffff");
   ctx.fillStyle = nameGrad;
   ctx.beginPath();
-  ctx.roundRect(nameBarX, NAME_Y, nameBarW, NAME_H + NAME_GAP, [BORDER_R, BORDER_R, 0, 0]);
+  ctx.roundRect(nameBarX, NAME_Y, nameBarW, NAME_H, [BORDER_R, BORDER_R, 0, 0]);
   ctx.fill();
 
   ctx.font = `900 31px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;  // 24 × 1.3
