@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>政治家カードゲーム</title>
+  <title>永田町ポリティクス</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script>
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
@@ -32,6 +35,14 @@
         <div class="party-btn-catch">新勢力の挑戦、スピード重視</div>
         <div class="party-btn-members">T・アンノ / S・タカヤマ / K・ムトウ ほか</div>
       </button>
+    </div>
+  </div>
+
+  <!-- 読込中画面 -->
+  <div id="loading-screen" class="screen hidden">
+    <div class="loading-inner">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">読込中…</div>
     </div>
   </div>
 

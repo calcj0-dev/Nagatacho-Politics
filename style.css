@@ -180,6 +180,36 @@ body {
   min-height: 100vh;
 }
 
+#loading-screen {
+  justify-content: center;
+}
+
+.loading-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid rgba(255, 215, 0, 0.3);
+  border-top-color: #ffd700;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: #ffd700;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
 h1 {
   font-size: 1.5rem;
   margin-bottom: 24px;
@@ -251,22 +281,11 @@ h1 {
 .card-back {
   width: 60px;
   height: 84px;
-  border: 2px solid #555;
   border-radius: 6px;
-  background: repeating-linear-gradient(
-    135deg,
-    #1a1a3e 0px,
-    #1a1a3e 6px,
-    #0f0f2a 6px,
-    #0f0f2a 12px
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  color: #4466aa;
+  background: url("assets/item/card_back.webp") center/cover no-repeat;
   cursor: default;
   flex-shrink: 0;
+  font-size: 0;
 }
 
 /* ============================================================
@@ -353,74 +372,15 @@ h1 {
   display: block;
 }
 
-
-/* 下部：能力パネル（フローティング） */
-.card-abilities-panel {
-  position: absolute;
-  bottom: 3px;
-  left: 3px;
-  right: 3px;
-  height: 40%;
-  background: rgba(255, 255, 255, 0.88);
-  border-radius: 3px;
-  padding: 2px 3px;
-  overflow: hidden;
-}
-
-.ability-panel-inner {
-  width: 100%;
+/* Canvas合成済みカード: imgエリアをカード全体に拡張 */
+.card.canvas-rendered .card-img-area {
+  flex: none;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly;
 }
 
-.card-ability-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0;
-  min-height: 0;
-}
 
-.ability-cost-icons {
-  display: flex;
-  align-items: center;
-  gap: 1px;
-  flex-shrink: 0;
-}
-
-.ability-cost-icons .coin-icon {
-  width: 5px;
-  height: 5px;
-}
-
-.ability-name-text {
-  font-size: 0.32rem;
-  font-weight: bold;
-  color: #222;
-  line-height: 1.25;
-  white-space: nowrap;
-  overflow: hidden;
-  flex: 1;
-  min-width: 0;
-}
-
-.option-effect-text {
-  white-space: normal;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  line-clamp: 4;
-  -webkit-box-orient: vertical;
-}
-
-.card-ability-sep {
-  height: 1px;
-  background: rgba(0, 0, 0, 0.12);
-  margin: 0;
-  flex-shrink: 0;
-}
+/* card-abilities-panel, ability-panel-inner, card-ability-row 等は
+   Canvas化により廃止済み（JSからも削除）*/
 
 /* ============================================================
    ゲーム画面
@@ -443,13 +403,17 @@ h1 {
 }
 
 .cpu-area {
-  background: rgba(233, 69, 96, 0.1);
-  border: 1px solid rgba(233, 69, 96, 0.3);
+  background: rgba(20, 10, 10, 0.25);
+  border: 1px solid rgba(233, 69, 96, 0.25);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .player-area-self {
-  background: rgba(15, 52, 96, 0.2);
-  border: 1px solid rgba(15, 52, 96, 0.4);
+  background: rgba(10, 18, 35, 0.25);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(15, 52, 96, 0.25);
 }
 
 .player-info {
@@ -531,20 +495,9 @@ h1 {
 .deck-card-back {
   width: 110px;
   height: 155px;
-  border: 2px solid #555;
   border-radius: 8px;
-  background: repeating-linear-gradient(
-    135deg,
-    #1a1a3e 0px,
-    #1a1a3e 8px,
-    #0f0f2a 8px,
-    #0f0f2a 16px
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2.5rem;
-  color: #4466aa;
+  background: url("assets/item/card_back.webp") center/cover no-repeat;
+  font-size: 0;
 }
 
 .deck-count {
@@ -560,13 +513,16 @@ h1 {
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
-  background: #16213e;
+  background: rgba(10, 18, 35, 0.30);
   border-radius: 4px;
   font-size: 0.85rem;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 #turn-num {
-  color: #aaa;
+  color: #fff;
   min-width: 56px;
 }
 
@@ -579,7 +535,7 @@ h1 {
 
 .survey-label {
   font-size: 0.72rem;
-  color: #888;
+  color: #fff;
   letter-spacing: 0.05em;
   white-space: nowrap;
 }
@@ -658,7 +614,7 @@ h1 {
 
 .approval-label {
   font-size: 0.85rem;
-  color: #aaa;
+  color: #fff;
   flex-shrink: 0;
 }
 
@@ -1195,111 +1151,7 @@ h1 {
   line-height: 1.5;
 }
 
-/* 拡大カード画像上の白半透明枠 */
-.zoom-ability-overlay {
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  right: 8px;
-  height: 40%;
-  background: rgba(255, 255, 255, 0.85);
-  border-radius: 8px;
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
-  gap: 6px;
-  overflow: hidden;
-}
 
-.zoom-ability-item {
-  padding: 6px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.zoom-ability-item:hover:not(.inactive) {
-  background: rgba(0, 0, 0, 0.08);
-}
-
-.zoom-ability-item.inactive {
-  cursor: not-allowed;
-  opacity: 0.45;
-}
-
-/* 使用済み能力: チェックマーク付きで薄く表示 */
-.zoom-ability-item.ability-used {
-  cursor: default;
-  pointer-events: none;
-  opacity: 0.5;
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.zoom-ability-item.ability-used::before {
-  content: "✓ 使用済み";
-  display: block;
-  font-size: 0.62rem;
-  color: #aaa;
-  margin-bottom: 3px;
-  letter-spacing: 0.05em;
-}
-
-/* 封印中カードの通知 */
-.ability-disabled-notice {
-  font-size: 0.75rem;
-  color: #e94560;
-  text-align: center;
-  padding: 12px 8px;
-  font-style: italic;
-  opacity: 0.8;
-}
-
-.zoom-ability-item.selected {
-  background: rgba(255, 220, 50, 0.15);
-  outline: 1px solid rgba(255, 220, 50, 0.4);
-}
-
-
-.zoom-ability-name {
-  font-size: 0.8rem;
-  font-weight: bold;
-  color: #222;
-  margin-bottom: 2px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.zoom-ability-cost {
-  display: flex;
-  align-items: center;
-  gap: 1px;
-  flex-shrink: 0;
-}
-
-.zoom-ability-cost .coin-icon {
-  width: 14px;
-  height: 14px;
-}
-
-.zoom-ability-effect {
-  font-size: 0.75rem;
-  font-weight: bold;
-  color: #c00;
-  margin-bottom: 2px;
-  line-height: 1.3;
-}
-
-.zoom-ability-desc {
-  display: none; /* zoom-ability-overlay 内では非表示（card-zoom-info 内で使用） */
-}
-
-/* オプションカードズーム: テキストを小さく */
-.zoom-ability-overlay .zoom-ability-effect {
-  font-size: 0.6rem;
-}
 
 .zoom-option-flavor {
   cursor: default;
@@ -1360,47 +1212,6 @@ h1 {
    ============================================================ */
 
 /* 山札下（プレイヤー）: 縦並び */
-.active-effects {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  width: 110px;
-  margin-top: 6px;
-}
-
-
-.effect-tag {
-  font-size: 0.6rem;
-  padding: 3px 5px;
-  border-radius: 4px;
-  text-align: center;
-  line-height: 1.4;
-  word-break: break-all;
-}
-
-.effect-shield {
-  background: rgba(100, 180, 255, 0.2);
-  border: 1px solid rgba(100, 180, 255, 0.55);
-  color: #aaddff;
-}
-
-.effect-buff {
-  background: rgba(80, 200, 120, 0.2);
-  border: 1px solid rgba(80, 200, 120, 0.55);
-  color: #aaeecc;
-}
-
-.effect-debuff {
-  background: rgba(220, 80, 80, 0.2);
-  border: 1px solid rgba(220, 80, 80, 0.55);
-  color: #ffaaaa;
-}
-
-.effect-current {
-  background: rgba(255, 200, 50, 0.2);
-  border: 1px solid rgba(255, 200, 50, 0.55);
-  color: #ffdd88;
-}
 
 /* ============================================================
    捨て札スロット（山札横）
@@ -1883,10 +1694,6 @@ h1 {
   .discard-stack-shadow,
   .discard-stack-top {
     border-radius: 4px;
-  }
-
-  .active-effects {
-    display: none;
   }
 
   /* 手札カード（デフォルトサイズ：場のカード用） */

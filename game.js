@@ -1,7 +1,7 @@
 ﻿// ============================================================
 // バージョン
 // ============================================================
-const APP_VERSION = "0.1.21";
+const APP_VERSION = "0.1.22";
 
 // ============================================================
 // カードデータ定義
@@ -9,6 +9,7 @@ const APP_VERSION = "0.1.21";
 
 let POLITICIAN_CARDS = []; // assets/data/politician_cards.json から読み込み
 let OPTION_CARDS = [];    // assets/data/option_cards.json から読み込み
+const cardImageCache = new Map(); // card.id → Canvas dataURL
 
 
 
@@ -273,9 +274,7 @@ const ABILITY_EFFECTS = {
     const msgs = [];
     const m1 = changeApproval(self, 6);
     if (m1) msgs.push(m1);
-    if (self.hand.length >= 7) {
-      msgs.push("手札が上限（7枚）のためドロー不可…");
-    } else if (self.deck.length > 0) {
+    if (self.deck.length > 0) {
       const drawn = self.deck.shift();
       self.hand.push(drawn);
       msgs.push(`${drawn.name}を手札に加えた！`);
@@ -381,11 +380,7 @@ const ABILITY_EFFECTS = {
   },
   ito_2(self, _opponent) {
     const msgs = [];
-    if (self.hand.length >= 7) {
-      msgs.push("手札が上限（7枚）のためドロー不可…");
-      return msgs;
-    }
-    const drawCount = Math.min(2, 7 - self.hand.length, self.deck.length);
+    const drawCount = Math.min(2, self.deck.length);
     if (drawCount === 0) {
       msgs.push("山札がなくドロー不可…");
       return msgs;
@@ -583,10 +578,6 @@ const OPTION_EFFECTS = {
   },
   ouen_enzetsu(self, opponent) {
     const msgs = [];
-    if (self.hand.length >= 7) {
-      msgs.push("手札が上限（7枚）のためドロー不可…");
-      return msgs;
-    }
     const politicianIdx = self.deck.findIndex(c => c.type === "politician");
     if (politicianIdx >= 0) {
       const drawn = self.deck.splice(politicianIdx, 1)[0];
@@ -1629,42 +1620,27 @@ function playAbilityAnimation(fieldIndex, abilityIndex, side, callback) {
 
   const imageDiv = document.createElement("div");
   imageDiv.className = "card-zoom-image";
-  if (card.image) imageDiv.style.backgroundImage = `url(${card.image})`;
+  const _zoomSrc1 = cardImageCache.get(card.id) ?? card.image;
+  if (_zoomSrc1) imageDiv.style.backgroundImage = `url(${_zoomSrc1})`;
 
-  // zoom-ability-overlay を構築
-  const abilityOverlay = document.createElement("div");
-  abilityOverlay.className = "zoom-ability-overlay";
-
-  card.abilities.forEach((ability, aIdx) => {
-    const item = document.createElement("div");
-    item.className = "zoom-ability-item";
-
-    const nameRow = document.createElement("div");
-    nameRow.className = "zoom-ability-name";
-    const coins = ability.cost > 0 ? COIN_IMG.repeat(ability.cost) : '<span class="funds-zero">—</span>';
-    nameRow.innerHTML = `<span class="zoom-ability-cost">${coins}</span>${ability.name}`;
-    item.appendChild(nameRow);
-
-    if (ability.effectText) {
-      const effectRow = document.createElement("div");
-      effectRow.className = "zoom-ability-effect";
-      effectRow.textContent = ability.effectText;
-      item.appendChild(effectRow);
-    }
-
-    // 発動した能力を黄色く光らせる
-    if (aIdx === abilityIndex) {
-      item.style.background = "rgba(255,220,50,0.45)";
-      item.style.boxShadow = "0 0 18px 6px rgba(255,220,50,0.85)";
-      item.style.borderRadius = "4px";
-    } else {
-      item.style.opacity = "0.45";
-    }
-
-    abilityOverlay.appendChild(item);
+  // 発動能力をY座標で黄色くハイライト（Canvasが能力テキストを表示済み）
+  const abilities = card.abilities;
+  const rowCount = abilities.length;
+  const rowH = (40 / rowCount); // % per row within bottom 40%
+  const highlightTop = 60 + abilityIndex * rowH;
+  const highlight = document.createElement("div");
+  Object.assign(highlight.style, {
+    position: "absolute",
+    top: `${highlightTop}%`,
+    left: "0",
+    right: "0",
+    height: `${rowH}%`,
+    background: "rgba(255,220,50,0.35)",
+    boxShadow: "0 0 18px 6px rgba(255,220,50,0.7)",
+    borderRadius: "4px",
+    pointerEvents: "none",
   });
-
-  imageDiv.appendChild(abilityOverlay);
+  imageDiv.appendChild(highlight);
   zoomWrap.appendChild(imageDiv);
   document.body.appendChild(zoomWrap);
 
@@ -1743,26 +1719,7 @@ function playOptionCardAnimation(card, fromRect, isCpu, callback) {
     const zoomW = 250, zoomH = 350;
     clone = document.createElement("div");
     clone.className = "card-zoom-image";
-    clone.style.backgroundImage = `url(${card.image})`;
-    const optOverlay = document.createElement("div");
-    optOverlay.className = "zoom-ability-overlay";
-    const effectText = card.effectDescription || card.effectText || "";
-    if (effectText) {
-      const item = document.createElement("div");
-      item.className = "zoom-ability-item";
-      const row = document.createElement("div");
-      row.className = "zoom-ability-effect";
-      row.textContent = effectText;
-      item.appendChild(row);
-      optOverlay.appendChild(item);
-    }
-    if (card.description) {
-      const descItem = document.createElement("div");
-      descItem.className = "zoom-ability-item zoom-option-flavor";
-      descItem.textContent = card.description;
-      optOverlay.appendChild(descItem);
-    }
-    clone.appendChild(optOverlay);
+    clone.style.backgroundImage = `url(${cardImageCache.get(card.id) ?? card.image})`;
     // 初期位置：元カードの中心に合わせる
     cloneInitLeft = rect.left + rect.width / 2 - zoomW / 2;
     cloneInitTop  = rect.top  + rect.height / 2 - zoomH / 2;
@@ -2456,145 +2413,79 @@ function showCardZoom(card, context, index) {
   // カード画像
   const imageDiv = document.createElement("div");
   imageDiv.className = "card-zoom-image";
+  const _zoomSrc2 = cardImageCache.get(card.id) ?? card.image;
   const img = new Image();
-  img.src = card.image;
+  img.src = _zoomSrc2;
   img.onload = () => {
-    imageDiv.style.backgroundImage = `url(${card.image})`;
+    imageDiv.style.backgroundImage = `url(${_zoomSrc2})`;
   };
   img.onerror = () => {
     imageDiv.classList.add("no-image");
     imageDiv.textContent = card.name;
   };
 
-  // 政治家カード: 画像上に白半透明枠で能力を配置
+  // 政治家カード: Canvas白枠下40%をY座標検出でタップ判定（HTML要素は不要）
   let infoPanel = null;
   if (card.type === "politician" && card.abilities) {
-    const abilityOverlay = document.createElement("div");
-    abilityOverlay.className = "zoom-ability-overlay";
-
     const isFieldPlayer = context === "field";
     const isCpuView = context === "view";
     const p = gameState.player;
     const costReduction = isFieldPlayer ? (p.currentTurnCostReduction || 0) : 0;
+    const abilities = card.abilities;
 
     // 相手カード閲覧時: 能力詳細パネルを用意
     if (isCpuView) {
       infoPanel = document.createElement("div");
       infoPanel.className = "card-zoom-info";
-      infoPanel.innerHTML = `<div class="card-zoom-hint">能力をクリックで詳細表示</div>`;
+      infoPanel.innerHTML = `<div class="card-zoom-hint">能力エリアをタップで詳細表示</div>`;
     }
 
-    // 封印中: 全能力を非表示にして通知のみ
-    if (isFieldPlayer && card.disabled) {
-      const notice = document.createElement("div");
-      notice.className = "ability-disabled-notice";
-      notice.textContent = "封印中 — このカードは使用できません";
-      abilityOverlay.appendChild(notice);
-    } else {
-      const usedVal = isFieldPlayer ? p.usedAbilities[card.instanceId] : 0;
-      const usedIdx = usedVal ? usedVal - 1 : -1; // 使用した能力のインデックス（0 or 1）、未使用は-1
+    // imageDiv クリックで能力判定（Canvas白枠の下40%が能力エリア）
+    if (isFieldPlayer || isCpuView) {
+      imageDiv.style.cursor = "pointer";
+      imageDiv.addEventListener("click", (e) => {
+        const rect = imageDiv.getBoundingClientRect();
+        const relY = (e.clientY - rect.top) / rect.height;
 
-      card.abilities.forEach((ability, aIdx) => {
-        const effectiveCost = (isFieldPlayer && p.zeroCostCardId === card.instanceId)
-          ? 0
-          : Math.max(0, ability.cost - costReduction);
+        // 上60%はイラストエリア → 何もしない
+        if (relY < 0.60) return;
 
-        // 使用済みカード: 使った能力だけ表示、それ以外は非表示
-        if (isFieldPlayer && usedIdx >= 0 && aIdx !== usedIdx) return;
+        if (isFieldPlayer && card.disabled) return;
 
-        const item = document.createElement("div");
-        item.className = "zoom-ability-item";
+        const usedVal = isFieldPlayer ? (p.usedAbilities[card.instanceId] || 0) : 0;
+        const usedIdx = usedVal ? usedVal - 1 : -1;
 
-        // 能力2封印判定
-        const isSealed = isFieldPlayer && aIdx === 1 && card.sealedAbility2;
+        if (isFieldPlayer && usedIdx >= 0) return; // 使用済み
 
-        // スタイル判定
+        // 能力インデックス計算
+        const panelRelY = (relY - 0.60) / 0.40;
+        let abilityIdx = Math.floor(panelRelY * abilities.length);
+        abilityIdx = Math.max(0, Math.min(abilityIdx, abilities.length - 1));
+        const ability = abilities[abilityIdx];
+
         if (isFieldPlayer) {
-          if (usedIdx >= 0) {
-            // 使用済み能力として表示
-            item.classList.add("ability-used");
-          } else if (isSealed) {
-            // 能力2封印中: グレーアウト
-            item.classList.add("inactive");
-          } else if (p.funds < effectiveCost) {
-            // 資金不足: グレーアウト（非表示にはしない）
-            item.classList.add("inactive");
-          }
-        }
+          const isSealed = abilityIdx === 1 && card.sealedAbility2;
+          if (isSealed) return;
 
-        const nameRow = document.createElement("div");
-        nameRow.className = "zoom-ability-name";
-        if (isSealed) {
-          nameRow.innerHTML = `${ability.name}（封印中）`;
-        } else {
-          const coins = effectiveCost > 0 ? COIN_IMG.repeat(effectiveCost) : '<span class="funds-zero">—</span>';
-          nameRow.innerHTML = `<span class="zoom-ability-cost">${coins}</span>${ability.name}`;
-        }
-        item.appendChild(nameRow);
+          const effectiveCost = (p.zeroCostCardId === card.instanceId)
+            ? 0
+            : Math.max(0, ability.cost - costReduction);
+          if (p.funds < effectiveCost) return;
 
-        if (ability.effectText) {
-          const effectRow = document.createElement("div");
-          effectRow.className = "zoom-ability-effect";
-          effectRow.textContent = isSealed ? "【封印中】次のターンまで使用不可" : ability.effectText;
-          item.appendChild(effectRow);
+          overlay.remove();
+          useAbility(index, abilityIdx);
+        } else if (isCpuView && infoPanel) {
+          infoPanel.innerHTML = [
+            `<div class="card-zoom-name">${ability.name}</div>`,
+            ability.effectText   ? `<div class="card-zoom-effect">${ability.effectText}</div>`   : "",
+            ability.description  ? `<div class="card-zoom-desc">${ability.description}</div>`    : "",
+          ].join("");
         }
-
-        // 場のプレイヤーカード: クリックで能力発動
-        if (isFieldPlayer && usedIdx < 0 && !isSealed && p.funds >= effectiveCost) {
-          item.addEventListener("click", (e) => {
-            e.stopPropagation();
-            overlay.remove();
-            useAbility(index, aIdx);
-          });
-        }
-
-        // 相手カード閲覧: クリックで能力名・効果・説明を表示
-        if (isCpuView && infoPanel) {
-          item.style.cursor = "pointer";
-          item.addEventListener("click", (e) => {
-            e.stopPropagation();
-            abilityOverlay.querySelectorAll(".zoom-ability-item").forEach(el => el.classList.remove("selected"));
-            item.classList.add("selected");
-            infoPanel.innerHTML = [
-              `<div class="card-zoom-name">${ability.name}</div>`,
-              ability.effectText   ? `<div class="card-zoom-effect">${ability.effectText}</div>`   : "",
-              ability.description  ? `<div class="card-zoom-desc">${ability.description}</div>`    : "",
-            ].join("");
-          });
-        }
-
-        abilityOverlay.appendChild(item);
       });
     }
-
-    imageDiv.appendChild(abilityOverlay);
   }
 
-  // オプションカード: 効果テキスト + 説明を画像下部の白半透明枠に表示
-  if (card.type === "option") {
-    const optOverlay = document.createElement("div");
-    optOverlay.className = "zoom-ability-overlay";
-
-    const effectText = card.effectDescription || card.effectText || "";
-    if (effectText) {
-      const item = document.createElement("div");
-      item.className = "zoom-ability-item";
-      const row = document.createElement("div");
-      row.className = "zoom-ability-effect";
-      row.textContent = effectText;
-      item.appendChild(row);
-      optOverlay.appendChild(item);
-    }
-
-    if (card.description) {
-      const descItem = document.createElement("div");
-      descItem.className = "zoom-ability-item zoom-option-flavor";
-      descItem.textContent = card.description;
-      optOverlay.appendChild(descItem);
-    }
-
-    imageDiv.appendChild(optOverlay);
-  }
+  // オプションカード: CanvasがdescriptionとeffectDescriptionを表示するため不要
 
   container.appendChild(imageDiv);
   if (infoPanel) container.appendChild(infoPanel);
@@ -2683,8 +2574,8 @@ function showDiscardUI(count, onComplete) {
     }).join("");
 
     showOverlay(`
-      <h2>手札が上限を超えています</h2>
-      <p>捨てるカードを選んでください（あと${remaining}枚）</p>
+      <h2>手札が8枚以上あります</h2>
+      <p>7枚になるまで捨てるカードを選んでください（あと${remaining}枚）</p>
       <div class="discard-list">${cardsHtml}</div>
     `);
 
@@ -2933,7 +2824,6 @@ function renderGame() {
   renderFieldCards("cpu-field", gameState.cpu.field, false);
   renderDeckSlot("cpu-deck", gameState.cpu.deck.length);
   renderDiscardSlot("cpu-discard", gameState.cpu.discard);
-  renderActiveEffects("cpu-deck", gameState.cpu, "before");
 
   // プレイヤー情報
   document.getElementById("player-party").textContent = gameState.player.party || "???";
@@ -2975,7 +2865,6 @@ function renderGame() {
   renderFieldCards("player-field", gameState.player.field, true);
   renderDeckSlot("player-deck", gameState.player.deck.length);
   renderDiscardSlot("player-discard", gameState.player.discard);
-  renderActiveEffects("player-deck", gameState.player);
 
   // CPU手札（裏向き）
   renderCpuHand();
@@ -2991,12 +2880,8 @@ function renderDeckSlot(slotId, deckCount) {
   slot.innerHTML = "";
   const back = document.createElement("div");
   back.className = "deck-card-back";
-  back.textContent = deckCount > 0 ? "🂠" : "";
-  const countEl = document.createElement("div");
-  countEl.className = "deck-count";
-  countEl.textContent = `${deckCount}枚`;
+  if (deckCount === 0) back.style.visibility = "hidden";
   slot.appendChild(back);
-  slot.appendChild(countEl);
 }
 
 function renderDiscardSlot(slotId, pile) {
@@ -3006,11 +2891,6 @@ function renderDiscardSlot(slotId, pile) {
   slot.innerHTML = "";
   slot.style.cursor = "default";
   slot.onclick = null;
-
-  const label = document.createElement("div");
-  label.className = "discard-label";
-  label.textContent = "捨て札";
-  slot.appendChild(label);
 
   if (pile.length === 0) {
     const empty = document.createElement("div");
@@ -3083,7 +2963,7 @@ function showDiscardOverlay(pile, isPlayer) {
     item.className = "discard-overlay-card";
 
     const img = document.createElement("img");
-    img.src = card.image;
+    img.src = cardImageCache.get(card.id) ?? card.image;
     img.alt = card.name;
     img.onerror = () => {
       img.style.display = "none";
@@ -3116,51 +2996,6 @@ function showDiscardOverlay(pile, isPlayer) {
   document.body.appendChild(overlay);
 }
 
-// 特殊効果バッジを描画。position="before" で先頭挿入（CPU用）、省略で末尾追加（プレイヤー用）
-function renderActiveEffects(slotId, ps, position = "after") {
-  const slot = document.getElementById(slotId);
-  if (!slot) return;
-
-  const tags = []; // { label, type }
-
-  // シールド
-  ps.shields.forEach(s => {
-    if (s === "block_approval_down")       tags.push({ label: `🛡 支持率低下を1回無効化`,           type: "shield" });
-    if (s === "block_approval_down_drill") tags.push({ label: `🛡 ドリル破壊：支持率低下を1回無効化`, type: "shield" });
-    if (s === "block_approval_up")         tags.push({ label: `📵 支持率上昇を1回無効化`,           type: "debuff" });
-    if (s === "block_approval_up_masukomi") tags.push({ label: `📵 マスコミ対策：支持率上昇を1回無効化`, type: "debuff" });
-    if (s === "block_attack")              tags.push({ label: `🛡 攻撃を1回無効化`,                 type: "shield" });
-  });
-
-  // 次ターンボーナス
-  const nb = ps.nextTurnBonuses;
-  if (nb.costReduction   > 0) tags.push({ label: `🔧 次ターン コスト-${nb.costReduction}億`,                   type: "buff"   });
-  if (nb.fundBonus       > 0) tags.push({ label: `${COIN_IMG} 次ターン 資金+${nb.fundBonus}億`,                 type: "buff"   });
-  if (nb.approvalBonus   > 0) tags.push({ label: `📈 次ターン 支持率+${nb.approvalBonus}%`,                    type: "buff"   });
-  if (nb.approvalBonus   < 0) tags.push({ label: `📉 次ターン 支持率${nb.approvalBonus}%`,                     type: "debuff" });
-  if (nb.attackReduction > 0) tags.push({ label: `🛡 次ターン ダメージ-${nb.attackReduction}%`,                type: "shield" });
-
-  // このターン限定コスト軽減
-  if (ps.currentTurnCostReduction > 0) {
-    tags.push({ label: `⚡ このターン コスト-${ps.currentTurnCostReduction}億`, type: "current" });
-  }
-
-  if (tags.length === 0) return;
-
-  const panel = document.createElement("div");
-  panel.className = "active-effects";
-  tags.forEach(({ label, type }) => {
-    const el = document.createElement("div");
-    el.className = `effect-tag effect-${type}`;
-    el.innerHTML = label;
-    panel.appendChild(el);
-  });
-  if (position === "before") {
-    slot.insertBefore(panel, slot.firstChild);
-  } else {
-    slot.appendChild(panel);
-  }
-}
 
 function renderFieldCards(containerId, cards, isPlayer) {
   const container = document.getElementById(containerId);
@@ -3196,7 +3031,6 @@ function renderCpuHand() {
   gameState.cpu.hand.forEach(() => {
     const el = document.createElement("div");
     el.className = "card-back";
-    el.textContent = "🂠";
     container.appendChild(el);
   });
 }
@@ -3457,72 +3291,265 @@ function applyHandFan(container) {
   });
 }
 
+// ============================================================
+// Canvas カードレンダリング
+// ============================================================
+
+const CARD_CANVAS_W = 400;
+const CARD_CANVAS_H = 560;
+
+// 金色コインを Canvas に描画
+function drawCoinCanvas(ctx, cx, cy, r) {
+  const grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.35, r * 0.05, cx, cy, r);
+  grad.addColorStop(0,    "#fff8c0");
+  grad.addColorStop(0.45, "#ffd700");
+  grad.addColorStop(0.85, "#c8960c");
+  grad.addColorStop(1,    "#8b6914");
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = "rgba(0,0,0,0.25)";
+  ctx.stroke();
+  // 内側リム
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.65, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(0,0,0,0.18)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  // ¥ テキスト
+  ctx.font = `900 ${Math.round(r * 1.1)}px 'Noto Sans JP', 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
+  ctx.fillStyle = "#7a5500";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("¥", cx, cy + 0.5);
+}
+
+// 折り返しテキスト描画（返値: 描画終了Y座標）
+function fillWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
+  let line = "";
+  let currentY = y;
+  for (const ch of [...text]) {
+    const test = line + ch;
+    if (ctx.measureText(test).width > maxWidth && line.length > 0) {
+      ctx.fillText(line, x, currentY);
+      line = ch;
+      currentY += lineHeight;
+    } else {
+      line = test;
+    }
+  }
+  if (line) ctx.fillText(line, x, currentY);
+  return currentY + lineHeight;
+}
+
+// カード1枚をCanvasで合成してdataURLを返す
+async function renderCardCanvas(card) {
+  const W = CARD_CANVAS_W, H = CARD_CANVAS_H;
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+
+  const isPolitician = card.type === "politician";
+
+  // レイアウト定数
+  const GAP       = 18;  // 白パネルの両サイド・下の隙間
+  const BORDER_R  = 18;  // カード角丸（グレー枠と合わせる）
+  const PANEL_H   = Math.round(H * 0.40);  // 224px（全体の40%）
+  const PANEL_Y   = H - PANEL_H;           // 336px
+  const NAME_H    = 60;  // 46 × 1.3
+  const NAME_Y    = 0;   // グレー枠に隙間なし（最上部）
+  const PAD_X     = 18;
+  const COIN_R    = 10;
+  const COIN_STEP = COIN_R * 2 + 4;
+
+  // ── 1. イラスト（全面、center-crop） ──
+  await new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const srcW = img.naturalWidth, srcH = img.naturalHeight;
+      const destAspect = W / H;
+      const srcAspect  = srcW / srcH;
+      let sx, sy, sw, sh;
+      if (srcAspect > destAspect) {
+        sh = srcH; sw = srcH * destAspect; sx = (srcW - sw) / 2; sy = 0;
+      } else {
+        sw = srcW; sh = srcW / destAspect; sx = 0; sy = (srcH - sh) / 2;
+      }
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+      resolve();
+    };
+    img.onerror = () => {
+      const fbGrad = ctx.createLinearGradient(0, 0, W, H);
+      fbGrad.addColorStop(0, isPolitician ? "#2a0a18" : "#0a1a2e");
+      fbGrad.addColorStop(1, isPolitician ? "#4a1a28" : "#0f2a4a");
+      ctx.fillStyle = fbGrad;
+      ctx.fillRect(0, 0, W, H);
+      resolve();
+    };
+    img.src = card.image;
+  });
+
+  // ── 2. 名前バー（政党カラー・黒文字） ──
+  const PARTY_COLORS = {
+    "自民党":      "#d42020",
+    "国民民主党":  "#f5c400",
+    "チームみらい":"#1c9e45",
+  };
+  const nameColor = isPolitician
+    ? (PARTY_COLORS[card.party] ?? "#aaaaaa")
+    : "#c0c0c0";
+
+  // 上部・両サイドはグレー枠まで隙間なし
+  const nameBarX = 0;
+  const nameBarW = W;
+  const nameGrad = ctx.createLinearGradient(0, 0, nameBarW, 0);
+  nameGrad.addColorStop(0, nameColor);
+  nameGrad.addColorStop(1, "#ffffff");
+  ctx.fillStyle = nameGrad;
+  ctx.beginPath();
+  ctx.roundRect(nameBarX, NAME_Y, nameBarW, NAME_H, [BORDER_R, BORDER_R, 0, 0]);
+  ctx.fill();
+
+  ctx.font = `900 31px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;  // 24 × 1.3
+  ctx.fillStyle = "#111111";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(card.name, W / 2, NAME_Y + NAME_H / 2);
+
+  // ── 3. 半透明白パネル（両サイド・下に隙間） ──
+  const panelX = GAP;
+  const panelW = W - GAP * 2;
+  const panelDrawH = PANEL_H - GAP;  // 下GAP分を引く
+  ctx.fillStyle = "rgba(255, 255, 255, 0.88)";
+  ctx.beginPath();
+  ctx.roundRect(panelX, PANEL_Y, panelW, panelDrawH, [0, 0, 10, 10]);
+  ctx.fill();
+
+  // ── 4. 能力 / 効果テキスト ──
+  if (isPolitician && card.abilities) {
+    const rows  = card.abilities.length;
+    const rowH  = panelDrawH / rows;
+
+    card.abilities.forEach((ability, i) => {
+      const rowY = PANEL_Y + i * rowH;
+
+      if (i > 0) {
+        ctx.strokeStyle = "rgba(0,0,0,0.15)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(panelX + PAD_X, rowY);
+        ctx.lineTo(panelX + panelW - PAD_X, rowY);
+        ctx.stroke();
+      }
+
+      const cost   = ability.cost ?? 0;
+      const startX = panelX + PAD_X;
+      const nameY  = rowY + rowH * 0.32;  // 上寄り
+      const effY   = rowY + rowH * 0.65;  // 下寄り
+
+      // コイン（能力名と同じ高さ）
+      for (let c = 0; c < cost; c++) {
+        drawCoinCanvas(ctx, startX + COIN_R + c * COIN_STEP, nameY, COIN_R);
+      }
+
+      const textX = startX + (cost > 0 ? cost * COIN_STEP + 8 : 0);
+
+      // 能力名：黒字
+      ctx.font = `900 20px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
+      ctx.fillStyle = "#111111";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(ability.name, textX, nameY);
+
+      // 効果テキスト：赤字
+      if (ability.effectText) {
+        ctx.font = `900 16px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
+        ctx.fillStyle = "#cc1a1a";
+        ctx.textBaseline = "middle";
+        fillWrappedText(ctx, ability.effectText, panelX + PAD_X, effY, panelW - PAD_X * 2, 20);
+      }
+    });
+  } else if (!isPolitician) {
+    const textX   = panelX + PAD_X;
+    const maxW    = panelW - PAD_X * 2;
+    let   currentY = PANEL_Y + 16;
+
+    // 説明文：黒字
+    if (card.description) {
+      ctx.font = `900 17px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
+      ctx.fillStyle = "#111111";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      currentY = fillWrappedText(ctx, card.description, textX, currentY, maxW, 24);
+      currentY += 6;
+    }
+
+    // 効果テキスト：赤字
+    if (card.effectDescription) {
+      ctx.font = `900 17px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
+      ctx.fillStyle = "#cc1a1a";
+      ctx.textBaseline = "top";
+      fillWrappedText(ctx, card.effectDescription, textX, currentY, maxW, 24);
+    }
+  }
+
+  // ── 5. グレー外枠（ポケポケ風） ──
+  const BORDER_INSET = 5;
+  const BORDER_W     = 9;
+  const borderGrad = ctx.createLinearGradient(0, 0, 0, H);
+  borderGrad.addColorStop(0,   "#e4e4e4");
+  borderGrad.addColorStop(0.5, "#b4b4b4");
+  borderGrad.addColorStop(1,   "#888888");
+  ctx.strokeStyle = borderGrad;
+  ctx.lineWidth = BORDER_W;
+  ctx.beginPath();
+  ctx.roundRect(BORDER_INSET, BORDER_INSET, W - BORDER_INSET * 2, H - BORDER_INSET * 2, BORDER_R);
+  ctx.stroke();
+
+  return canvas.toDataURL("image/webp");
+}
+
+// 全カードをキャッシュに登録（起動時）
+async function buildAllCardImages() {
+  const allCards = [...POLITICIAN_CARDS, ...OPTION_CARDS];
+  await Promise.all(allCards.map(async card => {
+    try {
+      cardImageCache.set(card.id, await renderCardCanvas(card));
+    } catch (e) {
+      console.warn(`[Canvas] ${card.id} 生成失敗:`, e);
+    }
+  }));
+  console.log(`[Canvas] ${cardImageCache.size}枚 生成完了`);
+}
+
 function createCardElement(card) {
   const el = document.createElement("div");
   el.className = `card card-${card.type}`;
   el.dataset.instanceId = card.instanceId;
 
-  // 画像エリア
   const imgArea = document.createElement("div");
   imgArea.className = "card-img-area";
 
   const img = document.createElement("img");
   img.className = "card-photo";
   img.alt = card.name;
-  img.src = card.image;
-  img.onload = () => el.classList.add("has-image");
-  img.onerror = () => el.classList.add("no-image");
+
+  const cached = cardImageCache.get(card.id);
+  if (cached) {
+    el.classList.add("canvas-rendered", "has-image");
+    img.src = cached;
+  } else {
+    // フォールバック: 生画像のみ（パネルなし）
+    img.src = card.image;
+    img.onload  = () => el.classList.add("has-image");
+    img.onerror = () => el.classList.add("no-image");
+  }
+
   imgArea.appendChild(img);
-
   el.appendChild(imgArea);
-
-  // 情報パネル（オプションカード）
-  if (card.type === "option") {
-    const panel = document.createElement("div");
-    panel.className = "card-abilities-panel";
-    const inner = document.createElement("div");
-    inner.className = "ability-panel-inner";
-    if (card.effectDescription) {
-      const effectEl = document.createElement("div");
-      effectEl.className = "ability-name-text option-effect-text";
-      effectEl.textContent = card.effectDescription;
-      inner.appendChild(effectEl);
-    }
-    panel.appendChild(inner);
-    el.appendChild(panel);
-  }
-
-  // 能力パネル（政治家カードのみ）
-  if (card.type === "politician" && card.abilities) {
-    const panel = document.createElement("div");
-    panel.className = "card-abilities-panel";
-    const inner = document.createElement("div");
-    inner.className = "ability-panel-inner";
-    card.abilities.forEach((ability, i) => {
-      if (i > 0) {
-        const sep = document.createElement("div");
-        sep.className = "card-ability-sep";
-        inner.appendChild(sep);
-      }
-      const row = document.createElement("div");
-      row.className = "card-ability-row";
-
-      const costEl = document.createElement("span");
-      costEl.className = "ability-cost-icons";
-      costEl.innerHTML = COIN_IMG.repeat(ability.cost);
-      row.appendChild(costEl);
-
-      const nameEl = document.createElement("span");
-      nameEl.className = "ability-name-text";
-      nameEl.textContent = ability.name;
-      row.appendChild(nameEl);
-
-      inner.appendChild(row);
-    });
-    panel.appendChild(inner);
-    el.appendChild(panel);
-  }
-
   return el;
 }
 
@@ -3549,7 +3576,18 @@ function logState() {
 // 画面遷移: 政党選択
 // ============================================================
 
-function selectParty(party) {
+async function selectParty(party) {
+  // ローディング画面表示
+  document.getElementById("party-select-screen").classList.add("hidden");
+  document.getElementById("loading-screen").classList.remove("hidden");
+
+  // Canvas カード画像を未生成なら生成
+  if (cardImageCache.size === 0) {
+    await document.fonts.ready;
+    await buildAllCardImages();
+  }
+
+  document.getElementById("loading-screen").classList.add("hidden");
   initGame(party);
 }
 
