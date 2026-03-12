@@ -50,6 +50,7 @@ function createPlayerState() {
     usedAbilities: {},       // { cardInstanceId: true }
     usedOptionThisTurn: false,
     skipNextDraw: false,
+    sealAllNextTurn: false,  // ヤジ合戦：次の自分ターン開始後に全カード封印
     shields: [],             // 無効化系効果
     currentTurnCostReduction: 0, // このターンのみ有効なコスト軽減（ターン開始時にnextTurnBonusesから転写）
     zeroCostCardId: null,        // このターンのみコスト0にする政治家カードのinstanceId
@@ -223,7 +224,7 @@ const ABILITY_EFFECTS = {
         const curCost  = (cur.abilities  || []).reduce((s, a) => s + (a.cost || 0), 0);
         return curCost > bestCost ? cur : best;
       }, opponent.field[0]);
-      target.disabled = true;
+      target.sealedNextTurn = true;
       msgs.push(`${target.name}の能力を次ターン封印！`);
     } else {
       msgs.push("相手の場にカードがなく空振り…");
@@ -337,8 +338,8 @@ const ABILITY_EFFECTS = {
   },
   shinba_1(self, _opponent) {
     const msgs = [];
-    self.shields.push("block_approval_down");
-    msgs.push("次の相手ターンに受ける支持率低下を無効化！");
+    const m1 = changeApproval(self, 5);
+    if (m1) msgs.push(m1);
     return msgs;
   },
   shinba_2(self, opponent) {
@@ -601,12 +602,13 @@ const OPTION_EFFECTS = {
   },
   yaji_gassen(_self, opponent) {
     const msgs = [];
-    let count = 0;
-    opponent.field.forEach(card => {
-      card.disabled = true;
-      count++;
-    });
-    msgs.push(count > 0 ? `相手の政治家${count}人の能力を封じた！` : "相手の場に政治家カードがない…");
+    const count = opponent.field.length;
+    if (count > 0) {
+      opponent.sealAllNextTurn = true;
+      msgs.push(`相手の政治家${count}人の能力を次のターン封じた！`);
+    } else {
+      msgs.push("相手の場に政治家カードがない…");
+    }
     return msgs;
   },
   gyuuho_senjutsu(_self, opponent) {
@@ -729,8 +731,20 @@ function startPlayerTurn() {
   p.optionBlockReason = p.blockOptionNextTurn ? "takayama" : null;
   p.blockOptionNextTurn = false;
 
+  // 1ターン限定シールドを失効（前の自分ターンに積んだ未使用分を消去）
+  p.shields = p.shields.filter(s => s !== "block_approval_down" && s !== "block_approval_down_drill");
+
   // disabled解除・sealedAbility2解除（前ターンで封印されたカードを復帰）
   p.field.forEach(c => { c.disabled = false; c.sealedAbility2 = false; });
+
+  // ヤジ合戦：このターン全カード封印
+  if (p.sealAllNextTurn) {
+    p.field.forEach(c => { c.disabled = true; });
+    p.sealAllNextTurn = false;
+  }
+
+  // ishiba_2等: 個別カード封印フラグ適用
+  p.field.forEach(c => { if (c.sealedNextTurn) { c.disabled = true; c.sealedNextTurn = false; } });
 
   // 遅延効果の処理
   processPendingEffects();
@@ -891,8 +905,21 @@ function startCpuTurn() {
   c.usedAbilities = {};
   c.usedOptionThisTurn = c.blockOptionNextTurn ?? false;
   c.blockOptionNextTurn = false;
+
+  // 1ターン限定シールドを失効
+  c.shields = c.shields.filter(s => s !== "block_approval_down" && s !== "block_approval_down_drill");
   c.zeroCostCardId = null;
   c.field.forEach(card => { card.disabled = false; card.sealedAbility2 = false; });
+
+  // ヤジ合戦：このターン全カード封印
+  if (c.sealAllNextTurn) {
+    c.field.forEach(card => { card.disabled = true; });
+    c.sealAllNextTurn = false;
+  }
+
+  // ishiba_2等: 個別カード封印フラグ適用
+  c.field.forEach(card => { if (card.sealedNextTurn) { card.disabled = true; card.sealedNextTurn = false; } });
+
   processPendingEffects();
 
   if (c.nextTurnBonuses.approvalBonus) {
@@ -1520,7 +1547,7 @@ function useAbility(fieldIndex, abilityIndex) {
       }
       showFieldCardPicker(opp.field, "封印する相手カードを選択", (selected) => {
         if (!selected) return;
-        selected.disabled = true;
+        selected.sealedNextTurn = true;
         const msgs = [`${selected.name}の能力を次ターン封印！`];
         playAbilityAnimation(fieldIndex, abilityIndex, "player", () => {
           renderGame();
@@ -2019,8 +2046,8 @@ function showSlotAnimation(outcomes, onDone, options = {}) {
   const n = items.length;
   const winnerIdx = Math.floor(Math.random() * n);
 
-  // スピンシーケンス: 高速で全アイテムを巡回し、減速して winner に着地
-  const totalFrames = Math.max(20, n * 4);
+  // スピンシーケンス: 高速で全アイテムを巡回し、減速して winner に着地（合計約3秒）
+  const totalFrames = Math.max(15, n * 3);
   const seq = [];
   for (let i = 0; i < totalFrames; i++) seq.push(i % n);
   // 末尾を winner に合わせる
@@ -2029,7 +2056,7 @@ function showSlotAnimation(outcomes, onDone, options = {}) {
   // 各フレームの表示時間: 指数的に増加（高速→低速）
   const delays = seq.map((_, i) => {
     const t = i / (seq.length - 1);
-    return Math.round(55 + t * t * 480);
+    return Math.round(40 + t * t * 200);
   });
 
   // オーバーレイ
@@ -2070,22 +2097,36 @@ function showSlotAnimation(outcomes, onDone, options = {}) {
 
   // アニメーション実行
   let step = 0;
+  let currentTimer = null;
+  let finished = false;
+
+  function finish() {
+    if (finished) return;
+    finished = true;
+    if (currentTimer) clearTimeout(currentTimer);
+    const winner = items[winnerIdx];
+    slotVal.textContent = winner.label;
+    slotVal.style.color = winner.color;
+    slotWrap.style.border = `4px solid ${winner.color}`;
+    slotWrap.style.boxShadow = `0 0 40px ${winner.color}88, inset 0 0 20px rgba(0,0,0,0.6)`;
+    currentTimer = setTimeout(() => {
+      overlay.remove();
+      onDone(winner);
+    }, 800);
+  }
+
+  // タップでスキップ
+  overlay.addEventListener("click", finish, { once: true });
+
   function tick() {
     const cur = items[seq[step]];
     slotVal.textContent = cur.label;
     slotVal.style.color = cur.color;
     step++;
     if (step < seq.length) {
-      setTimeout(tick, delays[step - 1]);
+      currentTimer = setTimeout(tick, delays[step - 1]);
     } else {
-      // 着地: 枠を winner 色でフラッシュ
-      const winner = items[winnerIdx];
-      slotWrap.style.border = `4px solid ${winner.color}`;
-      slotWrap.style.boxShadow = `0 0 40px ${winner.color}88, inset 0 0 20px rgba(0,0,0,0.6)`;
-      setTimeout(() => {
-        overlay.remove();
-        onDone(winner);
-      }, 1100);
+      finish();
     }
   }
   tick();
@@ -2264,10 +2305,11 @@ function showFinishOverlay(result) {
            : result.includes("（")         ? result
            : "25ターン終了";
 
-  // 最終支持率を履歴に追記（ゲーム途中終了のケースに対応）
+  // 最終支持率を履歴に反映（最後のエントリを最新値で上書き or 追記）
   const hist = gameState.approvalHistory;
-  const lastTurn = hist.length > 0 ? hist[hist.length - 1].turn : -1;
-  if (lastTurn !== gameState.turn) {
+  if (hist.length > 0) {
+    hist[hist.length - 1] = { turn: gameState.turn, player: pa, cpu: ca };
+  } else {
     hist.push({ turn: gameState.turn, player: pa, cpu: ca });
   }
 
