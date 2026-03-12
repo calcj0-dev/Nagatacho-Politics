@@ -50,6 +50,7 @@ function createPlayerState() {
     usedAbilities: {},       // { cardInstanceId: true }
     usedOptionThisTurn: false,
     skipNextDraw: false,
+    sealAllNextTurn: false,  // ヤジ合戦：次の自分ターン開始後に全カード封印
     shields: [],             // 無効化系効果
     currentTurnCostReduction: 0, // このターンのみ有効なコスト軽減（ターン開始時にnextTurnBonusesから転写）
     zeroCostCardId: null,        // このターンのみコスト0にする政治家カードのinstanceId
@@ -223,7 +224,7 @@ const ABILITY_EFFECTS = {
         const curCost  = (cur.abilities  || []).reduce((s, a) => s + (a.cost || 0), 0);
         return curCost > bestCost ? cur : best;
       }, opponent.field[0]);
-      target.disabled = true;
+      target.sealedNextTurn = true;
       msgs.push(`${target.name}の能力を次ターン封印！`);
     } else {
       msgs.push("相手の場にカードがなく空振り…");
@@ -337,19 +338,24 @@ const ABILITY_EFFECTS = {
   },
   shinba_1(self, _opponent) {
     const msgs = [];
-    self.shields.push("block_approval_down");
-    msgs.push("次の相手ターンに受ける支持率低下を無効化！");
+    const m1 = changeApproval(self, 5);
+    if (m1) msgs.push(m1);
     return msgs;
   },
   shinba_2(self, opponent) {
     const msgs = [];
-    const politicians = opponent.field.filter(c => c.type === "politician");
-    if (politicians.length === 0) {
-      msgs.push("相手の場に政治家カードがなく空振り…");
+    if (opponent.field.length === 0) {
+      msgs.push("相手の場にカードがなく空振り…");
       return msgs;
     }
-    politicians.forEach(c => { c.sealedAbility2 = true; });
-    msgs.push("相手の全政治家カードの能力2を封印！");
+    // CPU：最もコスト合計が高いカードを封印対象に選ぶ
+    const target = opponent.field.reduce((best, cur) => {
+      const bestCost = (best.abilities || []).reduce((s, a) => s + (a.cost || 0), 0);
+      const curCost  = (cur.abilities  || []).reduce((s, a) => s + (a.cost || 0), 0);
+      return curCost > bestCost ? cur : best;
+    }, opponent.field[0]);
+    target.sealedNextTurn = true;
+    msgs.push(`${target.name}の能力を次ターン封印！`);
     return msgs;
   },
   furukawa_1(_self, opponent) {
@@ -601,12 +607,13 @@ const OPTION_EFFECTS = {
   },
   yaji_gassen(_self, opponent) {
     const msgs = [];
-    let count = 0;
-    opponent.field.forEach(card => {
-      card.disabled = true;
-      count++;
-    });
-    msgs.push(count > 0 ? `相手の政治家${count}人の能力を封じた！` : "相手の場に政治家カードがない…");
+    const count = opponent.field.length;
+    if (count > 0) {
+      opponent.sealAllNextTurn = true;
+      msgs.push(`相手の政治家${count}人の能力を次のターン封じた！`);
+    } else {
+      msgs.push("相手の場に政治家カードがない…");
+    }
     return msgs;
   },
   gyuuho_senjutsu(_self, opponent) {
@@ -729,8 +736,20 @@ function startPlayerTurn() {
   p.optionBlockReason = p.blockOptionNextTurn ? "takayama" : null;
   p.blockOptionNextTurn = false;
 
+  // 1ターン限定シールドを失効（前の自分ターンに積んだ未使用分を消去）
+  p.shields = p.shields.filter(s => s !== "block_approval_down" && s !== "block_approval_down_drill");
+
   // disabled解除・sealedAbility2解除（前ターンで封印されたカードを復帰）
   p.field.forEach(c => { c.disabled = false; c.sealedAbility2 = false; });
+
+  // ヤジ合戦：このターン全カード封印
+  if (p.sealAllNextTurn) {
+    p.field.forEach(c => { c.disabled = true; });
+    p.sealAllNextTurn = false;
+  }
+
+  // ishiba_2等: 個別カード封印フラグ適用
+  p.field.forEach(c => { if (c.sealedNextTurn) { c.disabled = true; c.sealedNextTurn = false; } });
 
   // 遅延効果の処理
   processPendingEffects();
@@ -891,8 +910,21 @@ function startCpuTurn() {
   c.usedAbilities = {};
   c.usedOptionThisTurn = c.blockOptionNextTurn ?? false;
   c.blockOptionNextTurn = false;
+
+  // 1ターン限定シールドを失効
+  c.shields = c.shields.filter(s => s !== "block_approval_down" && s !== "block_approval_down_drill");
   c.zeroCostCardId = null;
   c.field.forEach(card => { card.disabled = false; card.sealedAbility2 = false; });
+
+  // ヤジ合戦：このターン全カード封印
+  if (c.sealAllNextTurn) {
+    c.field.forEach(card => { card.disabled = true; });
+    c.sealAllNextTurn = false;
+  }
+
+  // ishiba_2等: 個別カード封印フラグ適用
+  c.field.forEach(card => { if (card.sealedNextTurn) { card.disabled = true; card.sealedNextTurn = false; } });
+
   processPendingEffects();
 
   if (c.nextTurnBonuses.approvalBonus) {
@@ -1071,7 +1103,7 @@ function cpuPhaseAbilities() {
     if (c.usedAbilities[card.instanceId] || card.disabled) continue;
     const costs = card.abilities.map(a => Math.max(0, a.cost - cr));
     // 相手の場が空の場合、ishiba_2 は空振りになるため除外
-    const isUseful = (effect) => effect !== "ishiba_2" || gameState.player.field.length > 0;
+    const isUseful = (effect) => (effect !== "ishiba_2" && effect !== "shinba_2") || gameState.player.field.length > 0;
     const afford0 = c.funds >= costs[0] && isUseful(card.abilities[0].effect);
     const afford1 = !card.sealedAbility2 && c.funds >= costs[1] && isUseful(card.abilities[1].effect);
     let chosen = -1;
@@ -1505,8 +1537,8 @@ function useAbility(fieldIndex, abilityIndex) {
     p.usedAbilities[card.instanceId] = abilityIndex + 1; // 1 or 2 (常にtruthyで0を避ける)
     console.log(`[能力発動] ${card.name}: ${ability.name}（コスト${effectiveCost}億）`);
 
-    // ishiba_2: プレイヤーが相手の場から封印対象を選択
-    if (ability.effect === "ishiba_2") {
+    // ishiba_2 / shinba_2: プレイヤーが相手の場から封印対象を選択
+    if (ability.effect === "ishiba_2" || ability.effect === "shinba_2") {
       const opp = gameState.cpu;
       if (opp.field.length === 0) {
         playAbilityAnimation(fieldIndex, abilityIndex, "player", () => {
@@ -1520,7 +1552,7 @@ function useAbility(fieldIndex, abilityIndex) {
       }
       showFieldCardPicker(opp.field, "封印する相手カードを選択", (selected) => {
         if (!selected) return;
-        selected.disabled = true;
+        selected.sealedNextTurn = true;
         const msgs = [`${selected.name}の能力を次ターン封印！`];
         playAbilityAnimation(fieldIndex, abilityIndex, "player", () => {
           renderGame();
@@ -2019,8 +2051,8 @@ function showSlotAnimation(outcomes, onDone, options = {}) {
   const n = items.length;
   const winnerIdx = Math.floor(Math.random() * n);
 
-  // スピンシーケンス: 高速で全アイテムを巡回し、減速して winner に着地
-  const totalFrames = Math.max(20, n * 4);
+  // スピンシーケンス: 高速で全アイテムを巡回し、減速して winner に着地（合計約3秒）
+  const totalFrames = Math.max(15, n * 3);
   const seq = [];
   for (let i = 0; i < totalFrames; i++) seq.push(i % n);
   // 末尾を winner に合わせる
@@ -2029,7 +2061,7 @@ function showSlotAnimation(outcomes, onDone, options = {}) {
   // 各フレームの表示時間: 指数的に増加（高速→低速）
   const delays = seq.map((_, i) => {
     const t = i / (seq.length - 1);
-    return Math.round(55 + t * t * 480);
+    return Math.round(40 + t * t * 200);
   });
 
   // オーバーレイ
@@ -2070,22 +2102,36 @@ function showSlotAnimation(outcomes, onDone, options = {}) {
 
   // アニメーション実行
   let step = 0;
+  let currentTimer = null;
+  let finished = false;
+
+  function finish() {
+    if (finished) return;
+    finished = true;
+    if (currentTimer) clearTimeout(currentTimer);
+    const winner = items[winnerIdx];
+    slotVal.textContent = winner.label;
+    slotVal.style.color = winner.color;
+    slotWrap.style.border = `4px solid ${winner.color}`;
+    slotWrap.style.boxShadow = `0 0 40px ${winner.color}88, inset 0 0 20px rgba(0,0,0,0.6)`;
+    currentTimer = setTimeout(() => {
+      overlay.remove();
+      onDone(winner);
+    }, 800);
+  }
+
+  // タップでスキップ
+  overlay.addEventListener("click", finish, { once: true });
+
   function tick() {
     const cur = items[seq[step]];
     slotVal.textContent = cur.label;
     slotVal.style.color = cur.color;
     step++;
     if (step < seq.length) {
-      setTimeout(tick, delays[step - 1]);
+      currentTimer = setTimeout(tick, delays[step - 1]);
     } else {
-      // 着地: 枠を winner 色でフラッシュ
-      const winner = items[winnerIdx];
-      slotWrap.style.border = `4px solid ${winner.color}`;
-      slotWrap.style.boxShadow = `0 0 40px ${winner.color}88, inset 0 0 20px rgba(0,0,0,0.6)`;
-      setTimeout(() => {
-        overlay.remove();
-        onDone(winner);
-      }, 1100);
+      finish();
     }
   }
   tick();
@@ -2264,10 +2310,11 @@ function showFinishOverlay(result) {
            : result.includes("（")         ? result
            : "25ターン終了";
 
-  // 最終支持率を履歴に追記（ゲーム途中終了のケースに対応）
+  // 最終支持率を履歴に反映（最後のエントリを最新値で上書き or 追記）
   const hist = gameState.approvalHistory;
-  const lastTurn = hist.length > 0 ? hist[hist.length - 1].turn : -1;
-  if (lastTurn !== gameState.turn) {
+  if (hist.length > 0) {
+    hist[hist.length - 1] = { turn: gameState.turn, player: pa, cpu: ca };
+  } else {
     hist.push({ turn: gameState.turn, player: pa, cpu: ca });
   }
 
@@ -3365,28 +3412,40 @@ async function renderCardCanvas(card) {
   const COIN_R    = 10;
   const COIN_STEP = COIN_R * 2 + 4;
 
-  // ── 1. イラスト（全面、center-crop） ──
+  // ── 0. キャンバス全体をグレーで塗りつぶし（枠外隙間をグレーに） ──
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0,   "#e4e4e4");
+  bgGrad.addColorStop(0.5, "#b4b4b4");
+  bgGrad.addColorStop(1,   "#888888");
+  ctx.fillStyle = bgGrad;
+  ctx.beginPath();
+  ctx.roundRect(0, 0, W, H, BORDER_R);
+  ctx.fill();
+
+  // ── 1. イラスト（名前バー下から開始、center-crop） ──
+  const imgDestY  = NAME_H;
+  const imgDestH  = H - imgDestY;
   await new Promise(resolve => {
     const img = new Image();
     img.onload = () => {
       const srcW = img.naturalWidth, srcH = img.naturalHeight;
-      const destAspect = W / H;
+      const destAspect = W / imgDestH;
       const srcAspect  = srcW / srcH;
       let sx, sy, sw, sh;
       if (srcAspect > destAspect) {
         sh = srcH; sw = srcH * destAspect; sx = (srcW - sw) / 2; sy = 0;
       } else {
-        sw = srcW; sh = srcW / destAspect; sx = 0; sy = (srcH - sh) / 2;
+        sw = srcW; sh = srcW / destAspect; sx = 0; sy = 0;
       }
-      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+      ctx.drawImage(img, sx, sy, sw, sh, 0, imgDestY, W, imgDestH);
       resolve();
     };
     img.onerror = () => {
-      const fbGrad = ctx.createLinearGradient(0, 0, W, H);
+      const fbGrad = ctx.createLinearGradient(0, imgDestY, W, H);
       fbGrad.addColorStop(0, isPolitician ? "#2a0a18" : "#0a1a2e");
       fbGrad.addColorStop(1, isPolitician ? "#4a1a28" : "#0f2a4a");
       ctx.fillStyle = fbGrad;
-      ctx.fillRect(0, 0, W, H);
+      ctx.fillRect(0, imgDestY, W, imgDestH);
       resolve();
     };
     img.src = card.image;
@@ -3423,9 +3482,9 @@ async function renderCardCanvas(card) {
   const panelX = GAP;
   const panelW = W - GAP * 2;
   const panelDrawH = PANEL_H - GAP;  // 下GAP分を引く
-  ctx.fillStyle = "rgba(255, 255, 255, 0.88)";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.72)";
   ctx.beginPath();
-  ctx.roundRect(panelX, PANEL_Y, panelW, panelDrawH, [0, 0, 10, 10]);
+  ctx.roundRect(panelX, PANEL_Y, panelW, panelDrawH, [10, 10, 10, 10]);
   ctx.fill();
 
   // ── 4. 能力 / 効果テキスト ──
@@ -3606,19 +3665,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error("カードデータの読み込みに失敗:", e);
   }
 
-  // 全カード画像をプリロード（ゲーム中の遅延を防ぐ）
+  // 全カード画像をバックグラウンドでプリロード（完了を待たない）
   const allImages = [
     ...POLITICIAN_CARDS.map(c => c.image),
     ...OPTION_CARDS.map(c => c.image),
     "assets/icons/coin.webp",
   ];
-  await Promise.all(allImages.map(src => new Promise(resolve => {
+  Promise.all(allImages.map(src => new Promise(resolve => {
     const img = new Image();
     img.onload = resolve;
-    img.onerror = resolve; // 失敗しても続行
+    img.onerror = resolve;
     img.src = src;
-  })));
-  console.log(`[プリロード完了] ${allImages.length}枚`);
+  }))).then(() => console.log(`[プリロード完了] ${allImages.length}枚`));
 
   const verEl = document.getElementById("app-version");
   if (verEl) verEl.textContent = `ver ${APP_VERSION}`;

@@ -169,7 +169,7 @@
   },
   {
     "id": "k-shinba",
-    "name": "K・シンバ",
+    "name": "",
     "gender": "男",
     "party": "国民民主党",
     "image": "assets/politicians/kokumin/k-shinba.webp",
@@ -177,14 +177,14 @@
     "abilities": [
       {
         "name": "静岡茶で一服",
-        "effectText": "次の相手ターンの支持率低下を1回無効化",
-        "description": "お茶を一杯飲む間に根回し完了",
+        "effectText": "支持率+5%",
+        "description": "お茶を一杯、皆ほっこり",
         "cost": 1,
         "effect": "shinba_1"
       },
       {
         "name": "永田町の根回し王",
-        "effectText": "相手の政治家カードの能力2を全てこのターン中封印",
+        "effectText": "相手の政治家カードを選択し、次の相手ターン使用不可",
         "description": "誰も気づかないうちに話がまとまっている",
         "cost": 2,
         "effect": "shinba_2"

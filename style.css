@@ -302,7 +302,7 @@ h1 {
 .card {
   width: 100px;
   height: 140px;
-  border: 2px solid #555;
+  border: none;
   border-radius: 8px;
   padding: 0;
   display: flex;
@@ -312,6 +312,8 @@ h1 {
   position: relative;
   overflow: hidden;
   touch-action: manipulation; /* タップ遅延解消 */
+  box-shadow: inset 0 0 0 2px rgba(160, 160, 160, 0.7);
+  background: #111;
 }
 
 .card:hover {
@@ -344,12 +346,12 @@ h1 {
 
 /* 政治家カード */
 .card-politician {
-  border-color: #e94560;
+  box-shadow: inset 0 0 0 2px rgba(233, 69, 96, 0.8);
 }
 
 /* オプションカード */
 .card-option {
-  border-color: #0f3460;
+  box-shadow: inset 0 0 0 2px rgba(74, 171, 240, 0.5);
 }
 
 /* ============================================================
@@ -378,6 +380,11 @@ h1 {
   height: 100%;
 }
 
+/* canvas描画済みカードはCSS枠を無効化（canvas内に枠が焼き込み済み） */
+.card.canvas-rendered {
+  box-shadow: none;
+}
+
 
 /* card-abilities-panel, ability-panel-inner, card-ability-row 等は
    Canvas化により廃止済み（JSからも削除）*/
@@ -403,17 +410,17 @@ h1 {
 }
 
 .cpu-area {
-  background: rgba(20, 10, 10, 0.25);
-  border: 1px solid rgba(233, 69, 96, 0.25);
+  background: rgba(20, 10, 10, 0.12);
+  border: 1px solid rgba(233, 69, 96, 0.15);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
 }
 
 .player-area-self {
-  background: rgba(10, 18, 35, 0.25);
+  background: rgba(10, 18, 35, 0.12);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  border: 1px solid rgba(15, 52, 96, 0.25);
+  border: 1px solid rgba(15, 52, 96, 0.15);
 }
 
 .player-info {
@@ -513,7 +520,7 @@ h1 {
   align-items: center;
   justify-content: space-between;
   padding: 8px 16px;
-  background: rgba(10, 18, 35, 0.30);
+  background: rgba(10, 18, 35, 0.15);
   border-radius: 4px;
   font-size: 0.85rem;
   backdrop-filter: blur(6px);
