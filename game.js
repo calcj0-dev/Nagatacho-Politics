@@ -344,13 +344,18 @@ const ABILITY_EFFECTS = {
   },
   shinba_2(self, opponent) {
     const msgs = [];
-    const politicians = opponent.field.filter(c => c.type === "politician");
-    if (politicians.length === 0) {
-      msgs.push("相手の場に政治家カードがなく空振り…");
+    if (opponent.field.length === 0) {
+      msgs.push("相手の場にカードがなく空振り…");
       return msgs;
     }
-    politicians.forEach(c => { c.sealedAbility2 = true; });
-    msgs.push("相手の全政治家カードの能力2を封印！");
+    // CPU：最もコスト合計が高いカードを封印対象に選ぶ
+    const target = opponent.field.reduce((best, cur) => {
+      const bestCost = (best.abilities || []).reduce((s, a) => s + (a.cost || 0), 0);
+      const curCost  = (cur.abilities  || []).reduce((s, a) => s + (a.cost || 0), 0);
+      return curCost > bestCost ? cur : best;
+    }, opponent.field[0]);
+    target.sealedNextTurn = true;
+    msgs.push(`${target.name}の能力を次ターン封印！`);
     return msgs;
   },
   furukawa_1(_self, opponent) {
@@ -1098,7 +1103,7 @@ function cpuPhaseAbilities() {
     if (c.usedAbilities[card.instanceId] || card.disabled) continue;
     const costs = card.abilities.map(a => Math.max(0, a.cost - cr));
     // 相手の場が空の場合、ishiba_2 は空振りになるため除外
-    const isUseful = (effect) => effect !== "ishiba_2" || gameState.player.field.length > 0;
+    const isUseful = (effect) => (effect !== "ishiba_2" && effect !== "shinba_2") || gameState.player.field.length > 0;
     const afford0 = c.funds >= costs[0] && isUseful(card.abilities[0].effect);
     const afford1 = !card.sealedAbility2 && c.funds >= costs[1] && isUseful(card.abilities[1].effect);
     let chosen = -1;
@@ -1532,8 +1537,8 @@ function useAbility(fieldIndex, abilityIndex) {
     p.usedAbilities[card.instanceId] = abilityIndex + 1; // 1 or 2 (常にtruthyで0を避ける)
     console.log(`[能力発動] ${card.name}: ${ability.name}（コスト${effectiveCost}億）`);
 
-    // ishiba_2: プレイヤーが相手の場から封印対象を選択
-    if (ability.effect === "ishiba_2") {
+    // ishiba_2 / shinba_2: プレイヤーが相手の場から封印対象を選択
+    if (ability.effect === "ishiba_2" || ability.effect === "shinba_2") {
       const opp = gameState.cpu;
       if (opp.field.length === 0) {
         playAbilityAnimation(fieldIndex, abilityIndex, "player", () => {
