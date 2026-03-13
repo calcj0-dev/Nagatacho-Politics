@@ -2195,6 +2195,7 @@ function showResultOverlay(title, messages, onClose) {
 // 情勢調査オーバーレイ（opts.kinkyuu=true で緊急世論調査モード）
 function showSurveyOverlay(onClose, opts) {
   opts = opts || {};
+  playSE("assets/audio/se/survey_drum.mp3");
   const pa = gameState.player.approval;
   const ca = gameState.cpu.approval;
 
@@ -2293,6 +2294,11 @@ function showSurveyOverlay(onClose, opts) {
 
 // 終了画面オーバーレイ
 function showFinishOverlay(result) {
+  if (result.startsWith("プレイヤーの勝利")) {
+    playSE("assets/audio/se/victory.mp3");
+  } else if (result.startsWith("CPUの勝利")) {
+    playSE("assets/audio/se/defeat.mp3");
+  }
   const pa = gameState.player.approval;
   const ca = gameState.cpu.approval;
   let title, subtitle;
@@ -2450,6 +2456,7 @@ function showApprovalHistoryOverlay() {
 function showCardZoom(card, context, index) {
   const existing = document.querySelector(".card-zoom-overlay");
   if (existing) existing.remove();
+  playSE("assets/audio/se/card_play.mp3");
 
   const overlay = document.createElement("div");
   overlay.className = "card-zoom-overlay";
@@ -2729,6 +2736,12 @@ function animateCardToDiscard(card, isPlayer, onDone) {
 }
 
 // 共通: 大型フローティング数値 + プレイヤーエリアフラッシュ
+function playSE(src, volume = 0.6) {
+  const se = new Audio(src);
+  se.volume = volume;
+  se.play().catch(() => {});
+}
+
 function showStatBigDelta(text, textClass, flashClass, anchorEl) {
   // プレイヤーエリアフラッシュ
   const playerArea = document.querySelector(".player-area-self");
@@ -2857,6 +2870,7 @@ function renderGame() {
   if (gameState.cpu._fundsFlash) {
     const { dir, delta } = gameState.cpu._fundsFlash;
     delete gameState.cpu._fundsFlash;
+    playSE(dir === "up" ? "assets/audio/se/funds_up.mp3" : "assets/audio/se/funds_down.mp3");
     const cpuFundsDelay = gameState.cpu._approvalFlash ? 300 : 0;
     setTimeout(() => requestAnimationFrame(() => {
       showCpuStatDelta((delta > 0 ? "+" : "") + delta + "億", dir, true);
@@ -2865,6 +2879,7 @@ function renderGame() {
   if (gameState.cpu._approvalFlash) {
     const { dir, delta } = gameState.cpu._approvalFlash;
     delete gameState.cpu._approvalFlash;
+    playSE(dir === "up" ? "assets/audio/se/rating_rise.mp3" : "assets/audio/se/rating_down.mp3");
     requestAnimationFrame(() => {
       showCpuStatDelta((delta > 0 ? "+" : "") + delta + "%", dir, false);
     });
@@ -2879,6 +2894,7 @@ function renderGame() {
   if (gameState.player._fundsFlash) {
     const { dir, delta } = gameState.player._fundsFlash;
     delete gameState.player._fundsFlash;
+    playSE(dir === "up" ? "assets/audio/se/funds_up.mp3" : "assets/audio/se/funds_down.mp3");
     const fundsDelay = gameState.player._approvalFlash ? 300 : 0;
     setTimeout(() => requestAnimationFrame(() => {
       const fundsEl = document.getElementById("player-funds");
@@ -2896,6 +2912,7 @@ function renderGame() {
   if (gameState.player._approvalFlash) {
     const { dir, delta } = gameState.player._approvalFlash;
     delete gameState.player._approvalFlash;
+    playSE(dir === "up" ? "assets/audio/se/rating_rise.mp3" : "assets/audio/se/rating_down.mp3");
     requestAnimationFrame(() => {
       // バーフラッシュ
       barEl.classList.remove("approval-flash-up", "approval-flash-down");
@@ -3649,6 +3666,11 @@ async function selectParty(party) {
   }
 
   document.getElementById("loading-screen").classList.add("hidden");
+
+  // 効果音: 政党選択
+  const seSel = new Audio("assets/audio/se/menu_start.mp3");
+  seSel.volume = 0.7;
+  seSel.play().catch(() => {});
 
   // BGM再生（ユーザー操作後なので自動再生ポリシーをクリア）
   const bgm = document.getElementById("bgm");
