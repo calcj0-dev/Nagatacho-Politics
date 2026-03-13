@@ -2857,9 +2857,10 @@ function renderGame() {
   if (gameState.cpu._fundsFlash) {
     const { dir, delta } = gameState.cpu._fundsFlash;
     delete gameState.cpu._fundsFlash;
-    requestAnimationFrame(() => {
+    const cpuFundsDelay = gameState.cpu._approvalFlash ? 300 : 0;
+    setTimeout(() => requestAnimationFrame(() => {
       showCpuStatDelta((delta > 0 ? "+" : "") + delta + "億", dir, true);
-    });
+    }), cpuFundsDelay);
   }
   if (gameState.cpu._approvalFlash) {
     const { dir, delta } = gameState.cpu._approvalFlash;
@@ -2878,11 +2879,12 @@ function renderGame() {
   if (gameState.player._fundsFlash) {
     const { dir, delta } = gameState.player._fundsFlash;
     delete gameState.player._fundsFlash;
-    requestAnimationFrame(() => {
+    const fundsDelay = gameState.player._approvalFlash ? 300 : 0;
+    setTimeout(() => requestAnimationFrame(() => {
       const fundsEl = document.getElementById("player-funds");
       const rect = fundsEl.getBoundingClientRect();
       showFundsDelta(delta, rect.right + 6, rect.top + rect.height / 2, dir);
-    });
+    }), fundsDelay);
   }
   const pa = gameState.player.approval;
   document.getElementById("player-approval").textContent = `${pa}%`;
@@ -3647,6 +3649,11 @@ async function selectParty(party) {
   }
 
   document.getElementById("loading-screen").classList.add("hidden");
+
+  // BGM再生（ユーザー操作後なので自動再生ポリシーをクリア）
+  const bgm = document.getElementById("bgm");
+  if (bgm) { bgm.volume = 0.4; bgm.play().catch(() => {}); }
+
   initGame(party);
 }
 
