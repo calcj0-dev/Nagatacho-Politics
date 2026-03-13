@@ -2456,7 +2456,6 @@ function showApprovalHistoryOverlay() {
 function showCardZoom(card, context, index) {
   const existing = document.querySelector(".card-zoom-overlay");
   if (existing) existing.remove();
-  playSE("assets/audio/se/card_play.mp3");
 
   const overlay = document.createElement("div");
   overlay.className = "card-zoom-overlay";
@@ -2558,6 +2557,7 @@ function showCardZoom(card, context, index) {
       btn.disabled = true;
     }
     btn.addEventListener("click", () => {
+      playSE("assets/audio/se/card_play.mp3");
       const srcEl = document.querySelectorAll("#player-hand .card")[index];
       const destEl = document.querySelector("#player-field .field-empty-slot");
       overlay.remove();
@@ -3655,6 +3655,11 @@ function logState() {
 // ============================================================
 
 async function selectParty(party) {
+  // 効果音: 政党選択（タップ直後）
+  const seSel = new Audio("assets/audio/se/menu_start.mp3");
+  seSel.volume = 0.7;
+  seSel.play().catch(() => {});
+
   // ローディング画面表示
   document.getElementById("party-select-screen").classList.add("hidden");
   document.getElementById("loading-screen").classList.remove("hidden");
@@ -3666,11 +3671,6 @@ async function selectParty(party) {
   }
 
   document.getElementById("loading-screen").classList.add("hidden");
-
-  // 効果音: 政党選択
-  const seSel = new Audio("assets/audio/se/menu_start.mp3");
-  seSel.volume = 0.7;
-  seSel.play().catch(() => {});
 
   // BGM再生（ユーザー操作後なので自動再生ポリシーをクリア）
   const bgm = document.getElementById("bgm");
