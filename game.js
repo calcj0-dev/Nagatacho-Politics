@@ -14,7 +14,7 @@ const cardImageCache = new Map(); // card.id → Canvas dataURL
 
 
 // 政党リスト
-const PARTIES = ["自民党", "国民民主党", "チームみらい"];
+const PARTIES = ["自民党", "国民民主党", "チームみらい", "維新の会", "参政党", "中道改革連合"];
 
 // ============================================================
 // ユーティリティ
@@ -482,6 +482,213 @@ const ABILITY_EFFECTS = {
     if (m1) msgs.push(m1);
     const m2 = changeApproval(opponent, -10);
     if (m2) msgs.push(m2);
+    return msgs;
+  },
+  // 維新の会
+  saito_a_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 5);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  saito_a_2(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 8);
+    if (m) msgs.push(m);
+    self.funds = Math.max(0, self.funds - 2);
+    msgs.push("政治資金-2億");
+    return msgs;
+  },
+  fujita_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 6);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  fujita_2(self, _opponent) {
+    const msgs = [];
+    if (self.deck.length > 0) {
+      const drawn = self.deck.shift();
+      self.hand.push(drawn);
+      msgs.push(`${drawn.name}を手札に加えた！`);
+    }
+    self.funds += 3;
+    msgs.push("政治資金+3億");
+    return msgs;
+  },
+  nakatsuka_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 5);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  nakatsuka_2(_self, opponent) {
+    const msgs = [];
+    const m = changeApproval(opponent, -6);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  baba_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 7);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  baba_2(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 5);
+    if (m1) msgs.push(m1);
+    const m2 = changeApproval(opponent, -4);
+    if (m2) msgs.push(m2);
+    return msgs;
+  },
+  maehara_1(self, _opponent) {
+    const msgs = [];
+    self.funds += 4;
+    msgs.push("政治資金+4億");
+    return msgs;
+  },
+  maehara_2(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 9);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  // 参政党
+  kamiya_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 6);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  kamiya_2(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 10);
+    if (m1) msgs.push(m1);
+    const m2 = changeApproval(opponent, -4);
+    if (m2) msgs.push(m2);
+    return msgs;
+  },
+  ando_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 5);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  ando_2(self, _opponent) {
+    const msgs = [];
+    self.funds += 4;
+    msgs.push("政治資金+4億");
+    return msgs;
+  },
+  toyota_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 5);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  toyota_2(self, _opponent) {
+    const msgs = [];
+    const femaleCount = self.field.filter(c => c.gender === "女").length;
+    const bonus = femaleCount >= 2 ? 5 : 0;
+    const m = changeApproval(self, 7 + bonus);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  yoshikawa_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 5);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  yoshikawa_2(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 6);
+    if (m) msgs.push(m);
+    self.funds += 2;
+    msgs.push("政治資金+2億");
+    return msgs;
+  },
+  mogami_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 4);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  mogami_2(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 8);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  // 中道改革連合
+  noda_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 6);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  noda_2(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, -5);
+    if (m) msgs.push(m);
+    self.funds += 8;
+    msgs.push("政治資金+8億");
+    return msgs;
+  },
+  izumi_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 5);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  izumi_2(_self, opponent) {
+    const msgs = [];
+    const m = changeApproval(opponent, -7);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  ogawa_1(self, _opponent) {
+    const msgs = [];
+    self.funds += 5;
+    msgs.push("政治資金+5億");
+    return msgs;
+  },
+  ogawa_2(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 8);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  isa_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 5);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  isa_2(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 6);
+    if (m) msgs.push(m);
+    self.funds += 3;
+    msgs.push("政治資金+3億");
+    return msgs;
+  },
+  saito_t_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 5);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  saito_t_2(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 7);
+    if (m) msgs.push(m);
+    if (self.deck.length > 0) {
+      const drawn = self.deck.shift();
+      self.hand.push(drawn);
+      msgs.push(`${drawn.name}を手札に加えた！`);
+    }
     return msgs;
   }
 };
@@ -2195,6 +2402,7 @@ function showResultOverlay(title, messages, onClose) {
 // 情勢調査オーバーレイ（opts.kinkyuu=true で緊急世論調査モード）
 function showSurveyOverlay(onClose, opts) {
   opts = opts || {};
+  playSE("assets/audio/se/survey_drum.mp3");
   const pa = gameState.player.approval;
   const ca = gameState.cpu.approval;
 
@@ -2293,6 +2501,11 @@ function showSurveyOverlay(onClose, opts) {
 
 // 終了画面オーバーレイ
 function showFinishOverlay(result) {
+  if (result.startsWith("プレイヤーの勝利")) {
+    playSE("assets/audio/se/victory.mp3");
+  } else if (result.startsWith("CPUの勝利")) {
+    playSE("assets/audio/se/defeat.mp3");
+  }
   const pa = gameState.player.approval;
   const ca = gameState.cpu.approval;
   let title, subtitle;
@@ -2375,15 +2588,15 @@ function buildApprovalSVG() {
   [0, 25, 50, 75, 100].forEach(a => {
     const y = py(a);
     const dash = a === 50 ? "4,3" : "";
-    svg += `<line x1="${pl}" y1="${y}" x2="${pl + cw}" y2="${y}" stroke="rgba(255,255,255,${a === 50 ? 0.18 : 0.08})" stroke-width="1"${dash ? ` stroke-dasharray="${dash}"` : ""}/>`;
-    svg += `<text x="${pl - 4}" y="${y + 4}" text-anchor="end" font-size="9" fill="#555">${a}%</text>`;
+    svg += `<line x1="${pl}" y1="${y}" x2="${pl + cw}" y2="${y}" stroke="rgba(255,255,255,${a === 50 ? 0.35 : 0.15})" stroke-width="1"${dash ? ` stroke-dasharray="${dash}"` : ""}/>`;
+    svg += `<text x="${pl - 4}" y="${y + 4}" text-anchor="end" font-size="9" fill="#bbb">${a}%</text>`;
   });
 
   // X軸ラベル（最大7本）
   const step = Math.max(1, Math.ceil(hist.length / 7));
   hist.forEach((d, i) => {
     if (i % step === 0 || i === hist.length - 1) {
-      svg += `<text x="${px(d.turn)}" y="${H - 6}" text-anchor="middle" font-size="9" fill="#555">${d.turn}T</text>`;
+      svg += `<text x="${px(d.turn)}" y="${H - 6}" text-anchor="middle" font-size="9" fill="#bbb">${d.turn}T</text>`;
     }
   });
 
@@ -2551,6 +2764,7 @@ function showCardZoom(card, context, index) {
       btn.disabled = true;
     }
     btn.addEventListener("click", () => {
+      playSE("assets/audio/se/card_play.mp3");
       const srcEl = document.querySelectorAll("#player-hand .card")[index];
       const destEl = document.querySelector("#player-field .field-empty-slot");
       overlay.remove();
@@ -2729,6 +2943,20 @@ function animateCardToDiscard(card, isPlayer, onDone) {
 }
 
 // 共通: 大型フローティング数値 + プレイヤーエリアフラッシュ
+const seCache = new Map();
+// メニューSEのみ起動時にプリロード
+const _menuSE = new Audio("assets/audio/se/menu_start.mp3");
+_menuSE.preload = "auto";
+seCache.set("assets/audio/se/menu_start.mp3", _menuSE);
+
+function playSE(src, volume = 0.6) {
+  const cached = seCache.get(src);
+  const se = cached ?? new Audio(src);
+  se.volume = volume;
+  se.currentTime = 0;
+  se.play().catch(() => {});
+}
+
 function showStatBigDelta(text, textClass, flashClass, anchorEl) {
   // プレイヤーエリアフラッシュ
   const playerArea = document.querySelector(".player-area-self");
@@ -2857,13 +3085,16 @@ function renderGame() {
   if (gameState.cpu._fundsFlash) {
     const { dir, delta } = gameState.cpu._fundsFlash;
     delete gameState.cpu._fundsFlash;
-    requestAnimationFrame(() => {
+    playSE(dir === "up" ? "assets/audio/se/funds_up.mp3" : "assets/audio/se/funds_down.mp3");
+    const cpuFundsDelay = gameState.cpu._approvalFlash ? 300 : 0;
+    setTimeout(() => requestAnimationFrame(() => {
       showCpuStatDelta((delta > 0 ? "+" : "") + delta + "億", dir, true);
-    });
+    }), cpuFundsDelay);
   }
   if (gameState.cpu._approvalFlash) {
     const { dir, delta } = gameState.cpu._approvalFlash;
     delete gameState.cpu._approvalFlash;
+    playSE(dir === "up" ? "assets/audio/se/rating_rise.mp3" : "assets/audio/se/rating_down.mp3", 0.20);
     requestAnimationFrame(() => {
       showCpuStatDelta((delta > 0 ? "+" : "") + delta + "%", dir, false);
     });
@@ -2878,11 +3109,13 @@ function renderGame() {
   if (gameState.player._fundsFlash) {
     const { dir, delta } = gameState.player._fundsFlash;
     delete gameState.player._fundsFlash;
-    requestAnimationFrame(() => {
+    playSE(dir === "up" ? "assets/audio/se/funds_up.mp3" : "assets/audio/se/funds_down.mp3");
+    const fundsDelay = gameState.player._approvalFlash ? 300 : 0;
+    setTimeout(() => requestAnimationFrame(() => {
       const fundsEl = document.getElementById("player-funds");
       const rect = fundsEl.getBoundingClientRect();
       showFundsDelta(delta, rect.right + 6, rect.top + rect.height / 2, dir);
-    });
+    }), fundsDelay);
   }
   const pa = gameState.player.approval;
   document.getElementById("player-approval").textContent = `${pa}%`;
@@ -2894,6 +3127,7 @@ function renderGame() {
   if (gameState.player._approvalFlash) {
     const { dir, delta } = gameState.player._approvalFlash;
     delete gameState.player._approvalFlash;
+    playSE(dir === "up" ? "assets/audio/se/rating_rise.mp3" : "assets/audio/se/rating_down.mp3", 0.20);
     requestAnimationFrame(() => {
       // バーフラッシュ
       barEl.classList.remove("approval-flash-up", "approval-flash-down");
@@ -3404,8 +3638,8 @@ async function renderCardCanvas(card) {
   // レイアウト定数
   const GAP       = 18;  // 白パネルの両サイド・下の隙間
   const BORDER_R  = 18;  // カード角丸（グレー枠と合わせる）
-  const PANEL_H   = Math.round(H * 0.40);  // 224px（全体の40%）
-  const PANEL_Y   = H - PANEL_H;           // 336px
+  const PANEL_H   = Math.round(H * 0.35);  // 196px（全体の35%）
+  const PANEL_Y   = H - PANEL_H;           // 364px
   const NAME_H    = 60;  // 46 × 1.3
   const NAME_Y    = 0;   // グレー枠に隙間なし（最上部）
   const PAD_X     = 18;
@@ -3453,9 +3687,12 @@ async function renderCardCanvas(card) {
 
   // ── 2. 名前バー（政党カラー・黒文字） ──
   const PARTY_COLORS = {
-    "自民党":      "#d42020",
-    "国民民主党":  "#f5c400",
-    "チームみらい":"#1c9e45",
+    "自民党":       "#d42020",
+    "国民民主党":   "#f5c400",
+    "チームみらい": "#1c9e45",
+    "維新の会":     "#7ec820",
+    "参政党":       "#e07020",
+    "中道改革連合": "#1060c0",
   };
   const nameColor = isPolitician
     ? (PARTY_COLORS[card.party] ?? "#aaaaaa")
@@ -3636,6 +3873,7 @@ function logState() {
 // ============================================================
 
 async function selectParty(party) {
+
   // ローディング画面表示
   document.getElementById("party-select-screen").classList.add("hidden");
   document.getElementById("loading-screen").classList.remove("hidden");
@@ -3647,6 +3885,11 @@ async function selectParty(party) {
   }
 
   document.getElementById("loading-screen").classList.add("hidden");
+
+  // BGM再生（ユーザー操作後なので自動再生ポリシーをクリア）
+  const bgm = document.getElementById("bgm");
+  if (bgm) { bgm.volume = 0.4; bgm.play().catch(() => {}); }
+
   initGame(party);
 }
 
@@ -3682,7 +3925,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (verEl) verEl.textContent = `ver ${APP_VERSION}`;
 
   document.querySelectorAll(".party-btn").forEach(btn => {
-    btn.addEventListener("click", () => selectParty(btn.dataset.party));
+    btn.addEventListener("click", () => {
+      playSE("assets/audio/se/menu_start.mp3", 0.7);
+      selectParty(btn.dataset.party);
+    });
   });
 
   document.getElementById("end-turn-btn").addEventListener("click", () => {
