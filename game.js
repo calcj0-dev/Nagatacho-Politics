@@ -14,7 +14,7 @@ const cardImageCache = new Map(); // card.id → Canvas dataURL
 
 
 // 政党リスト
-const PARTIES = ["自民党", "国民民主党", "チームみらい"];
+const PARTIES = ["自民党", "国民民主党", "チームみらい", "維新の会", "参政党", "中道改革連合"];
 
 // ============================================================
 // ユーティリティ
@@ -482,6 +482,213 @@ const ABILITY_EFFECTS = {
     if (m1) msgs.push(m1);
     const m2 = changeApproval(opponent, -10);
     if (m2) msgs.push(m2);
+    return msgs;
+  },
+  // 維新の会
+  saito_a_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 5);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  saito_a_2(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 8);
+    if (m) msgs.push(m);
+    self.funds = Math.max(0, self.funds - 2);
+    msgs.push("政治資金-2億");
+    return msgs;
+  },
+  fujita_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 6);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  fujita_2(self, _opponent) {
+    const msgs = [];
+    if (self.deck.length > 0) {
+      const drawn = self.deck.shift();
+      self.hand.push(drawn);
+      msgs.push(`${drawn.name}を手札に加えた！`);
+    }
+    self.funds += 3;
+    msgs.push("政治資金+3億");
+    return msgs;
+  },
+  nakatsuka_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 5);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  nakatsuka_2(_self, opponent) {
+    const msgs = [];
+    const m = changeApproval(opponent, -6);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  baba_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 7);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  baba_2(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 5);
+    if (m1) msgs.push(m1);
+    const m2 = changeApproval(opponent, -4);
+    if (m2) msgs.push(m2);
+    return msgs;
+  },
+  maehara_1(self, _opponent) {
+    const msgs = [];
+    self.funds += 4;
+    msgs.push("政治資金+4億");
+    return msgs;
+  },
+  maehara_2(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 9);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  // 参政党
+  kamiya_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 6);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  kamiya_2(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 10);
+    if (m1) msgs.push(m1);
+    const m2 = changeApproval(opponent, -4);
+    if (m2) msgs.push(m2);
+    return msgs;
+  },
+  ando_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 5);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  ando_2(self, _opponent) {
+    const msgs = [];
+    self.funds += 4;
+    msgs.push("政治資金+4億");
+    return msgs;
+  },
+  toyota_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 5);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  toyota_2(self, _opponent) {
+    const msgs = [];
+    const femaleCount = self.field.filter(c => c.gender === "女").length;
+    const bonus = femaleCount >= 2 ? 5 : 0;
+    const m = changeApproval(self, 7 + bonus);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  yoshikawa_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 5);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  yoshikawa_2(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 6);
+    if (m) msgs.push(m);
+    self.funds += 2;
+    msgs.push("政治資金+2億");
+    return msgs;
+  },
+  mogami_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 4);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  mogami_2(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 8);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  // 中道改革連合
+  noda_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 6);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  noda_2(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, -5);
+    if (m) msgs.push(m);
+    self.funds += 8;
+    msgs.push("政治資金+8億");
+    return msgs;
+  },
+  izumi_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 5);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  izumi_2(_self, opponent) {
+    const msgs = [];
+    const m = changeApproval(opponent, -7);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  ogawa_1(self, _opponent) {
+    const msgs = [];
+    self.funds += 5;
+    msgs.push("政治資金+5億");
+    return msgs;
+  },
+  ogawa_2(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 8);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  isa_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 5);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  isa_2(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 6);
+    if (m) msgs.push(m);
+    self.funds += 3;
+    msgs.push("政治資金+3億");
+    return msgs;
+  },
+  saito_t_1(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 5);
+    if (m) msgs.push(m);
+    return msgs;
+  },
+  saito_t_2(self, _opponent) {
+    const msgs = [];
+    const m = changeApproval(self, 7);
+    if (m) msgs.push(m);
+    if (self.deck.length > 0) {
+      const drawn = self.deck.shift();
+      self.hand.push(drawn);
+      msgs.push(`${drawn.name}を手札に加えた！`);
+    }
     return msgs;
   }
 };
@@ -3480,9 +3687,12 @@ async function renderCardCanvas(card) {
 
   // ── 2. 名前バー（政党カラー・黒文字） ──
   const PARTY_COLORS = {
-    "自民党":      "#d42020",
-    "国民民主党":  "#f5c400",
-    "チームみらい":"#1c9e45",
+    "自民党":       "#d42020",
+    "国民民主党":   "#f5c400",
+    "チームみらい": "#1c9e45",
+    "維新の会":     "#7ec820",
+    "参政党":       "#e07020",
+    "中道改革連合": "#1060c0",
   };
   const nameColor = isPolitician
     ? (PARTY_COLORS[card.party] ?? "#aaaaaa")
