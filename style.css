@@ -221,10 +221,11 @@ h1 {
    ============================================================ */
 
 .party-buttons {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 16px;
-  flex-wrap: wrap;
-  justify-content: center;
+  width: 100%;
+  max-width: 500px;
 }
 
 .app-version {
