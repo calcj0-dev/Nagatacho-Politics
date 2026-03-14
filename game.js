@@ -3431,8 +3431,8 @@ async function renderCardCanvas(card) {
   // レイアウト定数
   const GAP       = 18;  // 白パネルの両サイド・下の隙間
   const BORDER_R  = 18;  // カード角丸（グレー枠と合わせる）
-  const PANEL_H   = Math.round(H * 0.30);  // 168px（全体の30%）
-  const PANEL_Y   = H - PANEL_H;           // 392px
+  const PANEL_H   = Math.round(H * 0.35);  // 196px（全体の35%）
+  const PANEL_Y   = H - PANEL_H;           // 364px
   const NAME_H    = 60;  // 46 × 1.3
   const NAME_Y    = 0;   // グレー枠に隙間なし（最上部）
   const PAD_X     = 18;
