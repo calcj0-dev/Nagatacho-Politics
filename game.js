@@ -3655,10 +3655,6 @@ function logState() {
 // ============================================================
 
 async function selectParty(party) {
-  // 効果音: 政党選択（タップ直後）
-  const seSel = new Audio("assets/audio/se/menu_start.mp3");
-  seSel.volume = 0.7;
-  seSel.play().catch(() => {});
 
   // ローディング画面表示
   document.getElementById("party-select-screen").classList.add("hidden");
@@ -3711,7 +3707,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (verEl) verEl.textContent = `ver ${APP_VERSION}`;
 
   document.querySelectorAll(".party-btn").forEach(btn => {
-    btn.addEventListener("click", () => selectParty(btn.dataset.party));
+    btn.addEventListener("click", () => {
+      playSE("assets/audio/se/menu_start.mp3", 0.7);
+      selectParty(btn.dataset.party);
+    });
   });
 
   document.getElementById("end-turn-btn").addEventListener("click", () => {
