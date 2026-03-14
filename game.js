@@ -2736,9 +2736,17 @@ function animateCardToDiscard(card, isPlayer, onDone) {
 }
 
 // 共通: 大型フローティング数値 + プレイヤーエリアフラッシュ
+const seCache = new Map();
+// メニューSEのみ起動時にプリロード
+const _menuSE = new Audio("assets/audio/se/menu_start.mp3");
+_menuSE.preload = "auto";
+seCache.set("assets/audio/se/menu_start.mp3", _menuSE);
+
 function playSE(src, volume = 0.6) {
-  const se = new Audio(src);
+  const cached = seCache.get(src);
+  const se = cached ?? new Audio(src);
   se.volume = volume;
+  se.currentTime = 0;
   se.play().catch(() => {});
 }
 
