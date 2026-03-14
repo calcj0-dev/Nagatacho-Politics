@@ -3094,7 +3094,7 @@ function renderGame() {
   if (gameState.cpu._approvalFlash) {
     const { dir, delta } = gameState.cpu._approvalFlash;
     delete gameState.cpu._approvalFlash;
-    playSE(dir === "up" ? "assets/audio/se/rating_rise.mp3" : "assets/audio/se/rating_down.mp3");
+    playSE(dir === "up" ? "assets/audio/se/rating_rise.mp3" : "assets/audio/se/rating_down.mp3", 0.36);
     requestAnimationFrame(() => {
       showCpuStatDelta((delta > 0 ? "+" : "") + delta + "%", dir, false);
     });
@@ -3127,7 +3127,7 @@ function renderGame() {
   if (gameState.player._approvalFlash) {
     const { dir, delta } = gameState.player._approvalFlash;
     delete gameState.player._approvalFlash;
-    playSE(dir === "up" ? "assets/audio/se/rating_rise.mp3" : "assets/audio/se/rating_down.mp3");
+    playSE(dir === "up" ? "assets/audio/se/rating_rise.mp3" : "assets/audio/se/rating_down.mp3", 0.36);
     requestAnimationFrame(() => {
       // バーフラッシュ
       barEl.classList.remove("approval-flash-up", "approval-flash-down");
