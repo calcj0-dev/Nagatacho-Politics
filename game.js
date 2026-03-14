@@ -2588,15 +2588,15 @@ function buildApprovalSVG() {
   [0, 25, 50, 75, 100].forEach(a => {
     const y = py(a);
     const dash = a === 50 ? "4,3" : "";
-    svg += `<line x1="${pl}" y1="${y}" x2="${pl + cw}" y2="${y}" stroke="rgba(255,255,255,${a === 50 ? 0.18 : 0.08})" stroke-width="1"${dash ? ` stroke-dasharray="${dash}"` : ""}/>`;
-    svg += `<text x="${pl - 4}" y="${y + 4}" text-anchor="end" font-size="9" fill="#555">${a}%</text>`;
+    svg += `<line x1="${pl}" y1="${y}" x2="${pl + cw}" y2="${y}" stroke="rgba(255,255,255,${a === 50 ? 0.35 : 0.15})" stroke-width="1"${dash ? ` stroke-dasharray="${dash}"` : ""}/>`;
+    svg += `<text x="${pl - 4}" y="${y + 4}" text-anchor="end" font-size="9" fill="#bbb">${a}%</text>`;
   });
 
   // X軸ラベル（最大7本）
   const step = Math.max(1, Math.ceil(hist.length / 7));
   hist.forEach((d, i) => {
     if (i % step === 0 || i === hist.length - 1) {
-      svg += `<text x="${px(d.turn)}" y="${H - 6}" text-anchor="middle" font-size="9" fill="#555">${d.turn}T</text>`;
+      svg += `<text x="${px(d.turn)}" y="${H - 6}" text-anchor="middle" font-size="9" fill="#bbb">${d.turn}T</text>`;
     }
   });
 
