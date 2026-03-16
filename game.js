@@ -631,8 +631,8 @@ const ABILITY_EFFECTS = {
     const msgs = [];
     const m = changeApproval(self, -5);
     if (m) msgs.push(m);
-    self.funds += 8;
-    msgs.push("政治資金+8億");
+    self.funds += 4;
+    msgs.push("政治資金+4億");
     return msgs;
   },
   izumi_1(self, _opponent) {
@@ -643,19 +643,28 @@ const ABILITY_EFFECTS = {
   },
   izumi_2(_self, opponent) {
     const msgs = [];
-    const m = changeApproval(opponent, -7);
+    const m = changeApproval(opponent, -25);
     if (m) msgs.push(m);
     return msgs;
   },
-  ogawa_1(self, _opponent) {
+  ogawa_1(_self, opponent) {
     const msgs = [];
-    self.funds += 5;
-    msgs.push("政治資金+5億");
+    if (opponent.field.length > 0) {
+      const target = opponent.field.reduce((best, cur) => {
+        const bestCost = (best.abilities || []).reduce((s, a) => s + (a.cost || 0), 0);
+        const curCost  = (cur.abilities  || []).reduce((s, a) => s + (a.cost || 0), 0);
+        return curCost > bestCost ? cur : best;
+      }, opponent.field[0]);
+      target.sealedNextTurn = true;
+      msgs.push(`${target.name}の能力を次ターン封印！`);
+    } else {
+      msgs.push("相手の場にカードがなく空振り…");
+    }
     return msgs;
   },
   ogawa_2(self, _opponent) {
     const msgs = [];
-    const m = changeApproval(self, 8);
+    const m = changeApproval(self, 9);
     if (m) msgs.push(m);
     return msgs;
   },
@@ -667,10 +676,9 @@ const ABILITY_EFFECTS = {
   },
   isa_2(self, _opponent) {
     const msgs = [];
-    const m = changeApproval(self, 6);
+    const gain = self.hand.length * 3;
+    const m = changeApproval(self, gain);
     if (m) msgs.push(m);
-    self.funds += 3;
-    msgs.push("政治資金+3億");
     return msgs;
   },
   saito_t_1(self, _opponent) {
@@ -1309,7 +1317,7 @@ function cpuPhaseAbilities() {
     if (c.usedAbilities[card.instanceId] || card.disabled) continue;
     const costs = card.abilities.map(a => Math.max(0, a.cost - cr));
     // 相手の場が空の場合、ishiba_2 は空振りになるため除外
-    const isUseful = (effect) => (effect !== "ishiba_2" && effect !== "shinba_2") || gameState.player.field.length > 0;
+    const isUseful = (effect) => (effect !== "ishiba_2" && effect !== "shinba_2" && effect !== "ogawa_1") || gameState.player.field.length > 0;
     const afford0 = c.funds >= costs[0] && isUseful(card.abilities[0].effect);
     const afford1 = !card.sealedAbility2 && c.funds >= costs[1] && isUseful(card.abilities[1].effect);
     let chosen = -1;
@@ -1744,7 +1752,7 @@ function useAbility(fieldIndex, abilityIndex) {
     console.log(`[能力発動] ${card.name}: ${ability.name}（コスト${effectiveCost}億）`);
 
     // ishiba_2 / shinba_2: プレイヤーが相手の場から封印対象を選択
-    if (ability.effect === "ishiba_2" || ability.effect === "shinba_2") {
+    if (ability.effect === "ishiba_2" || ability.effect === "shinba_2" || ability.effect === "ogawa_1") {
       const opp = gameState.cpu;
       if (opp.field.length === 0) {
         playAbilityAnimation(fieldIndex, abilityIndex, "player", () => {
@@ -3900,7 +3908,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // カードデータを JSON から読み込む（並列）
   try {
     [POLITICIAN_CARDS, OPTION_CARDS] = await Promise.all([
-      fetch("assets/data/politician_cards.json").then(r => r.json()),
+      fetch("assets/data/politician_cards.json").then(r => r.json()).then(data =>
+        data.flatMap(g => g.politicians.map(p => ({ ...p, party: g.party })))
+      ),
       fetch("assets/data/option_cards.json").then(r => r.json()),
     ]);
   } catch (e) {
