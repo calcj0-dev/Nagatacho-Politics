@@ -352,9 +352,9 @@
       },
       {
         "name": "身を切る改革",
-        "effectText": "支持率+8%、政治資金-2億",
+        "effectText": "支持率+15%、次の自分のターンのドローをスキップ",
         "description": "議員報酬を削減し、有権者の信頼を得る",
-        "cost": 2,
+        "cost": 3,
         "effect": "saito_a_2"
       }
     ]
@@ -376,7 +376,7 @@
       },
       {
         "name": "野党連携",
-        "effectText": "山札から1枚ドロー、政治資金+3億",
+        "effectText": "山札から1枚ドロー",
         "description": "他党との連携で政策推進力を高める",
         "cost": 2,
         "effect": "fujita_2"
@@ -393,16 +393,16 @@
     "abilities": [
       {
         "name": "大阪改革モデル",
-        "effectText": "支持率+5%",
+        "effectText": "支持率+10%",
         "description": "大阪で実証した改革を全国に広める",
-        "cost": 1,
+        "cost": 2,
         "effect": "nakatsuka_1"
       },
       {
         "name": "行政スリム化",
-        "effectText": "相手の支持率-6%",
+        "effectText": "政治資金+6億",
         "description": "無駄を削り、効率的な行政を実現する",
-        "cost": 2,
+        "cost": 4,
         "effect": "nakatsuka_2"
       }
     ]
@@ -417,14 +417,14 @@
     "abilities": [
       {
         "name": "維新スピリット",
-        "effectText": "支持率+7%",
+        "effectText": "支持率+8%",
         "description": "創党の精神を胸に改革を推し進める",
         "cost": 2,
         "effect": "baba_1"
       },
       {
         "name": "国政での決断",
-        "effectText": "支持率+5%、相手の支持率-4%",
+        "effectText": "支持率+5%または+15%",
         "description": "国政の場でも大阪維新の旗を掲げる",
         "cost": 3,
         "effect": "baba_2"
@@ -441,9 +441,9 @@
     "abilities": [
       {
         "name": "ベテランの経験",
-        "effectText": "政治資金+4億",
+        "effectText": "政治資金がランダムで+0億~+5億",
         "description": "長年の政治経験を活かして資金を集める",
-        "cost": 1,
+        "cost": 2,
         "effect": "maehara_1"
       },
       {
@@ -464,9 +464,9 @@
     "type": "politician",
     "abilities": [
       {
-        "name": "国民の声",
-        "effectText": "支持率+6%",
-        "description": "草の根運動で支持を広げる",
+        "name": "日本人ファースト",
+        "effectText": "支持率がランダムで+0%~+10%",
+        "description": "日本人ファーストで大きな支持を集める",
         "cost": 1,
         "effect": "kamiya_1"
       },
@@ -496,7 +496,7 @@
       },
       {
         "name": "国産推進",
-        "effectText": "政治資金+4億",
+        "effectText": "支持率+10%",
         "description": "国産品の普及で地方経済を活性化する",
         "cost": 2,
         "effect": "ando_2"
@@ -513,16 +513,16 @@
     "abilities": [
       {
         "name": "子育て支援",
-        "effectText": "支持率+5%",
+        "effectText": "支持率+10%",
         "description": "子育て世代の声を政策に反映させる",
-        "cost": 1,
+        "cost": 2,
         "effect": "toyota_1"
       },
       {
         "name": "女性の力",
-        "effectText": "支持率+7%（場に女性カードが2枚以上なら追加+5%）",
+        "effectText": "支持率+7%（場に女性カードが2枚以上なら追加+13）",
         "description": "女性議員の結束で政策を前進させる",
-        "cost": 2,
+        "cost": 4,
         "effect": "toyota_2"
       }
     ]
@@ -537,16 +537,16 @@
     "abilities": [
       {
         "name": "伝統文化の継承",
-        "effectText": "支持率+5%",
+        "effectText": "支持率+6%",
         "description": "日本の伝統を守ることを訴え保守層に響く",
         "cost": 1,
         "effect": "yoshikawa_1"
       },
       {
         "name": "地方からの発信",
-        "effectText": "支持率+6%、政治資金+2億",
+        "effectText": "支持率+6%、次の相手ターンのオプションカード使用禁止",
         "description": "地方の声を国政へ届ける橋渡し役",
-        "cost": 2,
+        "cost": 3,
         "effect": "yoshikawa_2"
       }
     ]
@@ -568,9 +568,9 @@
       },
       {
         "name": "保守の結集",
-        "effectText": "支持率+8%",
+        "effectText": "このターンのみ、自分の全カードの能力コスト消費なし",
         "description": "保守層をまとめ上げ、強固な基盤を築く",
-        "cost": 2,
+        "cost": 4,
         "effect": "mogami_2"
       }
     ]

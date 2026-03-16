@@ -493,10 +493,10 @@ const ABILITY_EFFECTS = {
   },
   saito_a_2(self, _opponent) {
     const msgs = [];
-    const m = changeApproval(self, 8);
+    const m = changeApproval(self, 15);
     if (m) msgs.push(m);
-    self.funds = Math.max(0, self.funds - 2);
-    msgs.push("政治資金-2億");
+    self.skipNextDraw = true;
+    msgs.push("次のターンのドローをスキップ");
     return msgs;
   },
   fujita_1(self, _opponent) {
@@ -512,40 +512,38 @@ const ABILITY_EFFECTS = {
       self.hand.push(drawn);
       msgs.push(`${drawn.name}を手札に加えた！`);
     }
-    self.funds += 3;
-    msgs.push("政治資金+3億");
     return msgs;
   },
   nakatsuka_1(self, _opponent) {
     const msgs = [];
-    const m = changeApproval(self, 5);
+    const m = changeApproval(self, 10);
     if (m) msgs.push(m);
     return msgs;
   },
-  nakatsuka_2(_self, opponent) {
+  nakatsuka_2(self, _opponent) {
     const msgs = [];
-    const m = changeApproval(opponent, -6);
-    if (m) msgs.push(m);
+    self.funds += 6;
+    msgs.push("政治資金+6億");
     return msgs;
   },
   baba_1(self, _opponent) {
     const msgs = [];
-    const m = changeApproval(self, 7);
+    const m = changeApproval(self, 8);
     if (m) msgs.push(m);
     return msgs;
   },
-  baba_2(self, opponent) {
+  baba_2(self, _opponent) {
     const msgs = [];
-    const m1 = changeApproval(self, 5);
-    if (m1) msgs.push(m1);
-    const m2 = changeApproval(opponent, -4);
-    if (m2) msgs.push(m2);
+    const gain = Math.random() < 0.5 ? 15 : 5;
+    const m = changeApproval(self, gain);
+    if (m) msgs.push(m);
     return msgs;
   },
   maehara_1(self, _opponent) {
     const msgs = [];
-    self.funds += 4;
-    msgs.push("政治資金+4億");
+    const gain = Math.floor(Math.random() * 6); // 0〜5
+    self.funds += gain;
+    msgs.push(`政治資金+${gain}億`);
     return msgs;
   },
   maehara_2(self, _opponent) {
@@ -557,7 +555,8 @@ const ABILITY_EFFECTS = {
   // 参政党
   kamiya_1(self, _opponent) {
     const msgs = [];
-    const m = changeApproval(self, 6);
+    const gain = Math.floor(Math.random() * 11); // 0〜10
+    const m = changeApproval(self, gain);
     if (m) msgs.push(m);
     return msgs;
   },
@@ -577,36 +576,36 @@ const ABILITY_EFFECTS = {
   },
   ando_2(self, _opponent) {
     const msgs = [];
-    self.funds += 4;
-    msgs.push("政治資金+4億");
+    const m = changeApproval(self, 10);
+    if (m) msgs.push(m);
     return msgs;
   },
   toyota_1(self, _opponent) {
     const msgs = [];
-    const m = changeApproval(self, 5);
+    const m = changeApproval(self, 10);
     if (m) msgs.push(m);
     return msgs;
   },
   toyota_2(self, _opponent) {
     const msgs = [];
     const femaleCount = self.field.filter(c => c.gender === "女").length;
-    const bonus = femaleCount >= 2 ? 5 : 0;
+    const bonus = femaleCount >= 2 ? 13 : 0;
     const m = changeApproval(self, 7 + bonus);
     if (m) msgs.push(m);
     return msgs;
   },
   yoshikawa_1(self, _opponent) {
     const msgs = [];
-    const m = changeApproval(self, 5);
+    const m = changeApproval(self, 6);
     if (m) msgs.push(m);
     return msgs;
   },
-  yoshikawa_2(self, _opponent) {
+  yoshikawa_2(self, opponent) {
     const msgs = [];
     const m = changeApproval(self, 6);
     if (m) msgs.push(m);
-    self.funds += 2;
-    msgs.push("政治資金+2億");
+    opponent.blockOptionNextTurn = true;
+    msgs.push("次の相手ターンはオプションカード使用不可！");
     return msgs;
   },
   mogami_1(self, _opponent) {
@@ -617,8 +616,8 @@ const ABILITY_EFFECTS = {
   },
   mogami_2(self, _opponent) {
     const msgs = [];
-    const m = changeApproval(self, 8);
-    if (m) msgs.push(m);
+    self.currentTurnCostReduction = 99; // 全能力コスト0
+    msgs.push("このターン、全カードの能力コスト消費なし！");
     return msgs;
   },
   // 中道改革連合
