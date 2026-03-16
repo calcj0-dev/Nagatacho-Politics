@@ -4019,6 +4019,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.querySelectorAll(".level-btn").forEach(btn => {
     btn.addEventListener("click", () => {
+      playSE("assets/audio/se/menu_start.mp3", 0.7);
       selectLevel(Number(btn.dataset.level));
     });
   });
