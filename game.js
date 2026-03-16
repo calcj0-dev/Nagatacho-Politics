@@ -72,7 +72,9 @@ const gameState = {
   player: createPlayerState(),
   cpu: createPlayerState(),
   instanceIdCounter: 0,
-  pendingEffects: []       // 遅延効果（5ターン後投資返却など）
+  pendingEffects: [],      // 遅延効果（5ターン後投資返却など）
+  cpuLevel: 3,             // 1〜5
+  _pendingParty: null,     // レベル選択前に一時保持する政党名
 };
 
 // カードインスタンスを生成（同じカード定義から複数インスタンスを作る）
@@ -1263,8 +1265,26 @@ function showActionBanner(lines, isPlayer, onDone) {
 // フェーズ1: 政治家カードを場に出す
 function cpuPhasePlace() {
   const c = gameState.cpu;
+  const lv = gameState.cpuLevel;
+
+  // Lv1: 50%でスキップ / Lv2: 25%でスキップ
+  if (lv === 1 && Math.random() < 0.5) { cpuPhaseAbilities(); return; }
+  if (lv === 2 && Math.random() < 0.25) { cpuPhaseAbilities(); return; }
+
   if (!c.placedThisTurn && c.field.length < 3) {
-    const idx = c.hand.findIndex(card => card.type === "politician");
+    // Lv4-5: 能力コスト合計が最大の政治家を選ぶ / Lv1-3: 先頭
+    let idx;
+    if (lv >= 4) {
+      let bestIdx = -1, bestCost = -1;
+      c.hand.forEach((card, i) => {
+        if (card.type !== "politician") return;
+        const total = (card.abilities || []).reduce((s, a) => s + (a.cost || 0), 0);
+        if (total > bestCost) { bestCost = total; bestIdx = i; }
+      });
+      idx = bestIdx;
+    } else {
+      idx = c.hand.findIndex(card => card.type === "politician");
+    }
     if (idx >= 0) {
       // アニメーション用に配置前の位置を取得
       const cardBackEl = document.querySelector("#cpu-hand .card-back");
@@ -1311,23 +1331,59 @@ function cpuPhasePlace() {
 // フェーズ2: 能力の発動（1つずつ順番に）
 function cpuPhaseAbilities() {
   const c = gameState.cpu;
+  const lv = gameState.cpuLevel;
   const cr = c.currentTurnCostReduction || 0;
   const abilityActions = [];
+
   for (const card of c.field) {
     if (c.usedAbilities[card.instanceId] || card.disabled) continue;
     const costs = card.abilities.map(a => Math.max(0, a.cost - cr));
-    // 相手の場が空の場合、ishiba_2 は空振りになるため除外
     const isUseful = (effect) => (effect !== "ishiba_2" && effect !== "shinba_2" && effect !== "ogawa_1") || gameState.player.field.length > 0;
     const afford0 = c.funds >= costs[0] && isUseful(card.abilities[0].effect);
     const afford1 = !card.sealedAbility2 && c.funds >= costs[1] && isUseful(card.abilities[1].effect);
+
+    // Lv1: 50%でスキップ
+    if (lv === 1 && Math.random() < 0.5) continue;
+    // Lv2: 25%でスキップ
+    if (lv === 2 && Math.random() < 0.25) continue;
+
     let chosen = -1;
-    if (afford0 && afford1) {
-      chosen = costs[1] >= costs[0] ? 1 : 0;
-    } else if (afford1) {
-      chosen = 1;
-    } else if (afford0) {
-      chosen = 0;
+    if (lv <= 2) {
+      // Lv1-2: ランダム選択
+      const options = [];
+      if (afford0) options.push(0);
+      if (afford1) options.push(1);
+      if (options.length > 0) chosen = options[Math.floor(Math.random() * options.length)];
+    } else if (lv === 3) {
+      // Lv3: コストが高い方（従来通り）
+      if (afford0 && afford1) chosen = costs[1] >= costs[0] ? 1 : 0;
+      else if (afford1) chosen = 1;
+      else if (afford0) chosen = 0;
+    } else {
+      // Lv4-5: 支持率変動効果が大きい方を優先
+      const getScore = (abilityIdx) => {
+        const effect = card.abilities[abilityIdx].effect;
+        // 妨害系・支持率大変動を高スコアに
+        const highValueEffects = ["ishiba_2", "shinba_2", "ogawa_1", "izumi_2", "takaichi_2",
+          "muto_2", "saito_t_2", "mineshima_2", "mogami_2", "baba_2"];
+        if (highValueEffects.includes(effect)) return 100 + costs[abilityIdx];
+        return costs[abilityIdx];
+      };
+      if (afford0 && afford1) {
+        chosen = getScore(1) >= getScore(0) ? 1 : 0;
+      } else if (afford1) chosen = 1;
+      else if (afford0) chosen = 0;
+
+      // Lv5: 支持率差が大きくリードしている場合、資金温存（安い方を選ぶ）
+      if (lv === 5 && chosen >= 0) {
+        const approvalDiff = c.approval - gameState.player.approval;
+        const remainingTurns = 25 - gameState.turn;
+        if (approvalDiff > 20 && remainingTurns > 5) {
+          if (afford0 && afford1) chosen = costs[0] <= costs[1] ? 0 : 1;
+        }
+      }
     }
+
     if (chosen >= 0) {
       abilityActions.push({ card, abilityIdx: chosen, cost: costs[chosen] });
     }
@@ -1392,7 +1448,20 @@ function cpuExecuteNextAbility(abilityActions, idx) {
 // フェーズ3: オプションカード使用
 function cpuPhaseOption() {
   const c = gameState.cpu;
+  const lv = gameState.cpuLevel;
+
+  // Lv1: 70%でスキップ / Lv2: 40%でスキップ
+  if (lv === 1 && Math.random() < 0.7) { cpuCheckWinAndEnd(); return; }
+  if (lv === 2 && Math.random() < 0.4) { cpuCheckWinAndEnd(); return; }
+
   if (!c.usedOptionThisTurn) {
+    // Lv5: 支持率が大幅リードなら温存（オプションを使わない）
+    if (lv === 5) {
+      const approvalDiff = c.approval - gameState.player.approval;
+      const remainingTurns = 25 - gameState.turn;
+      if (approvalDiff > 25 && remainingTurns > 8) { cpuCheckWinAndEnd(); return; }
+    }
+
     const optionIdx = c.hand.findIndex(card => card.type === "option");
     if (optionIdx >= 0) {
       const card = c.hand.splice(optionIdx, 1)[0];
@@ -3879,10 +3948,18 @@ function logState() {
 // 画面遷移: 政党選択
 // ============================================================
 
-async function selectParty(party) {
+function selectParty(party) {
+  // 政党を一時保持してレベル選択画面へ
+  gameState._pendingParty = party;
+  document.getElementById("party-select-screen").classList.add("hidden");
+  document.getElementById("level-select-screen").classList.remove("hidden");
+}
+
+async function selectLevel(level) {
+  gameState.cpuLevel = level;
 
   // ローディング画面表示
-  document.getElementById("party-select-screen").classList.add("hidden");
+  document.getElementById("level-select-screen").classList.add("hidden");
   document.getElementById("loading-screen").classList.remove("hidden");
 
   // Canvas カード画像を未生成なら生成
@@ -3897,7 +3974,7 @@ async function selectParty(party) {
   const bgm = document.getElementById("bgm");
   if (bgm) { bgm.volume = 0.4; bgm.play().catch(() => {}); }
 
-  initGame(party);
+  initGame(gameState._pendingParty);
 }
 
 // ============================================================
@@ -3938,6 +4015,35 @@ document.addEventListener("DOMContentLoaded", async () => {
       playSE("assets/audio/se/menu_start.mp3", 0.7);
       selectParty(btn.dataset.party);
     });
+  });
+
+  document.querySelectorAll(".level-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      selectLevel(Number(btn.dataset.level));
+    });
+  });
+
+  document.getElementById("level-back-btn").addEventListener("click", () => {
+    document.getElementById("level-select-screen").classList.add("hidden");
+    document.getElementById("party-select-screen").classList.remove("hidden");
+  });
+
+  document.getElementById("menu-back-btn").addEventListener("click", () => {
+    document.getElementById("back-to-menu-dialog").classList.remove("hidden");
+  });
+
+  document.getElementById("back-to-menu-no").addEventListener("click", () => {
+    document.getElementById("back-to-menu-dialog").classList.add("hidden");
+  });
+
+  document.getElementById("back-to-menu-yes").addEventListener("click", () => {
+    document.getElementById("back-to-menu-dialog").classList.add("hidden");
+    // BGM停止
+    const bgm = document.getElementById("bgm");
+    if (bgm) { bgm.pause(); bgm.currentTime = 0; }
+    // 画面切り替え
+    document.getElementById("game-screen").classList.add("hidden");
+    document.getElementById("party-select-screen").classList.remove("hidden");
   });
 
   document.getElementById("end-turn-btn").addEventListener("click", () => {
