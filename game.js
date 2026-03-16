@@ -683,19 +683,19 @@ const ABILITY_EFFECTS = {
   },
   saito_t_1(self, _opponent) {
     const msgs = [];
-    const m = changeApproval(self, 5);
-    if (m) msgs.push(m);
-    return msgs;
-  },
-  saito_t_2(self, _opponent) {
-    const msgs = [];
-    const m = changeApproval(self, 7);
-    if (m) msgs.push(m);
     if (self.deck.length > 0) {
       const drawn = self.deck.shift();
       self.hand.push(drawn);
       msgs.push(`${drawn.name}を手札に加えた！`);
     }
+    return msgs;
+  },
+  saito_t_2(self, opponent) {
+    const msgs = [];
+    const m1 = changeApproval(self, 15);
+    if (m1) msgs.push(m1);
+    const m2 = changeApproval(opponent, -10);
+    if (m2) msgs.push(m2);
     return msgs;
   }
 };
@@ -802,7 +802,7 @@ const OPTION_EFFECTS = {
     if (politicianIdx >= 0) {
       const drawn = self.deck.splice(politicianIdx, 1)[0];
       self.hand.push(drawn);
-      msgs.push(`${drawn.name}を手札に加えた！`);
+      msgs.push("政治家カードを山札から1枚手札に加えた！");
     } else {
       msgs.push("山札に政治家カードがなく空振り…");
     }
