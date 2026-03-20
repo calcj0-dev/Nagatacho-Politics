@@ -4099,10 +4099,10 @@ const HOW_TO_SLIDES = [
   {
     title: "ターンの流れ",
     image: "assets/item/game_screen.webp",
+    imageClass: "how-to-play-img-bottom",
     body: `<ol>
   <li><strong>ドロー</strong>：山札から1枚引く</li>
-  <li><strong>配置</strong>：政治家カードを場に出す（1ターン1枚）</li>
-  <li><strong>能力</strong>：場の政治家カードの能力を使用</li>
+  <li><strong>アクション</strong>：カードを場に出す・能力を使用</li>
   <li><strong>終了</strong>：ターン終了ボタンを押す</li>
 </ol>
 手札が7枚を超える場合、ターン終了時に捨て札が必要です。`
@@ -4151,8 +4151,9 @@ async function showHowToPlay() {
     const slide = HOW_TO_SLIDES[currentSlide];
     const imgSrc = slideImages[slide.title] ?? slide.image ?? null;
     const isCard = slideImages[slide.title] != null;
+    const extraClass = isCard ? " how-to-play-img-card" : (slide.imageClass ? ` ${slide.imageClass}` : "");
     const imgHtml = imgSrc
-      ? `<img src="${imgSrc}" class="how-to-play-img${isCard ? " how-to-play-img-card" : ""}" alt="${slide.title}">`
+      ? `<img src="${imgSrc}" class="how-to-play-img${extraClass}" alt="${slide.title}">`
       : "";
     box.innerHTML = `
       <button class="how-to-play-close" id="htp-close">✕</button>

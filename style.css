@@ -344,6 +344,11 @@ h1 {
   display: block;
 }
 
+/* ゲーム画面：下60%を表示 */
+.how-to-play-img-bottom {
+  object-position: bottom;
+}
+
 /* カード画像は縦長なので中央に固定サイズで表示 */
 .how-to-play-img-card {
   width: auto;
