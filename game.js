@@ -3853,7 +3853,7 @@ async function renderCardCanvas(card) {
   ctx.roundRect(nameBarX, NAME_Y, nameBarW, NAME_H, [BORDER_R, BORDER_R, 0, 0]);
   ctx.fill();
 
-  ctx.font = `900 31px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;  // 24 × 1.3
+  ctx.font = `900 ${isPolitician ? 30 : 24}px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
   ctx.fillStyle = "#111111";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
