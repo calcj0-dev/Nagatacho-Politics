@@ -541,12 +541,8 @@ const ABILITY_EFFECTS = {
     if (m) msgs.push(m);
     return msgs;
   },
-  maehara_1(self, _opponent) {
-    const msgs = [];
-    const gain = Math.floor(Math.random() * 6); // 0〜5
-    self.funds += gain;
-    msgs.push(`政治資金+${gain}億`);
-    return msgs;
+  maehara_1(_self, _opponent) {
+    return []; // スロット演出側で処理
   },
   maehara_2(self, _opponent) {
     const msgs = [];
@@ -1467,6 +1463,33 @@ function cpuExecuteNextAbility(abilityActions, idx) {
     console.log(`  CPU: ${action.card.name}「${ability.name}」（コスト${effectiveCost}億）`);
     const cpuFieldIndex = c.field.findIndex(fc => fc.instanceId === action.card.instanceId);
 
+    // maehara_1: 資金スロット（CPU）
+    if (ability.effect === "maehara_1") {
+      const outcomes = [
+        { label: "+0億", value: 0, color: "#888888" },
+        { label: "+1億", value: 1, color: "#88cc88" },
+        { label: "+2億", value: 2, color: "#44cc66" },
+        { label: "+3億", value: 3, color: "#22bb55" },
+        { label: "+4億", value: 4, color: "#11aa44" },
+        { label: "+5億", value: 5, color: "#ffcc00" },
+      ];
+      playAbilityAnimation(cpuFieldIndex, abilityIdx, "cpu", () => {
+        showSlotAnimation(outcomes, (winner) => {
+          c.funds += winner.value;
+          const msgs = [`政治資金+${winner.value}億！`];
+          renderGame();
+          setTimeout(() => {
+            showActionBanner(
+              [`${action.card.name}「${ability.name}」を発動！`, ...msgs],
+              false,
+              () => cpuExecuteNextAbility(abilityActions, idx + 1)
+            );
+          }, 700);
+        });
+      });
+      return;
+    }
+
     // スロット演出が必要な能力
     const cpuSlotEffects = {
       koizumi_1: [
@@ -1906,6 +1929,31 @@ function useAbility(fieldIndex, abilityIndex) {
         selected.sealedNextTurn = true;
         const msgs = [`${selected.name}の能力を次ターン封印！`];
         playAbilityAnimation(fieldIndex, abilityIndex, "player", () => {
+          renderGame();
+          setTimeout(() => showActionBanner([`「${ability.name}」発動！`, ...msgs], true, () => {
+            const result = checkWinCondition();
+            if (result) { gameState.phase = "finished"; showFinishOverlay(result); }
+          }), 700);
+        });
+      });
+      return;
+    }
+
+    // maehara_1: 資金スロット
+    if (ability.effect === "maehara_1") {
+      const outcomes = [
+        { label: "+0億", value: 0, color: "#888888" },
+        { label: "+1億", value: 1, color: "#88cc88" },
+        { label: "+2億", value: 2, color: "#44cc66" },
+        { label: "+3億", value: 3, color: "#22bb55" },
+        { label: "+4億", value: 4, color: "#11aa44" },
+        { label: "+5億", value: 5, color: "#ffcc00" },
+      ];
+      playAbilityAnimation(fieldIndex, abilityIndex, "player", () => {
+        showSlotAnimation(outcomes, (winner) => {
+          const { self } = getSelfAndOpponent("player");
+          self.funds += winner.value;
+          const msgs = [`政治資金+${winner.value}億！`];
           renderGame();
           setTimeout(() => showActionBanner([`「${ability.name}」発動！`, ...msgs], true, () => {
             const result = checkWinCondition();
@@ -3307,6 +3355,9 @@ function renderDeckSlot(slotId, deckCount) {
   back.className = "deck-card-back";
   if (deckCount === 0) back.style.visibility = "hidden";
   slot.appendChild(back);
+
+  const countEl = document.getElementById(slotId + "-count");
+  if (countEl) countEl.textContent = `${deckCount}枚`;
 }
 
 function renderDiscardSlot(slotId, pile) {

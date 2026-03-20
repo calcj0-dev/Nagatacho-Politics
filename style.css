@@ -836,6 +836,13 @@ h1 {
 }
 
 /* 山札スロット（field-rowの右端、枠外） */
+.deck-slot-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
 .deck-slot {
   display: flex;
   flex-direction: column;
