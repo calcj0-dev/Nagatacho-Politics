@@ -3646,6 +3646,14 @@ function renderHand() {
     });
     el.addEventListener("touchcancel", () => { swipeStartY = null; });
 
+    // 右クリック → カードズーム（PC/マウス環境のみ）
+    el.addEventListener("contextmenu", (e) => {
+      if (window.matchMedia("(pointer: fine)").matches) {
+        e.preventDefault();
+        showCardZoom(card, card.type === "option" ? "hand-option" : "hand-politician", idx);
+      }
+    });
+
     // タップ → フォーカス移動 or アクション
     el.addEventListener("click", (e) => {
       if (didSwipe) { didSwipe = false; return; } // スワイプ後のclickは無視
