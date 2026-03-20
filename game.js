@@ -4156,18 +4156,17 @@ async function showHowToPlay() {
       ? `<img src="${imgSrc}" class="how-to-play-img${extraClass}" alt="${slide.title}">`
       : "";
     box.innerHTML = `
-      <button class="how-to-play-close" id="htp-close">✕</button>
-      <div class="how-to-play-counter">${currentSlide + 1} / ${HOW_TO_SLIDES.length}</div>
-      <h3 class="how-to-play-title">${slide.title}</h3>
-      ${imgHtml}
-      <div class="how-to-play-body">${slide.body}</div>
-      <div class="how-to-play-nav">
+      <div class="how-to-play-header">
         <button class="htp-arrow" id="htp-prev" ${currentSlide === 0 ? "disabled" : ""}>‹</button>
-        <div class="htp-dots">
-          ${HOW_TO_SLIDES.map((_, i) => `<span class="htp-dot${i === currentSlide ? " active" : ""}"></span>`).join("")}
+        <div class="how-to-play-header-center">
+          <h3 class="how-to-play-title">${slide.title}</h3>
+          <div class="how-to-play-counter">${currentSlide + 1} / ${HOW_TO_SLIDES.length}</div>
         </div>
         <button class="htp-arrow" id="htp-next" ${currentSlide === HOW_TO_SLIDES.length - 1 ? "disabled" : ""}>›</button>
+        <button class="how-to-play-close" id="htp-close">✕</button>
       </div>
+      ${imgHtml}
+      <div class="how-to-play-body">${slide.body}</div>
     `;
 
     document.getElementById("htp-close").addEventListener("click", () => overlay.remove());

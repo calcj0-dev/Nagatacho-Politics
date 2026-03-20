@@ -300,10 +300,20 @@ h1 {
   user-select: none;
 }
 
+/* ヘッダー（矢印・タイトル・✕） */
+.how-to-play-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.how-to-play-header-center {
+  flex: 1;
+  text-align: center;
+}
+
 .how-to-play-close {
-  position: absolute;
-  top: 12px;
-  right: 14px;
   background: none;
   border: none;
   color: rgba(255, 255, 255, 0.5);
@@ -312,6 +322,7 @@ h1 {
   padding: 4px 6px;
   line-height: 1;
   transition: color 0.2s;
+  flex-shrink: 0;
 }
 
 .how-to-play-close:hover { color: #fff; }
@@ -319,23 +330,18 @@ h1 {
 .how-to-play-counter {
   font-size: 0.72rem;
   color: rgba(255, 255, 255, 0.4);
-  text-align: center;
-  margin-bottom: 8px;
+  margin-top: 2px;
 }
 
 .how-to-play-title {
   font-size: 1.1rem;
   font-weight: bold;
   color: #fff;
-  text-align: center;
-  margin-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  padding-bottom: 10px;
 }
 
 .how-to-play-img {
   width: 100%;
-  max-height: 180px;
+  max-height: 240px;
   object-fit: cover;
   object-position: top;
   border-radius: 8px;
@@ -344,7 +350,7 @@ h1 {
   display: block;
 }
 
-/* ゲーム画面：下60%を表示 */
+/* ゲーム画面：下側を表示 */
 .how-to-play-img-bottom {
   object-position: bottom;
 }
@@ -366,7 +372,6 @@ h1 {
   font-size: 0.88rem;
   color: rgba(255, 255, 255, 0.85);
   line-height: 1.8;
-  min-height: 120px;
 }
 
 .how-to-play-body ul,
@@ -376,13 +381,6 @@ h1 {
 
 .how-to-play-body li {
   margin-bottom: 6px;
-}
-
-.how-to-play-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 20px;
 }
 
 .htp-arrow {
@@ -398,26 +396,11 @@ h1 {
   align-items: center;
   justify-content: center;
   transition: background 0.2s;
+  flex-shrink: 0;
 }
 
 .htp-arrow:hover:not(:disabled) { background: rgba(255, 255, 255, 0.18); }
 .htp-arrow:disabled { opacity: 0.25; cursor: default; }
-
-.htp-dots {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.htp-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
-  transition: background 0.2s;
-}
-
-.htp-dot.active { background: #fff; }
 
 /* 遊び方ボタン共通 */
 .how-to-play-btn {
