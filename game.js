@@ -3859,57 +3859,6 @@ async function renderCardCanvas(card) {
   ctx.textBaseline = "middle";
   ctx.fillText(card.name, W / 2, NAME_Y + NAME_H / 2);
 
-  // ── 2b. 政党バッジ（名前バー左端・丸形） ──
-  const BADGE_COLORS = {
-    "自民党":       "#9f1818",
-    "国民民主党":   "#b79300",
-    "チームみらい": "#157633",
-    "維新の会":     "#5e9618",
-    "参政党":       "#a85418",
-    "中道改革連合": "#0c4890",
-  };
-  const BADGE_LABELS = {
-    "自民党": "自", "国民民主党": "国", "チームみらい": "み",
-    "維新の会": "維", "参政党": "参", "中道改革連合": "中",
-  };
-  const badgeR  = 27;
-  const badgeCX = 35;
-  const badgeCY = NAME_H / 2;
-  const badgeColor = isPolitician
-    ? (BADGE_COLORS[card.party] ?? "#555555")
-    : "#6a2299";
-  const badgeLabel = isPolitician
-    ? (BADGE_LABELS[card.party] ?? "?")
-    : "★";
-
-  // シャドウ
-  ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.45)";
-  ctx.shadowBlur  = 6;
-  ctx.shadowOffsetX = 1;
-  ctx.shadowOffsetY = 2;
-
-  // 塗り
-  ctx.beginPath();
-  ctx.arc(badgeCX, badgeCY, badgeR, 0, Math.PI * 2);
-  ctx.fillStyle = badgeColor;
-  ctx.fill();
-  ctx.restore();
-
-  // 白枠
-  ctx.beginPath();
-  ctx.arc(badgeCX, badgeCY, badgeR, 0, Math.PI * 2);
-  ctx.strokeStyle = "rgba(255,255,255,0.9)";
-  ctx.lineWidth = 2.5;
-  ctx.stroke();
-
-  // テキスト
-  ctx.font = `900 22px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
-  ctx.fillStyle = "#ffffff";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(badgeLabel, badgeCX, badgeCY + 1);
-
   // ── 3. 半透明白パネル（両サイド・下に隙間） ──
   const panelX = GAP;
   const panelW = W - GAP * 2;
@@ -3999,6 +3948,63 @@ async function renderCardCanvas(card) {
   ctx.beginPath();
   ctx.roundRect(BORDER_INSET, BORDER_INSET, W - BORDER_INSET * 2, H - BORDER_INSET * 2, BORDER_R);
   ctx.stroke();
+
+  // ── 6. 政党バッジ（最前面・名前バー左端・丸形） ──
+  const BADGE_COLORS = {
+    "自民党":       "#9f1818",
+    "国民民主党":   "#b79300",
+    "チームみらい": "#157633",
+    "維新の会":     "#5e9618",
+    "参政党":       "#a85418",
+    "中道改革連合": "#0c4890",
+  };
+  const BADGE_LABELS = {
+    "自民党": "自", "国民民主党": "国", "チームみらい": "み",
+    "維新の会": "維", "参政党": "参", "中道改革連合": "中",
+  };
+  const badgeR  = 27;
+  const badgeCX = 35;
+  const badgeCY = NAME_H / 2;
+  const badgeBaseColor = isPolitician
+    ? (BADGE_COLORS[card.party] ?? "#555555")
+    : "#6a2299";
+  const badgeLabel = isPolitician
+    ? (BADGE_LABELS[card.party] ?? "?")
+    : "★";
+
+  // グラデーション（名前バーと同様に左=政党色 → 右=白）
+  const badgeGrad = ctx.createLinearGradient(
+    badgeCX - badgeR, badgeCY,
+    badgeCX + badgeR, badgeCY
+  );
+  badgeGrad.addColorStop(0, badgeBaseColor);
+  badgeGrad.addColorStop(1, "#ffffff");
+
+  // シャドウ
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.45)";
+  ctx.shadowBlur  = 6;
+  ctx.shadowOffsetX = 1;
+  ctx.shadowOffsetY = 2;
+  ctx.beginPath();
+  ctx.arc(badgeCX, badgeCY, badgeR, 0, Math.PI * 2);
+  ctx.fillStyle = badgeGrad;
+  ctx.fill();
+  ctx.restore();
+
+  // 白枠
+  ctx.beginPath();
+  ctx.arc(badgeCX, badgeCY, badgeR, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(255,255,255,0.9)";
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // テキスト（名前バーと同形式: 900weight・黒）
+  ctx.font = `900 22px 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif`;
+  ctx.fillStyle = "#111111";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(badgeLabel, badgeCX, badgeCY + 1);
 
   return canvas.toDataURL("image/webp");
 }
