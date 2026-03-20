@@ -4125,5 +4125,121 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  // URLパラメータ ?dev でカードギャラリーを表示（開発者専用）
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has("dev")) {
+    showCardGallery();
+    return;
+  }
+
   renderGame();
 });
+
+// ============================================================
+// カードギャラリー（開発者専用: ?dev）
+// ============================================================
+async function showCardGallery() {
+  // 全画面を非表示にしてギャラリー専用レイアウトを表示
+  document.querySelectorAll(".screen").forEach(s => s.classList.add("hidden"));
+
+  const gallery = document.createElement("div");
+  gallery.id = "card-gallery";
+  Object.assign(gallery.style, {
+    position: "fixed", inset: "0", overflowY: "auto",
+    background: "#111", color: "#fff",
+    fontFamily: "'Noto Sans JP', sans-serif",
+    padding: "24px 16px",
+  });
+
+  const title = document.createElement("h1");
+  title.textContent = "永田町ポリティクス カード一覧";
+  Object.assign(title.style, { textAlign: "center", marginBottom: "32px", fontSize: "1.4rem", letterSpacing: "0.1em" });
+  gallery.appendChild(title);
+
+  // 政治家カード（政党ごと）
+  const parties = [...new Set(POLITICIAN_CARDS.map(c => c.party))];
+  for (const party of parties) {
+    const section = document.createElement("div");
+    section.style.marginBottom = "40px";
+
+    const heading = document.createElement("h2");
+    heading.textContent = party;
+    Object.assign(heading.style, {
+      fontSize: "1.1rem", borderBottom: "1px solid #444",
+      paddingBottom: "8px", marginBottom: "16px",
+    });
+    section.appendChild(heading);
+
+    const row = document.createElement("div");
+    Object.assign(row.style, {
+      display: "flex", flexWrap: "wrap", gap: "12px", justifyContent: "flex-start",
+    });
+
+    const cards = POLITICIAN_CARDS.filter(c => c.party === party);
+    for (const card of cards) {
+      const dataURL = await renderCardCanvas(card).catch(() => null);
+      if (!dataURL) continue;
+      const img = document.createElement("img");
+      img.src = dataURL;
+      Object.assign(img.style, {
+        width: "160px", height: "224px",
+        borderRadius: "8px", cursor: "pointer",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
+      });
+      img.title = card.name;
+      // クリックで元サイズ（400×560）をダウンロード
+      img.addEventListener("click", () => {
+        const a = document.createElement("a");
+        a.href = dataURL;
+        a.download = `${card.id}.webp`;
+        a.click();
+      });
+      row.appendChild(img);
+    }
+    section.appendChild(row);
+    gallery.appendChild(section);
+  }
+
+  // オプションカード
+  const optSection = document.createElement("div");
+  optSection.style.marginBottom = "40px";
+  const optHeading = document.createElement("h2");
+  optHeading.textContent = "オプションカード";
+  Object.assign(optHeading.style, {
+    fontSize: "1.1rem", borderBottom: "1px solid #444",
+    paddingBottom: "8px", marginBottom: "16px",
+  });
+  optSection.appendChild(optHeading);
+
+  const optRow = document.createElement("div");
+  Object.assign(optRow.style, {
+    display: "flex", flexWrap: "wrap", gap: "12px", justifyContent: "flex-start",
+  });
+
+  const seenOpt = new Set();
+  for (const card of OPTION_CARDS) {
+    if (seenOpt.has(card.id)) continue;
+    seenOpt.add(card.id);
+    const dataURL = await renderCardCanvas(card).catch(() => null);
+    if (!dataURL) continue;
+    const img = document.createElement("img");
+    img.src = dataURL;
+    Object.assign(img.style, {
+      width: "160px", height: "224px",
+      borderRadius: "8px", cursor: "pointer",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
+    });
+    img.title = card.name;
+    img.addEventListener("click", () => {
+      const a = document.createElement("a");
+      a.href = dataURL;
+      a.download = `${card.id}.webp`;
+      a.click();
+    });
+    optRow.appendChild(img);
+  }
+  optSection.appendChild(optRow);
+  gallery.appendChild(optSection);
+
+  document.body.appendChild(gallery);
+}
