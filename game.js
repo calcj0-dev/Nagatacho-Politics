@@ -4457,11 +4457,26 @@ async function showCardGallery() {
     return img;
   }
 
-  // カテゴリ定義（政党 + オプション）
+  // サンプルカード定義（?dev 専用）
+  const SAMPLE_CARDS = [
+    {
+      id: "nichibei_shunokaidan",
+      name: "日米首脳会談",
+      description: "日米同盟の絆を世界に示す外交の一手。",
+      effectDescription: "支持率+6%。政治資金が5億以上の場合は追加で+10%",
+      image: "assets/sample/nichibei_shunokaidan.webp",
+      type: "option",
+      effect: "nichibei_shunokaidan",
+      count: 1,
+    },
+  ];
+
+  // カテゴリ定義（政党 + オプション + サンプル）
   const parties = [...new Set(POLITICIAN_CARDS.map(c => c.party))];
   const categories = [
     ...parties.map(p => ({ label: p, type: "party", key: p })),
     { label: "オプション", type: "option", key: "option" },
+    { label: "サンプル", type: "sample", key: "sample" },
   ];
 
   // キャッシュ（生成済みdataURLを保持）
@@ -4487,6 +4502,8 @@ async function showCardGallery() {
     // 対象カードリスト
     const targetCards = key === "option"
       ? [...new Map(OPTION_CARDS.map(c => [c.id, c])).values()]
+      : key === "sample"
+      ? SAMPLE_CARDS
       : POLITICIAN_CARDS.filter(c => c.party === key);
 
     // キャッシュ済みはすぐ表示
