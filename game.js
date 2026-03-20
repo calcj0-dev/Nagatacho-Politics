@@ -4174,10 +4174,24 @@ async function showHowToPlay() {
     document.getElementById("htp-next").addEventListener("click", (e) => { e.stopPropagation(); if (currentSlide < HOW_TO_SLIDES.length - 1) { currentSlide++; render(); } });
   }
 
-  // コンテンツエリアタップで次へ
+  // コンテンツエリアタップで次へ（PC）
   box.addEventListener("click", (e) => {
     if (e.target.closest(".htp-arrow, #htp-close")) return;
     if (currentSlide < HOW_TO_SLIDES.length - 1) { currentSlide++; render(); }
+  });
+
+  // スワイプで切り替え（モバイル）
+  let swipeStartX = null;
+  box.addEventListener("touchstart", (e) => {
+    swipeStartX = e.touches[0].clientX;
+  }, { passive: true });
+  box.addEventListener("touchend", (e) => {
+    if (swipeStartX === null) return;
+    const dx = e.changedTouches[0].clientX - swipeStartX;
+    swipeStartX = null;
+    if (Math.abs(dx) < 40) return; // 短すぎるスワイプは無視
+    if (dx < 0 && currentSlide < HOW_TO_SLIDES.length - 1) { currentSlide++; render(); }
+    else if (dx > 0 && currentSlide > 0) { currentSlide--; render(); }
   });
 
   overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
