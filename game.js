@@ -3404,7 +3404,15 @@ function showDiscardOverlay(pile, isPlayer) {
 
     item.addEventListener("click", e => {
       e.stopPropagation();
+      overlay.style.visibility = "hidden";
       showCardZoom(card, "view");
+      // ズームが閉じたら捨て札オーバーレイを復元
+      const waitZoom = setInterval(() => {
+        if (!document.querySelector(".card-zoom-overlay")) {
+          clearInterval(waitZoom);
+          overlay.style.visibility = "";
+        }
+      }, 100);
     });
     grid.appendChild(item);
   });
@@ -4115,9 +4123,8 @@ const HOW_TO_SLIDES = [
   },
   {
     title: "情勢調査",
-    body: `一定ターンごとに<strong>情勢調査</strong>が発生します。<br><br>
-その時点の支持率に応じて、支持率がさらに増減します。<br><br>
-リードしているときは有利に、差を詰めているときは逆転のチャンスになります。`
+    body: `5ターンごとに<strong>情勢調査</strong>が発生します。<br><br>
+その時点の支持率をグラフで確認できます。
   },
 ];
 
