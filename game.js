@@ -4067,6 +4067,101 @@ function setMainPhaseUI(enabled) {
 }
 
 // ============================================================
+// 遊び方オーバーレイ
+// ============================================================
+
+const HOW_TO_SLIDES = [
+  {
+    title: "ゲーム概要",
+    body: `6つの政党から1つを選び、CPUと<strong>支持率</strong>を競うカードゲームです。<br><br>
+政治家カードやオプションカードを駆使して、相手より高い支持率を目指しましょう。`
+  },
+  {
+    title: "勝利条件",
+    body: `<ul>
+  <li>支持率が <strong>100%</strong> になった瞬間に勝利</li>
+  <li><strong>25ターン</strong> 終了時、支持率が高い方が勝利</li>
+  <li>支持率が <strong>0%</strong> になると即敗北</li>
+</ul>`
+  },
+  {
+    title: "カードの種類",
+    body: `<strong>政治家カード</strong><br>
+場に出して能力を使います。場には最大3枚まで。1ターンに1枚配置可能。<br><br>
+<strong>オプションカード</strong><br>
+即座に効果を発動する1回使い切りのカードです。`
+  },
+  {
+    title: "ターンの流れ",
+    body: `<ol>
+  <li><strong>ドロー</strong>：山札から1枚引く</li>
+  <li><strong>配置</strong>：政治家カードを場に出す（1ターン1枚）</li>
+  <li><strong>能力</strong>：場の政治家カードの能力を使用</li>
+  <li><strong>終了</strong>：ターン終了ボタンを押す</li>
+</ol><br>
+手札が7枚を超える場合、ターン終了時に捨て札が必要です。`
+  },
+  {
+    title: "政治資金",
+    body: `能力を使うには<strong>政治資金</strong>が必要です。<br><br>
+毎ターン開始時に一定額を獲得します。資金が足りない場合、その能力は使用できません。<br><br>
+オプションカードや政治家の能力で資金を増やすことも可能です。`
+  },
+  {
+    title: "情勢調査",
+    body: `一定ターンごとに<strong>情勢調査</strong>が発生します。<br><br>
+その時点の支持率に応じて、支持率がさらに増減します。<br><br>
+リードしているときは有利に、差を詰めているときは逆転のチャンスになります。`
+  },
+];
+
+function showHowToPlay() {
+  if (document.getElementById("how-to-play-overlay")) return;
+
+  let currentSlide = 0;
+
+  const overlay = document.createElement("div");
+  overlay.id = "how-to-play-overlay";
+  overlay.className = "how-to-play-overlay";
+
+  const box = document.createElement("div");
+  box.className = "how-to-play-box";
+
+  function render() {
+    const slide = HOW_TO_SLIDES[currentSlide];
+    box.innerHTML = `
+      <button class="how-to-play-close" id="htp-close">✕</button>
+      <div class="how-to-play-counter">${currentSlide + 1} / ${HOW_TO_SLIDES.length}</div>
+      <h3 class="how-to-play-title">${slide.title}</h3>
+      <div class="how-to-play-body">${slide.body}</div>
+      <div class="how-to-play-nav">
+        <button class="htp-arrow" id="htp-prev" ${currentSlide === 0 ? "disabled" : ""}>‹</button>
+        <div class="htp-dots">
+          ${HOW_TO_SLIDES.map((_, i) => `<span class="htp-dot${i === currentSlide ? " active" : ""}"></span>`).join("")}
+        </div>
+        <button class="htp-arrow" id="htp-next" ${currentSlide === HOW_TO_SLIDES.length - 1 ? "disabled" : ""}>›</button>
+      </div>
+    `;
+
+    document.getElementById("htp-close").addEventListener("click", () => overlay.remove());
+    document.getElementById("htp-prev").addEventListener("click", (e) => { e.stopPropagation(); if (currentSlide > 0) { currentSlide--; render(); } });
+    document.getElementById("htp-next").addEventListener("click", (e) => { e.stopPropagation(); if (currentSlide < HOW_TO_SLIDES.length - 1) { currentSlide++; render(); } });
+  }
+
+  // コンテンツエリアタップで次へ
+  box.addEventListener("click", (e) => {
+    if (e.target.closest(".htp-arrow, #htp-close")) return;
+    if (currentSlide < HOW_TO_SLIDES.length - 1) { currentSlide++; render(); }
+  });
+
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  render();
+}
+
+// ============================================================
 // デバッグ用
 // ============================================================
 
@@ -4156,6 +4251,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       selectLevel(Number(btn.dataset.level));
     });
   });
+
+  document.getElementById("how-to-play-btn-menu").addEventListener("click", showHowToPlay);
+  document.getElementById("how-to-play-btn-game").addEventListener("click", showHowToPlay);
 
   document.getElementById("level-back-btn").addEventListener("click", () => {
     document.getElementById("level-select-screen").classList.add("hidden");
