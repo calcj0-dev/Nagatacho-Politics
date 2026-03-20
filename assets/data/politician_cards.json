@@ -1,721 +1,721 @@
 [
   {
-    "id": "s-ishiba",
-    "name": "S・イシバ",
-    "gender": "男",
     "party": "自民党",
-    "image": "assets/politicians/jimin/s-ishiba.webp",
-    "type": "politician",
-    "abilities": [
+    "politicians": [
       {
-        "name": "一口でおにぎり",
-        "effectText": "支持率-3%、政治資金+5億",
-        "description": "おにぎりの産地が注目され、地方団体からの献金を得る",
-        "cost": 1,
-        "effect": "ishiba_1"
+        "id": "s-ishiba",
+        "name": "S・イシバ",
+        "gender": "男",
+        "image": "assets/politicians/jimin/s-ishiba.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "一口でおにぎり",
+            "effectText": "支持率-3%、政治資金+5億",
+            "description": "おにぎりの産地が注目され、地方団体からの献金を得る",
+            "cost": 1,
+            "effect": "ishiba_1"
+          },
+          {
+            "name": "ゲル顔プレス",
+            "effectText": "相手の場のカード1枚を選択し、次ターン使用不可",
+            "description": "圧倒的な表情圧で記者会見の場が一瞬にして凍りつく",
+            "cost": 2,
+            "effect": "ishiba_2"
+          }
+        ]
       },
       {
-        "name": "ゲル顔プレス",
-        "effectText": "相手の場のカード1枚を選択し、次ターン使用不可",
-        "description": "圧倒的な表情圧で記者会見の場が一瞬にして凍りつく",
-        "cost": 2,
-        "effect": "ishiba_2"
+        "id": "s-takaichi",
+        "name": "S・タカイチ",
+        "gender": "女",
+        "image": "assets/politicians/jimin/s-takaichi.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "早苗ネーム連呼",
+            "effectText": "支持率+8%",
+            "description": "自分の名前を繰り返すだけで保守クラスタがざわめく",
+            "cost": 2,
+            "effect": "takaichi_1"
+          },
+          {
+            "name": "靖国参拝決行",
+            "effectText": "支持率+12%、相手の支持率-4%",
+            "description": "外交部から止められても笑顔で参拝、毎年恒例の風物詩",
+            "cost": 3,
+            "effect": "takaichi_2"
+          }
+        ]
+      },
+      {
+        "id": "s-koizumi",
+        "name": "S・コイズミ",
+        "gender": "男",
+        "image": "assets/politicians/jimin/s-koizumi.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "セクシー発言",
+            "effectText": "支持率+15% or -10%",
+            "description": "予想外のワードチョイスで世界中のメディアが注目、話題性は抜群",
+            "cost": 1,
+            "effect": "koizumi_1"
+          },
+          {
+            "name": "レジ袋有料化",
+            "effectText": "相手の手札をランダム1枚捨て札にする",
+            "description": "日本のプラごみ削減に一石を投じた勇気ある一手",
+            "cost": 2,
+            "effect": "koizumi_2"
+          }
+        ]
+      },
+      {
+        "id": "t-kono",
+        "name": "T・コウノ",
+        "gender": "男",
+        "image": "assets/politicians/jimin/t-kono.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "Xブロック祭り",
+            "effectText": "次の相手ターンによる支持率低下を無効化",
+            "description": "批判コメントを片っ端からブロック、タイムラインを完璧に最適化",
+            "cost": 2,
+            "effect": "kono_1"
+          },
+          {
+            "name": "ハンコ廃止！",
+            "effectText": "支持率+6%、山札から1枚ドロー",
+            "description": "日本のハンコ文化に終止符、デジタル行政の扉を開く",
+            "cost": 2,
+            "effect": "kono_2"
+          }
+        ]
+      },
+      {
+        "id": "y-suga",
+        "name": "Y・スガ",
+        "gender": "男",
+        "image": "assets/politicians/jimin/y-suga.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "パンケーキ会食",
+            "effectText": "政治資金+3億",
+            "description": "パンケーキで心をつかむ",
+            "cost": 2,
+            "effect": "suga_1"
+          },
+          {
+            "name": "ガースーです",
+            "effectText": "支持率+8%（場が1枚なら追加+4%）",
+            "description": "まさかの自己紹介で場が和む",
+            "cost": 3,
+            "effect": "suga_2"
+          }
+        ]
       }
     ]
   },
   {
-    "id": "s-takaichi",
-    "name": "S・タカイチ",
-    "gender": "女",
-    "party": "自民党",
-    "image": "assets/politicians/jimin/s-takaichi.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "早苗ネーム連呼",
-        "effectText": "支持率+8%",
-        "description": "自分の名前を繰り返すだけで保守クラスタがざわめく",
-        "cost": 2,
-        "effect": "takaichi_1"
-      },
-      {
-        "name": "靖国参拝決行",
-        "effectText": "支持率+12%、相手の支持率-4%",
-        "description": "外交部から止められても笑顔で参拝、毎年恒例の風物詩",
-        "cost": 3,
-        "effect": "takaichi_2"
-      }
-    ]
-  },
-  {
-    "id": "s-koizumi",
-    "name": "S・コイズミ",
-    "gender": "男",
-    "party": "自民党",
-    "image": "assets/politicians/jimin/s-koizumi.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "セクシー発言",
-        "effectText": "支持率+15% or -10%",
-        "description": "予想外のワードチョイスで世界中のメディアが注目、話題性は抜群",
-        "cost": 1,
-        "effect": "koizumi_1"
-      },
-      {
-        "name": "レジ袋有料化",
-        "effectText": "相手の手札をランダム1枚捨て札にする",
-        "description": "日本のプラごみ削減に一石を投じた勇気ある一手",
-        "cost": 2,
-        "effect": "koizumi_2"
-      }
-    ]
-  },
-  {
-    "id": "t-kono",
-    "name": "T・コウノ",
-    "gender": "男",
-    "party": "自民党",
-    "image": "assets/politicians/jimin/t-kono.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "Xブロック祭り",
-        "effectText": "次の相手ターンによる支持率低下を無効化",
-        "description": "批判コメントを片っ端からブロック、タイムラインを完璧に最適化",
-        "cost": 2,
-        "effect": "kono_1"
-      },
-      {
-        "name": "ハンコ廃止！",
-        "effectText": "支持率+6%、山札から1枚ドロー",
-        "description": "日本のハンコ文化に終止符、デジタル行政の扉を開く",
-        "cost": 2,
-        "effect": "kono_2"
-      }
-    ]
-  },
-  {
-    "id": "y-suga",
-    "name": "Y・スガ",
-    "gender": "男",
-    "party": "自民党",
-    "image": "assets/politicians/jimin/y-suga.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "パンケーキ会食",
-        "effectText": "政治資金+3億",
-        "description": "パンケーキで心をつかむ",
-        "cost": 2,
-        "effect": "suga_1"
-      },
-      {
-        "name": "ガースーです",
-        "effectText": "支持率+8%（場が1枚なら追加+4%）",
-        "description": "まさかの自己紹介で場が和む",
-        "cost": 3,
-        "effect": "suga_2"
-      }
-    ]
-  },
-  {
-    "id": "y-tamaki",
-    "name": "Y・タマキ",
-    "gender": "男",
     "party": "国民民主党",
-    "image": "assets/politicians/kokumin/y-tamaki.webp",
-    "type": "politician",
-    "abilities": [
+    "politicians": [
       {
-        "name": "文春砲サバイバル",
-        "effectText": "相手の支持率が自分の場のカード枚数×4%DOWN",
-        "description": "不倫報道後に逆に知名度爆上がり",
-        "cost": 1,
-        "effect": "tamaki_1"
+        "id": "y-tamaki",
+        "name": "Y・タマキ",
+        "gender": "男",
+        "image": "assets/politicians/kokumin/y-tamaki.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "文春砲サバイバル",
+            "effectText": "相手の支持率が自分の場のカード枚数×4%DOWN",
+            "description": "不倫報道後に逆に知名度爆上がり",
+            "cost": 1,
+            "effect": "tamaki_1"
+          },
+          {
+            "name": "手取りを増やす！",
+            "effectText": "政治資金+5億",
+            "description": "シンプルな一言が有権者の心に刺さる",
+            "cost": 3,
+            "effect": "tamaki_2"
+          }
+        ]
       },
       {
-        "name": "手取りを増やす！",
-        "effectText": "政治資金+5億",
-        "description": "シンプルな一言が有権者の心に刺さる",
-        "cost": 3,
-        "effect": "tamaki_2"
+        "id": "y-mori",
+        "name": "Y・モリ",
+        "gender": "男",
+        "image": "assets/politicians/kokumin/y-mori.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "国会デビュー質疑",
+            "effectText": "支持率+5%、このターンの能力コスト全て-1億",
+            "description": "初々しさが逆に好評、SNSで話題に",
+            "cost": 2,
+            "effect": "mori_1"
+          },
+          {
+            "name": "次世代の星",
+            "effectText": "支持率+7%（場が2枚以下なら追加+8%）",
+            "description": "若手ならではの突破力で党の顔へ急浮上",
+            "cost": 3,
+            "effect": "mori_2"
+          }
+        ]
+      },
+      {
+        "id": "k-shinba",
+        "name": "K・シンバ",
+        "gender": "男",
+        "image": "assets/politicians/kokumin/k-shinba.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "静岡茶で一服",
+            "effectText": "支持率+5%",
+            "description": "お茶を一杯、皆ほっこり",
+            "cost": 1,
+            "effect": "shinba_1"
+          },
+          {
+            "name": "永田町の根回し王",
+            "effectText": "相手の政治家カードを選択し、次の相手ターン使用不可",
+            "description": "誰も気づかないうちに話がまとまっている",
+            "cost": 2,
+            "effect": "shinba_2"
+          }
+        ]
+      },
+      {
+        "id": "k-furukawa",
+        "name": "M・フルカワ",
+        "gender": "男",
+        "image": "assets/politicians/kokumin/k-furukawa.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "キャリア官僚の洗礼",
+            "effectText": "相手の支持率-5%",
+            "description": "財務省仕込みの論理で委員会を制す",
+            "cost": 1,
+            "effect": "furukawa_1"
+          },
+          {
+            "name": "国家戦略会議召集",
+            "effectText": "支持率+10% or -3%",
+            "description": "有識者を束ね、政策を一気に動かす",
+            "cost": 2,
+            "effect": "furukawa_2"
+          }
+        ]
+      },
+      {
+        "id": "t-ito",
+        "name": "T・イトウ",
+        "gender": "女",
+        "image": "assets/politicians/kokumin/t-ito.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "元NHKアナの本気",
+            "effectText": "支持率が自分の手札のカード枚数×2%UP",
+            "description": "流暢な語り口で視聴者を魅了",
+            "cost": 2,
+            "effect": "ito_1"
+          },
+          {
+            "name": "ママ目線の予算追及",
+            "effectText": "山札から2枚ドロー",
+            "description": "子育て世代の声を国会へ届ける",
+            "cost": 3,
+            "effect": "ito_2"
+          }
+        ]
       }
     ]
   },
   {
-    "id": "y-mori",
-    "name": "Y・モリ",
-    "gender": "男",
-    "party": "国民民主党",
-    "image": "assets/politicians/kokumin/y-mori.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "国会デビュー質疑",
-        "effectText": "支持率+5%、このターンの能力コスト全て-1億",
-        "description": "初々しさが逆に好評、SNSで話題に",
-        "cost": 2,
-        "effect": "mori_1"
-      },
-      {
-        "name": "次世代の星",
-        "effectText": "支持率+7%（場が2枚以下なら追加+8%）",
-        "description": "若手ならではの突破力で党の顔へ急浮上",
-        "cost": 3,
-        "effect": "mori_2"
-      }
-    ]
-  },
-  {
-    "id": "k-shinba",
-    "name": "K・シンバ",
-    "gender": "男",
-    "party": "国民民主党",
-    "image": "assets/politicians/kokumin/k-shinba.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "静岡茶で一服",
-        "effectText": "支持率+5%",
-        "description": "お茶を一杯、皆ほっこり",
-        "cost": 1,
-        "effect": "shinba_1"
-      },
-      {
-        "name": "永田町の根回し王",
-        "effectText": "相手の政治家カードを選択し、次の相手ターン使用不可",
-        "description": "誰も気づかないうちに話がまとまっている",
-        "cost": 2,
-        "effect": "shinba_2"
-      }
-    ]
-  },
-  {
-    "id": "k-furukawa",
-    "name": "M・フルカワ",
-    "gender": "男",
-    "party": "国民民主党",
-    "image": "assets/politicians/kokumin/k-furukawa.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "キャリア官僚の洗礼",
-        "effectText": "相手の支持率-5%",
-        "description": "財務省仕込みの論理で委員会を制す",
-        "cost": 1,
-        "effect": "furukawa_1"
-      },
-      {
-        "name": "国家戦略会議召集",
-        "effectText": "支持率+10% or -3%",
-        "description": "有識者を束ね、政策を一気に動かす",
-        "cost": 2,
-        "effect": "furukawa_2"
-      }
-    ]
-  },
-  {
-    "id": "t-ito",
-    "name": "T・イトウ",
-    "gender": "女",
-    "party": "国民民主党",
-    "image": "assets/politicians/kokumin/t-ito.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "元NHKアナの本気",
-        "effectText": "支持率が自分の手札のカード枚数×2%UP",
-        "description": "流暢な語り口で視聴者を魅了",
-        "cost": 2,
-        "effect": "ito_1"
-      },
-      {
-        "name": "ママ目線の予算追及",
-        "effectText": "山札から2枚ドロー",
-        "description": "子育て世代の声を国会へ届ける",
-        "cost": 3,
-        "effect": "ito_2"
-      }
-    ]
-  },
-  {
-    "id": "t-anno",
-    "name": "T・アンノ",
-    "gender": "男",
     "party": "チームみらい",
-    "image": "assets/politicians/mirai/t-anno.webp",
-    "type": "politician",
-    "abilities": [
+    "politicians": [
       {
-        "name": "未来への投資",
-        "effectText": "5ターン後に政治資金+5億を取得",
-        "description": "スタートアップ精神で政界に風穴",
-        "cost": 1,
-        "effect": "anno_1"
+        "id": "t-anno",
+        "name": "T・アンノ",
+        "gender": "男",
+        "image": "assets/politicians/mirai/t-anno.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "未来への投資",
+            "effectText": "5ターン後に政治資金+5億を取得",
+            "description": "スタートアップ精神で政界に風穴",
+            "cost": 1,
+            "effect": "anno_1"
+          },
+          {
+            "name": "デジタル民主主義",
+            "effectText": "支持率+6%（場が3枚なら追加+10%）",
+            "description": "テクノロジーで民意を政治へ直結",
+            "cost": 3,
+            "effect": "anno_2"
+          }
+        ]
       },
       {
-        "name": "デジタル民主主義",
-        "effectText": "支持率+6%（場が3枚なら追加+10%）",
-        "description": "テクノロジーで民意を政治へ直結",
-        "cost": 3,
-        "effect": "anno_2"
+        "id": "s-takayama",
+        "name": "S・タカヤマ",
+        "gender": "男",
+        "image": "assets/politicians/mirai/s-takayama.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "社会保険料で混乱！",
+            "effectText": "支持率+4%、次の相手ターンのオプションカードを使用不可",
+            "description": "ミスを動画で謝罪、誠実さで逆に人気UP",
+            "cost": 2,
+            "effect": "takayama_1"
+          },
+          {
+            "name": "BCGメソッド炸裂",
+            "effectText": "支持率が自分の場のカード枚数×4%UP",
+            "description": "コンサル仕込みの戦略で議会を制す",
+            "cost": 3,
+            "effect": "takayama_2"
+          }
+        ]
+      },
+      {
+        "id": "k-muto",
+        "name": "K・ムトウ",
+        "gender": "女",
+        "image": "assets/politicians/mirai/k-muto.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "ママエンジニアの本気",
+            "effectText": "支持率+6%",
+            "description": "育児と仕事を両立するパワフルな行動力",
+            "cost": 1,
+            "effect": "muto_1"
+          },
+          {
+            "name": "NPOから永田町へ",
+            "effectText": "相手の支持率-10%、支持率+5%",
+            "description": "地域支援の経験が国政レベルで開花",
+            "cost": 3,
+            "effect": "muto_2"
+          }
+        ]
+      },
+      {
+        "id": "e-suda",
+        "name": "E・スダ",
+        "gender": "男",
+        "image": "assets/politicians/mirai/e-suda.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "文化人類学で論破",
+            "effectText": "支持率+5%",
+            "description": "東大文人類の視点が政界に新風を送る",
+            "cost": 1,
+            "effect": "suda_1"
+          },
+          {
+            "name": "まちづくりDX",
+            "effectText": "相手の支持率が自分の手札のカード枚数×2%DOWN",
+            "description": "地方の課題をデジタルで一気に解決",
+            "cost": 2,
+            "effect": "suda_2"
+          }
+        ]
+      },
+      {
+        "id": "y-mineshima",
+        "name": "Y・ミネシマ",
+        "gender": "男",
+        "image": "assets/politicians/mirai/y-mineshima.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "ビリヤードの撞き方",
+            "effectText": "このターンのみ、自分の全カードの能力コスト-1億",
+            "description": "趣味の精密さが政策立案に活きる",
+            "cost": 1,
+            "effect": "mineshima_1"
+          },
+          {
+            "name": "マネーフォワードDX",
+            "effectText": "支持率+15%、相手の支持率-10%",
+            "description": "バックオフィスを丸ごとデジタル化する",
+            "cost": 4,
+            "effect": "mineshima_2"
+          }
+        ]
       }
     ]
   },
   {
-    "id": "s-takayama",
-    "name": "S・タカヤマ",
-    "gender": "男",
-    "party": "チームみらい",
-    "image": "assets/politicians/mirai/s-takayama.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "社会保険料で混乱！",
-        "effectText": "支持率+4%、次の相手ターンのオプションカードを使用不可",
-        "description": "ミスを動画で謝罪、誠実さで逆に人気UP",
-        "cost": 2,
-        "effect": "takayama_1"
-      },
-      {
-        "name": "BCGメソッド炸裂",
-        "effectText": "支持率が自分の場のカード枚数×4%UP",
-        "description": "コンサル仕込みの戦略で議会を制す",
-        "cost": 3,
-        "effect": "takayama_2"
-      }
-    ]
-  },
-  {
-    "id": "k-muto",
-    "name": "K・ムトウ",
-    "gender": "女",
-    "party": "チームみらい",
-    "image": "assets/politicians/mirai/k-muto.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "ママエンジニアの本気",
-        "effectText": "支持率+6%",
-        "description": "育児と仕事を両立するパワフルな行動力",
-        "cost": 1,
-        "effect": "muto_1"
-      },
-      {
-        "name": "NPOから永田町へ",
-        "effectText": "相手の支持率-10%、支持率+5%",
-        "description": "地域支援の経験が国政レベルで開花",
-        "cost": 3,
-        "effect": "muto_2"
-      }
-    ]
-  },
-  {
-    "id": "e-suda",
-    "name": "E・スダ",
-    "gender": "男",
-    "party": "チームみらい",
-    "image": "assets/politicians/mirai/e-suda.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "文化人類学で論破",
-        "effectText": "支持率+5%",
-        "description": "東大文人類の視点が政界に新風を送る",
-        "cost": 1,
-        "effect": "suda_1"
-      },
-      {
-        "name": "まちづくりDX",
-        "effectText": "相手の支持率が自分の手札のカード枚数×2%DOWN",
-        "description": "地方の課題をデジタルで一気に解決",
-        "cost": 2,
-        "effect": "suda_2"
-      }
-    ]
-  },
-  {
-    "id": "a-saito",
-    "name": "A・サイトウ",
-    "gender": "男",
     "party": "維新の会",
-    "image": "assets/politicians/ishin/a-saito.webp",
-    "type": "politician",
-    "abilities": [
+    "politicians": [
       {
-        "name": "改革の一手",
-        "effectText": "支持率+5%",
-        "description": "大阪から全国へ、改革の波を起こす",
-        "cost": 1,
-        "effect": "saito_a_1"
+        "id": "a-saito",
+        "name": "A・サイトウ",
+        "gender": "男",
+        "image": "assets/politicians/ishin/a-saito.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "改革の一手",
+            "effectText": "支持率+5%",
+            "description": "大阪から全国へ、改革の波を起こす",
+            "cost": 1,
+            "effect": "saito_a_1"
+          },
+          {
+            "name": "身を切る改革",
+            "effectText": "支持率+15%、次の自分のターンのドローをスキップ",
+            "description": "議員報酬を削減し、有権者の信頼を得る",
+            "cost": 3,
+            "effect": "saito_a_2"
+          }
+        ]
       },
       {
-        "name": "身を切る改革",
-        "effectText": "支持率+8%、政治資金-2億",
-        "description": "議員報酬を削減し、有権者の信頼を得る",
-        "cost": 2,
-        "effect": "saito_a_2"
+        "id": "h-fujita",
+        "name": "H・フジタ",
+        "gender": "男",
+        "image": "assets/politicians/ishin/h-fujita.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "党首の決断",
+            "effectText": "支持率+6%",
+            "description": "維新を率いる力強いリーダーシップ",
+            "cost": 1,
+            "effect": "fujita_1"
+          },
+          {
+            "name": "野党連携",
+            "effectText": "山札から1枚ドロー",
+            "description": "他党との連携で政策推進力を高める",
+            "cost": 2,
+            "effect": "fujita_2"
+          }
+        ]
+      },
+      {
+        "id": "h-nakatsuka",
+        "name": "H・ナカツカ",
+        "gender": "男",
+        "image": "assets/politicians/ishin/h-nakatsuka.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "大阪改革モデル",
+            "effectText": "支持率+10%",
+            "description": "大阪で実証した改革を全国に広める",
+            "cost": 2,
+            "effect": "nakatsuka_1"
+          },
+          {
+            "name": "行政スリム化",
+            "effectText": "政治資金+6億",
+            "description": "無駄を削り、効率的な行政を実現する",
+            "cost": 4,
+            "effect": "nakatsuka_2"
+          }
+        ]
+      },
+      {
+        "id": "n-baba",
+        "name": "N・ババ",
+        "gender": "男",
+        "image": "assets/politicians/ishin/n-baba.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "維新スピリット",
+            "effectText": "支持率+8%",
+            "description": "創党の精神を胸に改革を推し進める",
+            "cost": 2,
+            "effect": "baba_1"
+          },
+          {
+            "name": "国政での決断",
+            "effectText": "支持率+5%または+15%",
+            "description": "国政の場でも大阪維新の旗を掲げる",
+            "cost": 3,
+            "effect": "baba_2"
+          }
+        ]
+      },
+      {
+        "id": "s-maehara",
+        "name": "S・マエハラ",
+        "gender": "男",
+        "image": "assets/politicians/ishin/s-maehara.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "ベテランの経験",
+            "effectText": "政治資金がランダムで+0億~+5億",
+            "description": "長年の政治経験を活かして資金を集める",
+            "cost": 2,
+            "effect": "maehara_1"
+          },
+          {
+            "name": "政界渡り鳥",
+            "effectText": "支持率+9%",
+            "description": "複数の党を渡り歩いた経験が武器になる",
+            "cost": 2,
+            "effect": "maehara_2"
+          }
+        ]
       }
     ]
   },
   {
-    "id": "h-fujita",
-    "name": "H・フジタ",
-    "gender": "男",
-    "party": "維新の会",
-    "image": "assets/politicians/ishin/h-fujita.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "党首の決断",
-        "effectText": "支持率+6%",
-        "description": "維新を率いる力強いリーダーシップ",
-        "cost": 1,
-        "effect": "fujita_1"
-      },
-      {
-        "name": "野党連携",
-        "effectText": "山札から1枚ドロー、政治資金+3億",
-        "description": "他党との連携で政策推進力を高める",
-        "cost": 2,
-        "effect": "fujita_2"
-      }
-    ]
-  },
-  {
-    "id": "h-nakatsuka",
-    "name": "H・ナカツカ",
-    "gender": "男",
-    "party": "維新の会",
-    "image": "assets/politicians/ishin/h-nakatsuka.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "大阪改革モデル",
-        "effectText": "支持率+5%",
-        "description": "大阪で実証した改革を全国に広める",
-        "cost": 1,
-        "effect": "nakatsuka_1"
-      },
-      {
-        "name": "行政スリム化",
-        "effectText": "相手の支持率-6%",
-        "description": "無駄を削り、効率的な行政を実現する",
-        "cost": 2,
-        "effect": "nakatsuka_2"
-      }
-    ]
-  },
-  {
-    "id": "n-baba",
-    "name": "N・ババ",
-    "gender": "男",
-    "party": "維新の会",
-    "image": "assets/politicians/ishin/n-baba.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "維新スピリット",
-        "effectText": "支持率+7%",
-        "description": "創党の精神を胸に改革を推し進める",
-        "cost": 2,
-        "effect": "baba_1"
-      },
-      {
-        "name": "国政での決断",
-        "effectText": "支持率+5%、相手の支持率-4%",
-        "description": "国政の場でも大阪維新の旗を掲げる",
-        "cost": 3,
-        "effect": "baba_2"
-      }
-    ]
-  },
-  {
-    "id": "s-maehara",
-    "name": "S・マエハラ",
-    "gender": "男",
-    "party": "維新の会",
-    "image": "assets/politicians/ishin/s-maehara.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "ベテランの経験",
-        "effectText": "政治資金+4億",
-        "description": "長年の政治経験を活かして資金を集める",
-        "cost": 1,
-        "effect": "maehara_1"
-      },
-      {
-        "name": "政界渡り鳥",
-        "effectText": "支持率+9%",
-        "description": "複数の党を渡り歩いた経験が武器になる",
-        "cost": 2,
-        "effect": "maehara_2"
-      }
-    ]
-  },
-  {
-    "id": "s-kamiya",
-    "name": "S・カミヤ",
-    "gender": "男",
     "party": "参政党",
-    "image": "assets/politicians/sansei/s-kamiya.webp",
-    "type": "politician",
-    "abilities": [
+    "politicians": [
       {
-        "name": "国民の声",
-        "effectText": "支持率+6%",
-        "description": "草の根運動で支持を広げる",
-        "cost": 1,
-        "effect": "kamiya_1"
+        "id": "s-kamiya",
+        "name": "S・カミヤ",
+        "gender": "男",
+        "image": "assets/politicians/sansei/s-kamiya.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "日本人ファースト",
+            "effectText": "支持率がランダムで+0%~+10%",
+            "description": "日本人ファーストで大きな支持を集める",
+            "cost": 1,
+            "effect": "kamiya_1"
+          },
+          {
+            "name": "日本を守る！",
+            "effectText": "支持率+10%、相手の支持率-4%",
+            "description": "強い愛国心で保守層を結集させる",
+            "cost": 3,
+            "effect": "kamiya_2"
+          }
+        ]
       },
       {
-        "name": "日本を守る！",
-        "effectText": "支持率+10%、相手の支持率-4%",
-        "description": "強い愛国心で保守層を結集させる",
-        "cost": 3,
-        "effect": "kamiya_2"
+        "id": "h-ando",
+        "name": "H・アンドウ",
+        "gender": "男",
+        "image": "assets/politicians/sansei/h-ando.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "食の安全宣言",
+            "effectText": "支持率+5%",
+            "description": "食品添加物や農薬問題を訴え支持を集める",
+            "cost": 1,
+            "effect": "ando_1"
+          },
+          {
+            "name": "国産推進",
+            "effectText": "支持率+10%",
+            "description": "国産品の普及で地方経済を活性化する",
+            "cost": 2,
+            "effect": "ando_2"
+          }
+        ]
+      },
+      {
+        "id": "m-toyota",
+        "name": "M・トヨタ",
+        "gender": "女",
+        "image": "assets/politicians/sansei/m-toyota.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "子育て支援",
+            "effectText": "支持率+10%",
+            "description": "子育て世代の声を政策に反映させる",
+            "cost": 2,
+            "effect": "toyota_1"
+          },
+          {
+            "name": "女性の力",
+            "effectText": "支持率+7%（場に女性カードが2枚以上なら追加+13）",
+            "description": "女性議員の結束で政策を前進させる",
+            "cost": 4,
+            "effect": "toyota_2"
+          }
+        ]
+      },
+      {
+        "id": "r-yoshikawa",
+        "name": "R・ヨシカワ",
+        "gender": "女",
+        "image": "assets/politicians/sansei/r-yoshikawa.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "伝統文化の継承",
+            "effectText": "支持率+6%",
+            "description": "日本の伝統を守ることを訴え保守層に響く",
+            "cost": 1,
+            "effect": "yoshikawa_1"
+          },
+          {
+            "name": "地方からの発信",
+            "effectText": "支持率+6%、次の相手ターンのオプションカード使用禁止",
+            "description": "地方の声を国政へ届ける橋渡し役",
+            "cost": 3,
+            "effect": "yoshikawa_2"
+          }
+        ]
+      },
+      {
+        "id": "y-mogami",
+        "name": "Y・モガミ",
+        "gender": "男",
+        "image": "assets/politicians/sansei/y-mogami.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "草の根活動",
+            "effectText": "支持率+4%",
+            "description": "地道な街頭演説で支持者を増やす",
+            "cost": 1,
+            "effect": "mogami_1"
+          },
+          {
+            "name": "保守の結集",
+            "effectText": "このターンのみ、自分の全カードの能力コスト消費なし",
+            "description": "保守層をまとめ上げ、強固な基盤を築く",
+            "cost": 4,
+            "effect": "mogami_2"
+          }
+        ]
       }
     ]
   },
   {
-    "id": "h-ando",
-    "name": "H・アンドウ",
-    "gender": "男",
-    "party": "参政党",
-    "image": "assets/politicians/sansei/h-ando.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "食の安全宣言",
-        "effectText": "支持率+5%",
-        "description": "食品添加物や農薬問題を訴え支持を集める",
-        "cost": 1,
-        "effect": "ando_1"
-      },
-      {
-        "name": "国産推進",
-        "effectText": "政治資金+4億",
-        "description": "国産品の普及で地方経済を活性化する",
-        "cost": 2,
-        "effect": "ando_2"
-      }
-    ]
-  },
-  {
-    "id": "m-toyota",
-    "name": "M・トヨタ",
-    "gender": "女",
-    "party": "参政党",
-    "image": "assets/politicians/sansei/m-toyota.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "子育て支援",
-        "effectText": "支持率+5%",
-        "description": "子育て世代の声を政策に反映させる",
-        "cost": 1,
-        "effect": "toyota_1"
-      },
-      {
-        "name": "女性の力",
-        "effectText": "支持率+7%（場に女性カードが2枚以上なら追加+5%）",
-        "description": "女性議員の結束で政策を前進させる",
-        "cost": 2,
-        "effect": "toyota_2"
-      }
-    ]
-  },
-  {
-    "id": "r-yoshikawa",
-    "name": "R・ヨシカワ",
-    "gender": "女",
-    "party": "参政党",
-    "image": "assets/politicians/sansei/r-yoshikawa.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "伝統文化の継承",
-        "effectText": "支持率+5%",
-        "description": "日本の伝統を守ることを訴え保守層に響く",
-        "cost": 1,
-        "effect": "yoshikawa_1"
-      },
-      {
-        "name": "地方からの発信",
-        "effectText": "支持率+6%、政治資金+2億",
-        "description": "地方の声を国政へ届ける橋渡し役",
-        "cost": 2,
-        "effect": "yoshikawa_2"
-      }
-    ]
-  },
-  {
-    "id": "y-mogami",
-    "name": "Y・モガミ",
-    "gender": "男",
-    "party": "参政党",
-    "image": "assets/politicians/sansei/y-mogami.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "草の根活動",
-        "effectText": "支持率+4%",
-        "description": "地道な街頭演説で支持者を増やす",
-        "cost": 1,
-        "effect": "mogami_1"
-      },
-      {
-        "name": "保守の結集",
-        "effectText": "支持率+8%",
-        "description": "保守層をまとめ上げ、強固な基盤を築く",
-        "cost": 2,
-        "effect": "mogami_2"
-      }
-    ]
-  },
-  {
-    "id": "y-noda",
-    "name": "Y・ノダ",
-    "gender": "男",
     "party": "中道改革連合",
-    "image": "assets/politicians/chudo/y-noda.webp",
-    "type": "politician",
-    "abilities": [
+    "politicians": [
       {
-        "name": "どじょう外交",
-        "effectText": "支持率+6%",
-        "description": "泥臭くも誠実な外交姿勢で信頼を積む",
-        "cost": 1,
-        "effect": "noda_1"
+        "id": "y-noda",
+        "name": "Y・ノダ",
+        "gender": "男",
+        "image": "assets/politicians/chudo/y-noda.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "どじょう外交",
+            "effectText": "支持率+6%",
+            "description": "泥臭くも誠実な外交姿勢で信頼を積む",
+            "cost": 1,
+            "effect": "noda_1"
+          },
+          {
+            "name": "消費増税の決断",
+            "effectText": "支持率-5%、政治資金+4億",
+            "description": "政治生命を賭けた覚悟の決断",
+            "cost": 2,
+            "effect": "noda_2"
+          }
+        ]
       },
       {
-        "name": "消費増税の決断",
-        "effectText": "支持率-5%、政治資金+8億",
-        "description": "政治生命を賭けた覚悟の決断",
-        "cost": 2,
-        "effect": "noda_2"
-      }
-    ]
-  },
-  {
-    "id": "k-izumi",
-    "name": "K・イズミ",
-    "gender": "男",
-    "party": "中道改革連合",
-    "image": "assets/politicians/chudo/k-izumi.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "野党をまとめる",
-        "effectText": "支持率+5%",
-        "description": "分散した野党勢力を一本化する調整力",
-        "cost": 1,
-        "effect": "izumi_1"
+        "id": "k-izumi",
+        "name": "K・イズミ",
+        "gender": "男",
+        "image": "assets/politicians/chudo/k-izumi.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "野党をまとめる",
+            "effectText": "支持率+5%",
+            "description": "分散した野党勢力を一本化する調整力",
+            "cost": 1,
+            "effect": "izumi_1"
+          },
+          {
+            "name": "政権交代を！",
+            "effectText": "相手の支持率-25%",
+            "description": "対決姿勢を鮮明にし、政権批判票を集める",
+            "cost": 4,
+            "effect": "izumi_2"
+          }
+        ]
       },
       {
-        "name": "政権交代を！",
-        "effectText": "相手の支持率-7%",
-        "description": "対決姿勢を鮮明にし、政権批判票を集める",
-        "cost": 2,
-        "effect": "izumi_2"
-      }
-    ]
-  },
-  {
-    "id": "j-ogawa",
-    "name": "J・オガワ",
-    "gender": "男",
-    "party": "中道改革連合",
-    "image": "assets/politicians/chudo/j-ogawa.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "財務省との攻防",
-        "effectText": "政治資金+5億",
-        "description": "財政政策を巡り官僚と渡り合う",
-        "cost": 1,
-        "effect": "ogawa_1"
+        "id": "j-ogawa",
+        "name": "J・オガワ",
+        "gender": "男",
+        "image": "assets/politicians/chudo/j-ogawa.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "財務省との攻防",
+            "effectText": "相手の場のカード1枚を選択し、次ターン使用不可",
+            "description": "財政政策を巡り官僚と渡り合う",
+            "cost": 2,
+            "effect": "ogawa_1"
+          },
+          {
+            "name": "正直政治",
+            "effectText": "支持率+9%",
+            "description": "誠実な言動で無党派層の心をつかむ",
+            "cost": 2,
+            "effect": "ogawa_2"
+          }
+        ]
       },
       {
-        "name": "正直政治",
-        "effectText": "支持率+8%",
-        "description": "誠実な言動で無党派層の心をつかむ",
-        "cost": 2,
-        "effect": "ogawa_2"
-      }
-    ]
-  },
-  {
-    "id": "s-isa",
-    "name": "S・イサ",
-    "gender": "男",
-    "party": "中道改革連合",
-    "image": "assets/politicians/chudo/s-isa.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "中道の旗手",
-        "effectText": "支持率+5%",
-        "description": "左右に偏らない中庸な政策で幅広い支持を得る",
-        "cost": 1,
-        "effect": "isa_1"
+        "id": "s-isa",
+        "name": "S・イサ",
+        "gender": "男",
+        "image": "assets/politicians/chudo/s-isa.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "中道の旗手",
+            "effectText": "支持率+5%",
+            "description": "左右に偏らない中庸な政策で幅広い支持を得る",
+            "cost": 1,
+            "effect": "isa_1"
+          },
+          {
+            "name": "連立交渉",
+            "effectText": "支持率が自分の手札のカード枚数×3%UP",
+            "description": "連立パートナーとの交渉を成功させる",
+            "cost": 3,
+            "effect": "isa_2"
+          }
+        ]
       },
       {
-        "name": "連立交渉",
-        "effectText": "支持率+6%、政治資金+3億",
-        "description": "連立パートナーとの交渉を成功させる",
-        "cost": 2,
-        "effect": "isa_2"
-      }
-    ]
-  },
-  {
-    "id": "t-saito",
-    "name": "T・サイトウ",
-    "gender": "男",
-    "party": "中道改革連合",
-    "image": "assets/politicians/chudo/t-saito.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "改革の突破口",
-        "effectText": "支持率+5%",
-        "description": "現状打破に向け積極的に行動する",
-        "cost": 1,
-        "effect": "saito_t_1"
-      },
-      {
-        "name": "SNS戦略",
-        "effectText": "支持率+7%、山札から1枚ドロー",
-        "description": "SNSを駆使して若年層に支持を広げる",
-        "cost": 2,
-        "effect": "saito_t_2"
-      }
-    ]
-  },
-  {
-    "id": "y-mineshima",
-    "name": "Y・ミネシマ",
-    "gender": "男",
-    "party": "チームみらい",
-    "image": "assets/politicians/mirai/y-mineshima.webp",
-    "type": "politician",
-    "abilities": [
-      {
-        "name": "ビリヤードの撞き方",
-        "effectText": "このターンのみ、自分の全カードの能力コスト-1億",
-        "description": "趣味の精密さが政策立案に活きる",
-        "cost": 1,
-        "effect": "mineshima_1"
-      },
-      {
-        "name": "マネーフォワードDX",
-        "effectText": "支持率+15%、相手の支持率-10%",
-        "description": "バックオフィスを丸ごとデジタル化する",
-        "cost": 4,
-        "effect": "mineshima_2"
+        "id": "t-saito",
+        "name": "T・サイトウ",
+        "gender": "男",
+        "image": "assets/politicians/chudo/t-saito.webp",
+        "type": "politician",
+        "abilities": [
+          {
+            "name": "改革の突破口",
+            "effectText": "手札を1枚ドロー",
+            "description": "現状打破に向け積極的に行動する",
+            "cost": 2,
+            "effect": "saito_t_1"
+          },
+          {
+            "name": "SNS戦略",
+            "effectText": "支持率+15%、相手の支持率-10%",
+            "description": "SNSを駆使して若年層に支持を広げる",
+            "cost": 4,
+            "effect": "saito_t_2"
+          }
+        ]
       }
     ]
   }

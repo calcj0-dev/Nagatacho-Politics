@@ -46,6 +46,40 @@
         <div class="party-btn-catch">バランスと改革、穏健な前進</div>
       </button>
     </div>
+    <button id="how-to-play-btn-menu" class="how-to-play-btn">遊び方</button>
+  </div>
+
+  <!-- CPUレベル選択画面 -->
+  <div id="level-select-screen" class="screen hidden">
+    <h1>CPUの強さを選んでください</h1>
+    <div class="level-buttons">
+      <button class="level-btn" data-level="1">
+        <div class="level-btn-rank">Lv.1</div>
+        <div class="level-btn-name">新人議員</div>
+        <div class="level-btn-desc">ほぼ何もしない</div>
+      </button>
+      <button class="level-btn" data-level="2">
+        <div class="level-btn-rank">Lv.2</div>
+        <div class="level-btn-name">地方議員</div>
+        <div class="level-btn-desc">気まぐれに動く</div>
+      </button>
+      <button class="level-btn" data-level="3">
+        <div class="level-btn-rank">Lv.3</div>
+        <div class="level-btn-name">国会議員</div>
+        <div class="level-btn-desc">標準的な強さ</div>
+      </button>
+      <button class="level-btn" data-level="4">
+        <div class="level-btn-rank">Lv.4</div>
+        <div class="level-btn-name">大臣</div>
+        <div class="level-btn-desc">効果的な行動を選ぶ</div>
+      </button>
+      <button class="level-btn" data-level="5">
+        <div class="level-btn-rank">Lv.5</div>
+        <div class="level-btn-name">永田町の猛者</div>
+        <div class="level-btn-desc">状況を読んで最適行動</div>
+      </button>
+    </div>
+    <button class="level-back-btn" id="level-back-btn">← 政党選択に戻る</button>
   </div>
 
   <!-- 読込中画面 -->
@@ -56,8 +90,24 @@
     </div>
   </div>
 
+  <!-- メニューへ戻る確認ダイアログ -->
+  <div id="back-to-menu-dialog" class="back-to-menu-dialog hidden">
+    <div class="back-to-menu-box">
+      <div class="back-to-menu-title">メニューへ戻りますか？</div>
+      <div class="back-to-menu-desc">ゲームの進行状況はリセットされます</div>
+      <div class="back-to-menu-btns">
+        <button id="back-to-menu-yes">戻る</button>
+        <button id="back-to-menu-no">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ゲーム画面 -->
   <div id="game-screen" class="screen hidden">
+    <!-- メニューへ戻るボタン（右上固定） -->
+    <button id="menu-back-btn" title="メニューへ戻る">⌂</button>
+    <button id="how-to-play-btn-game" class="how-to-play-btn">遊び方</button>
+
     <!-- CPU側 -->
     <div class="player-area cpu-area">
       <div id="cpu-hand" class="card-list cpu-hand"></div>
@@ -73,7 +123,10 @@
       </div>
       <div class="field-row">
         <div id="cpu-field" class="field"></div>
-        <div id="cpu-deck" class="deck-slot"></div>
+        <div class="deck-slot-wrap">
+          <div id="cpu-deck" class="deck-slot"></div>
+          <span id="cpu-deck-count" class="deck-count">0</span>
+        </div>
         <div id="cpu-discard" class="deck-slot discard-slot"></div>
       </div>
     </div>
@@ -99,7 +152,10 @@
     <div class="player-area player-area-self">
       <div class="field-row">
         <div id="player-field" class="field"></div>
-        <div id="player-deck" class="deck-slot"></div>
+        <div class="deck-slot-wrap">
+          <div id="player-deck" class="deck-slot"></div>
+          <span id="player-deck-count" class="deck-count">0</span>
+        </div>
         <div id="player-discard" class="deck-slot discard-slot"></div>
       </div>
       <div class="player-info">
