@@ -273,14 +273,14 @@ const ABILITY_EFFECTS = {
     msgs.push("次の相手ターンに受ける支持率低下を無効化！");
     return msgs;
   },
-  kono_2(self, opponent) {
+  kono_2(self, opponent, executor = "player") {
     const msgs = [];
     const m1 = changeApproval(self, 6);
     if (m1) msgs.push(m1);
     if (self.deck.length > 0) {
       const drawn = self.deck.shift();
       self.hand.push(drawn);
-      msgs.push(`${drawn.name}を手札に加えた！`);
+      msgs.push(executor === "cpu" ? "カードを1枚手札に加えた！" : `${drawn.name}を手札に加えた！`);
     } else {
       msgs.push("山札がなくドロー不可…");
     }
@@ -507,12 +507,12 @@ const ABILITY_EFFECTS = {
     if (m) msgs.push(m);
     return msgs;
   },
-  fujita_2(self, _opponent) {
+  fujita_2(self, _opponent, executor = "player") {
     const msgs = [];
     if (self.deck.length > 0) {
       const drawn = self.deck.shift();
       self.hand.push(drawn);
-      msgs.push(`${drawn.name}を手札に加えた！`);
+      msgs.push(executor === "cpu" ? "カードを1枚手札に加えた！" : `${drawn.name}を手札に加えた！`);
     }
     return msgs;
   },
@@ -683,12 +683,12 @@ const ABILITY_EFFECTS = {
     if (m) msgs.push(m);
     return msgs;
   },
-  saito_t_1(self, _opponent) {
+  saito_t_1(self, _opponent, executor = "player") {
     const msgs = [];
     if (self.deck.length > 0) {
       const drawn = self.deck.shift();
       self.hand.push(drawn);
-      msgs.push(`${drawn.name}を手札に加えた！`);
+      msgs.push(executor === "cpu" ? "カードを1枚手札に加えた！" : `${drawn.name}を手札に加えた！`);
     }
     return msgs;
   },
@@ -798,15 +798,15 @@ const OPTION_EFFECTS = {
     msgs.push("次の相手ターンの支持率上昇を1回無効化！");
     return msgs;
   },
-  ouen_enzetsu(self, opponent) {
+  ouen_enzetsu(self, opponent, executor = "player") {
     const msgs = [];
     const politicianIdx = self.deck.findIndex(c => c.type === "politician");
     if (politicianIdx >= 0) {
       const drawn = self.deck.splice(politicianIdx, 1)[0];
       self.hand.push(drawn);
-      msgs.push("政治家カードを山札から1枚手札に加えた！");
+      msgs.push(executor === "cpu" ? "カードを1枚手札に加えた！" : "政治家カードを山札から1枚手札に加えた！");
     } else {
-      msgs.push("山札に政治家カードがなく空振り…");
+      msgs.push(executor === "cpu" ? "カードを手札に加えられなかった…" : "山札に政治家カードがなく空振り…");
     }
     return msgs;
   },
@@ -921,7 +921,7 @@ function executeEffect(effectId, executor) {
     console.log(`効果未定義: ${effectId}`);
     return ["（効果未定義）"];
   }
-  return effectFn(self, opponent);
+  return effectFn(self, opponent, executor);
 }
 
 // ============================================================
@@ -1330,6 +1330,7 @@ function cpuPhasePlace() {
       console.log(`  CPU: ${card.name}を場に出した`);
 
       const afterPlace = () => {
+        playSE("assets/audio/se/card_play.mp3");
         renderGame();
         // 着地アニメーション
         const cpuFieldCards = document.querySelectorAll("#cpu-field .card");
@@ -1370,7 +1371,11 @@ function cpuPhaseAbilities() {
   for (const card of c.field) {
     if (c.usedAbilities[card.instanceId] || card.disabled) continue;
     const costs = card.abilities.map(a => Math.max(0, a.cost - cr));
-    const isUseful = (effect) => (effect !== "ishiba_2" && effect !== "shinba_2" && effect !== "ogawa_1") || gameState.player.field.length > 0;
+    // シールド系能力（kono_1）はプレイヤーの場にカードがある時のみ有効（脅威なしに盾を張らない）
+    const isUseful = (effect) => {
+      if (effect === "kono_1") return gameState.player.field.length > 0;
+      return (effect !== "ishiba_2" && effect !== "shinba_2" && effect !== "ogawa_1") || gameState.player.field.length > 0;
+    };
     const afford0 = c.funds >= costs[0] && isUseful(card.abilities[0].effect);
     const afford1 = !card.sealedAbility2 && c.funds >= costs[1] && isUseful(card.abilities[1].effect);
 
@@ -1459,9 +1464,40 @@ function cpuExecuteNextAbility(abilityActions, idx) {
     c.funds -= effectiveCost;
     c.usedAbilities[action.card.instanceId] = abilityIdx + 1;
     const ability = action.card.abilities[abilityIdx];
-    const effectMsgs = executeEffect(ability.effect, "cpu");
     console.log(`  CPU: ${action.card.name}「${ability.name}」（コスト${effectiveCost}億）`);
     const cpuFieldIndex = c.field.findIndex(fc => fc.instanceId === action.card.instanceId);
+
+    // スロット演出が必要な能力
+    const cpuSlotEffects = {
+      koizumi_1: [
+        { label: "+15%", value: 15, color: "#22cc77" },
+        { label: "-10%", value: -10, color: "#ee4444" },
+      ],
+      furukawa_2: [
+        { label: "+10%", value: 10, color: "#22cc77" },
+        { label: "-3%",  value: -3,  color: "#ee4444" },
+      ],
+    };
+    if (cpuSlotEffects[ability.effect]) {
+      playAbilityAnimation(cpuFieldIndex, abilityIdx, "cpu", () => {
+        showSlotAnimation(cpuSlotEffects[ability.effect], (winner) => {
+          const msgs = [];
+          const m = changeApproval(c, winner.value);
+          if (m) msgs.push(m);
+          renderGame();
+          setTimeout(() => {
+            showActionBanner(
+              [`${action.card.name}「${ability.name}」を発動！`, ...msgs],
+              false,
+              () => cpuExecuteNextAbility(abilityActions, idx + 1)
+            );
+          }, 700);
+        });
+      });
+      return;
+    }
+
+    const effectMsgs = executeEffect(ability.effect, "cpu");
     playAbilityAnimation(cpuFieldIndex, abilityIdx, "cpu", () => {
       renderGame(); // カードアニメーション後に支持率・資金フラッシュを発火
       setTimeout(() => {
