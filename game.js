@@ -1118,6 +1118,25 @@ function showTurnBanner(isPlayer, onDone) {
   });
 }
 
+// オプションカードの最適使用タイミングを返す（Lv4-5用）
+// "first"         → 政治家配置前（draw系：引いた政治家をその場で配置可能）
+// "before_ability"→ 配置後・能力前（資金系：増やした資金で能力コストを払える）
+// "last"          → 能力後（デフォルト）
+function cpuGetOptionPriority(card) {
+  if (!card) return "last";
+  const drawFirst   = ["ouen_enzetsu", "kokkai_inemuri"];
+  const fundBefore  = ["kenkin_party", "zouzei_megane"];
+  if (drawFirst.includes(card.effect))  return "first";
+  if (fundBefore.includes(card.effect)) return "before_ability";
+  return "last";
+}
+
+// キューから次のフェーズ関数を取り出して実行
+function cpuRunNextPhase() {
+  const next = gameState.cpuPhaseQueue && gameState.cpuPhaseQueue.shift();
+  if (next) next();
+}
+
 function startCpuTurn() {
   const c = gameState.cpu;
   gameState.currentPlayer = "cpu";
@@ -1178,7 +1197,20 @@ function startCpuTurn() {
       document.body.appendChild(thinkingBanner);
       setTimeout(() => {
         thinkingBanner.remove();
-        cpuPhasePlace();
+        // フェーズ実行順序を決定（Lv4-5はオプションカード種別で最適化）
+        const lv = gameState.cpuLevel;
+        const optionCard = gameState.cpu.hand.find(card => card.type === "option");
+        let phases = [cpuPhasePlace, cpuPhaseAbilities, cpuPhaseOption, cpuCheckWinAndEnd];
+        if (lv >= 4 && optionCard) {
+          const priority = cpuGetOptionPriority(optionCard);
+          if (priority === "first") {
+            phases = [cpuPhaseOption, cpuPhasePlace, cpuPhaseAbilities, cpuCheckWinAndEnd];
+          } else if (priority === "before_ability") {
+            phases = [cpuPhasePlace, cpuPhaseOption, cpuPhaseAbilities, cpuCheckWinAndEnd];
+          }
+        }
+        gameState.cpuPhaseQueue = phases.slice(1);
+        phases[0]();
       }, 900);
     };
 
@@ -1268,8 +1300,8 @@ function cpuPhasePlace() {
   const lv = gameState.cpuLevel;
 
   // Lv1: 50%でスキップ / Lv2: 25%でスキップ
-  if (lv === 1 && Math.random() < 0.5) { cpuPhaseAbilities(); return; }
-  if (lv === 2 && Math.random() < 0.25) { cpuPhaseAbilities(); return; }
+  if (lv === 1 && Math.random() < 0.5) { cpuRunNextPhase(); return; }
+  if (lv === 2 && Math.random() < 0.25) { cpuRunNextPhase(); return; }
 
   if (!c.placedThisTurn && c.field.length < 3) {
     // Lv4-5: 能力コスト合計が最大の政治家を選ぶ / Lv1-3: 先頭
@@ -1303,7 +1335,7 @@ function cpuPhasePlace() {
         const cpuFieldCards = document.querySelectorAll("#cpu-field .card");
         const newCard = cpuFieldCards[cpuFieldCards.length - 1];
         if (newCard) newCard.classList.add("card-landing");
-        showActionBanner([`${card.name} を場に出した！`], false, () => cpuPhaseAbilities());
+        showActionBanner([`${card.name} を場に出した！`], false, () => cpuRunNextPhase());
       };
 
       if (cardBackEl && destEl) {
@@ -1325,7 +1357,7 @@ function cpuPhasePlace() {
       return;
     }
   }
-  cpuPhaseAbilities();
+  cpuRunNextPhase();
 }
 
 // フェーズ2: 能力の発動（1つずつ順番に）
@@ -1442,7 +1474,7 @@ function cpuExecuteNextAbility(abilityActions, idx) {
     });
     return;
   }
-  cpuPhaseOption();
+  cpuRunNextPhase();
 }
 
 // フェーズ3: オプションカード使用
@@ -1451,15 +1483,15 @@ function cpuPhaseOption() {
   const lv = gameState.cpuLevel;
 
   // Lv1: 70%でスキップ / Lv2: 40%でスキップ
-  if (lv === 1 && Math.random() < 0.7) { cpuCheckWinAndEnd(); return; }
-  if (lv === 2 && Math.random() < 0.4) { cpuCheckWinAndEnd(); return; }
+  if (lv === 1 && Math.random() < 0.7) { cpuRunNextPhase(); return; }
+  if (lv === 2 && Math.random() < 0.4) { cpuRunNextPhase(); return; }
 
   if (!c.usedOptionThisTurn) {
     // Lv5: 支持率が大幅リードなら温存（オプションを使わない）
     if (lv === 5) {
       const approvalDiff = c.approval - gameState.player.approval;
       const remainingTurns = 25 - gameState.turn;
-      if (approvalDiff > 25 && remainingTurns > 8) { cpuCheckWinAndEnd(); return; }
+      if (approvalDiff > 25 && remainingTurns > 8) { cpuRunNextPhase(); return; }
     }
 
     const optionIdx = c.hand.findIndex(card => card.type === "option");
@@ -1487,7 +1519,7 @@ function cpuPhaseOption() {
               [`${card.name} を使用！`, ...effectMsgs],
               false,
               () => {
-                cpuCheckWinAndEnd();
+                cpuRunNextPhase();
               }
             );
           }, 700);
@@ -1496,7 +1528,7 @@ function cpuPhaseOption() {
       return;
     }
   }
-  cpuCheckWinAndEnd();
+  cpuRunNextPhase();
 }
 
 // 勝敗判定 → ターン終了
