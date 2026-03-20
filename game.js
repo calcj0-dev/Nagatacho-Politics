@@ -4156,6 +4156,7 @@ async function showHowToPlay() {
       ? `<img src="${imgSrc}" class="how-to-play-img${extraClass}" alt="${slide.title}">`
       : "";
     box.innerHTML = `
+      <button class="how-to-play-close" id="htp-close">✕</button>
       <div class="how-to-play-header">
         <button class="htp-arrow" id="htp-prev" ${currentSlide === 0 ? "disabled" : ""}>‹</button>
         <div class="how-to-play-header-center">
@@ -4163,7 +4164,6 @@ async function showHowToPlay() {
           <div class="how-to-play-counter">${currentSlide + 1} / ${HOW_TO_SLIDES.length}</div>
         </div>
         <button class="htp-arrow" id="htp-next" ${currentSlide === HOW_TO_SLIDES.length - 1 ? "disabled" : ""}>›</button>
-        <button class="how-to-play-close" id="htp-close">✕</button>
       </div>
       ${imgHtml}
       <div class="how-to-play-body">${slide.body}</div>
