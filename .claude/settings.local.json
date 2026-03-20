@@ -3,7 +3,8 @@
     "allow": [
       "Bash(node --check \"c:\\\\Users\\\\RD24PC037N-user\\\\Documents\\\\gihub\\\\Nagatacho-Politics\\\\game.js\")",
       "Bash(node.exe --check \"c:/Users/RD24PC037N-user/Documents/gihub/Nagatacho-Politics/game.js\")",
-      "Bash(cmd.exe /c \"node --check \"\"c:\\\\Users\\\\RD24PC037N-user\\\\Documents\\\\gihub\\\\Nagatacho-Politics\\\\game.js\"\" 2>&1\")"
+      "Bash(cmd.exe /c \"node --check \"\"c:\\\\Users\\\\RD24PC037N-user\\\\Documents\\\\gihub\\\\Nagatacho-Politics\\\\game.js\"\" 2>&1\")",
+      "Bash(python -c \":*)"
     ]
   }
 }

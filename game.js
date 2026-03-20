@@ -4073,8 +4073,7 @@ function setMainPhaseUI(enabled) {
 const HOW_TO_SLIDES = [
   {
     title: "ゲーム概要",
-    body: `6つの政党から1つを選び、CPUと<strong>支持率</strong>を競うカードゲームです。<br><br>
-政治家カードやオプションカードを駆使して、相手より高い支持率を目指しましょう。`
+    body: `6つの政党から1つを選び、CPUと<strong>支持率</strong>を競うカードゲームです。政治家カードやオプションカードを駆使して、相手より高い支持率を目指しましょう。`
   },
   {
     title: "勝利条件",
@@ -4085,20 +4084,27 @@ const HOW_TO_SLIDES = [
 </ul>`
   },
   {
-    title: "カードの種類",
-    body: `<strong>政治家カード</strong><br>
-場に出して能力を使います。場には最大3枚まで。1ターンに1枚配置可能。<br><br>
-<strong>オプションカード</strong><br>
-即座に効果を発動する1回使い切りのカードです。`
+    title: "政治家カード",
+    image: "assets/politicians/jimin/s-ishiba.webp",
+    body: `場に出して<strong>能力</strong>を使います。<br><br>
+場には最大<strong>3枚</strong>まで配置可能。1ターンに配置できるのは<strong>1枚</strong>だけです。<br><br>
+能力を使うには<strong>政治資金</strong>が必要です。`
+  },
+  {
+    title: "オプションカード",
+    image: "assets/options/kenkin_party.webp",
+    body: `使った瞬間に効果を発動する<strong>1回使い切り</strong>のカードです。<br><br>
+支持率の増減・相手への妨害・資金獲得など、様々な効果があります。`
   },
   {
     title: "ターンの流れ",
+    image: "assets/item/game_screen.webp",
     body: `<ol>
   <li><strong>ドロー</strong>：山札から1枚引く</li>
   <li><strong>配置</strong>：政治家カードを場に出す（1ターン1枚）</li>
   <li><strong>能力</strong>：場の政治家カードの能力を使用</li>
   <li><strong>終了</strong>：ターン終了ボタンを押す</li>
-</ol><br>
+</ol>
 手札が7枚を超える場合、ターン終了時に捨て札が必要です。`
   },
   {
@@ -4115,8 +4121,22 @@ const HOW_TO_SLIDES = [
   },
 ];
 
-function showHowToPlay() {
+async function showHowToPlay() {
   if (document.getElementById("how-to-play-overlay")) return;
+
+  // 政治家・オプションカードのCanvas合成画像を取得
+  const politicianCard = POLITICIAN_CARDS.find(c => c.id === "s-ishiba");
+  const optionCard = OPTION_CARDS.find(c => c.id === "kenkin_party");
+  const [politicianDataUrl, optionDataUrl] = await Promise.all([
+    politicianCard ? renderCardCanvas(politicianCard) : Promise.resolve(null),
+    optionCard     ? renderCardCanvas(optionCard)     : Promise.resolve(null),
+  ]);
+
+  // スライドの cardImage を差し替え
+  const slideImages = {
+    "政治家カード":   politicianDataUrl,
+    "オプションカード": optionDataUrl,
+  };
 
   let currentSlide = 0;
 
@@ -4129,10 +4149,16 @@ function showHowToPlay() {
 
   function render() {
     const slide = HOW_TO_SLIDES[currentSlide];
+    const imgSrc = slideImages[slide.title] ?? slide.image ?? null;
+    const isCard = slideImages[slide.title] != null;
+    const imgHtml = imgSrc
+      ? `<img src="${imgSrc}" class="how-to-play-img${isCard ? " how-to-play-img-card" : ""}" alt="${slide.title}">`
+      : "";
     box.innerHTML = `
       <button class="how-to-play-close" id="htp-close">✕</button>
       <div class="how-to-play-counter">${currentSlide + 1} / ${HOW_TO_SLIDES.length}</div>
       <h3 class="how-to-play-title">${slide.title}</h3>
+      ${imgHtml}
       <div class="how-to-play-body">${slide.body}</div>
       <div class="how-to-play-nav">
         <button class="htp-arrow" id="htp-prev" ${currentSlide === 0 ? "disabled" : ""}>‹</button>
