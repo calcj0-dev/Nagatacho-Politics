@@ -1116,6 +1116,96 @@ function showTurnBanner(isPlayer, onDone) {
 
 // オプションカードの最適使用タイミングを返す（Lv4-5用）
 // "first"         → 政治家配置前（draw系：引いた政治家をその場で配置可能）
+// Lv5: 前ターンのプレイヤー支持率上昇量を返す（急上昇検知に使用）
+function cpuGetPlayerApprovalSurge() {
+  const hist = gameState.approvalHistory;
+  if (hist.length < 2) return 0;
+  return hist[hist.length - 1].player - hist[hist.length - 2].player;
+}
+
+// Lv5: オプションカードを状況スコアで評価して最適なインデックスを返す
+function cpuSelectBestOption(hand) {
+  let bestIdx = -1, bestScore = -1;
+  hand.forEach((card, i) => {
+    if (card.type !== "option") return;
+    const score = cpuScoreOption(card);
+    if (score > bestScore) { bestScore = score; bestIdx = i; }
+  });
+  return bestIdx;
+}
+
+function cpuScoreOption(card) {
+  const eff = card.effect;
+  const c = gameState.cpu;
+  const p = gameState.player;
+  const approvalDiff = c.approval - p.approval;
+  let score = 0;
+  switch (eff) {
+    case "yaji_gassen":
+      // 相手の全カードを次ターン封印 → 場のカード数に比例
+      score = p.field.length > 0 ? 180 + p.field.length * 30 : 0; break;
+    case "giinkaikan_furin":
+      // 相手-8% 自分-3% (実質-11差) → 劣勢ほど価値大
+      score = 120 + (approvalDiff < 0 ? 50 : 0); break;
+    case "kono_hage": {
+      const hasFemale = p.field.some(fc => fc.gender === "女");
+      score = 90 + (hasFemale ? 60 : 0) + (approvalDiff < -5 ? 30 : 0); break;
+    }
+    case "yukiguni_yukikaki":
+      score = 80 + (approvalDiff < -5 ? 20 : 0); break;
+    case "gyuuho_senjutsu":
+      // ドロー封印 → 終盤は特に価値大
+      score = 85 + (25 - gameState.turn <= 8 ? 30 : 0); break;
+    case "gaitou_enzetsu":
+      // 場2枚以上なら+12%の超強力カード
+      score = c.field.length >= 2 ? 130 : 65; break;
+    case "masukomi_taisaku":
+      // 相手の次の支持率上昇を無効化 → リード時に伸びを止める
+      score = 75 + (approvalDiff > 0 ? 25 : 0); break;
+    case "toushu_touron":
+      // +1〜10% ランダム (期待値+5.5%)
+      score = 70 + (approvalDiff < -5 ? 20 : 0); break;
+    case "kenkin_party":
+      // +5億 → 資金切れ時に高価値
+      score = c.funds <= 1 ? 90 : c.funds <= 3 ? 50 : 25; break;
+    case "zouzei_megane":
+      // 相手から最大3億徴収 → 相手に資金があるほど価値大
+      score = p.funds >= 3 ? 75 : p.funds >= 1 ? 45 : 10; break;
+    case "kioku_ni_gozaimasen": {
+      // 場のカード1枚をコスト0で再使用 → 高コストカードがあるほど価値大
+      const maxCost = c.field.reduce((mx, fc) =>
+        Math.max(mx, (fc.abilities || []).reduce((s, a) => s + (a.cost || 0), 0)), 0);
+      score = maxCost >= 5 ? 100 : maxCost >= 3 ? 60 : 25; break;
+    }
+    case "trump_tariff":
+      // 両者資金半減 → 相手が多く持っている時に有利
+      score = p.funds > c.funds + 2 ? 70 : p.funds > c.funds ? 40 : 10; break;
+    case "ouen_enzetsu":
+      // 政治家ドロー → 序盤・場が空きの時に価値大
+      score = c.field.length < 2 && gameState.turn <= 10 ? 70 : 30; break;
+    case "kokkai_inemuri":
+      // 2ドロー → 序盤は手札補充価値大
+      score = gameState.turn <= 8 ? 65 : 35; break;
+    case "tounai_kaikaku": {
+      // 場→捨て、手→場の入れ替え → 手札が強い時に価値
+      const bestHandCost = c.hand.filter(hc => hc.type === "politician")
+        .reduce((mx, hc) => Math.max(mx, (hc.abilities || []).reduce((s, a) => s + (a.cost || 0), 0)), 0);
+      const worstFieldCost = c.field.length > 0
+        ? c.field.reduce((mn, fc) => Math.min(mn, (fc.abilities || []).reduce((s, a) => s + (a.cost || 0), 0)), Infinity)
+        : Infinity;
+      score = bestHandCost > worstFieldCost + 3 ? 65 : 15; break;
+    }
+    case "drill_hakai":
+      // 支持率低下シールド → 劣勢で攻撃を受けている時に価値
+      score = approvalDiff < -5 ? 55 : 20; break;
+    case "kinkyuu_yoron":
+      score = 5; break;
+    default:
+      score = 30;
+  }
+  return score;
+}
+
 // "before_ability"→ 配置後・能力前（資金系：増やした資金で能力コストを払える）
 // "last"          → 能力後（デフォルト）
 function cpuGetOptionPriority(card) {
@@ -1195,7 +1285,11 @@ function startCpuTurn() {
         thinkingBanner.remove();
         // フェーズ実行順序を決定（Lv4-5はオプションカード種別で最適化）
         const lv = gameState.cpuLevel;
-        const optionCard = gameState.cpu.hand.find(card => card.type === "option");
+        // Lv5: スコア最高のオプションを基準にフェーズ順を決定
+        const _bestOptIdx = lv === 5 ? cpuSelectBestOption(gameState.cpu.hand) : -1;
+        const optionCard = _bestOptIdx >= 0
+          ? gameState.cpu.hand[_bestOptIdx]
+          : gameState.cpu.hand.find(card => card.type === "option");
         let phases = [cpuPhasePlace, cpuPhaseAbilities, cpuPhaseOption, cpuCheckWinAndEnd];
         if (lv >= 4 && optionCard) {
           const priority = cpuGetOptionPriority(optionCard);
@@ -1295,14 +1389,31 @@ function cpuPhasePlace() {
   const c = gameState.cpu;
   const lv = gameState.cpuLevel;
 
-  // Lv1: 50%でスキップ / Lv2: 25%でスキップ
-  if (lv === 1 && Math.random() < 0.5) { cpuRunNextPhase(); return; }
-  if (lv === 2 && Math.random() < 0.25) { cpuRunNextPhase(); return; }
+  // Lv1: 65%でスキップ / Lv2: 35%でスキップ
+  if (lv === 1 && Math.random() < 0.65) { cpuRunNextPhase(); return; }
+  if (lv === 2 && Math.random() < 0.35) { cpuRunNextPhase(); return; }
 
   if (!c.placedThisTurn && c.field.length < 3) {
-    // Lv4-5: 能力コスト合計が最大の政治家を選ぶ / Lv1-3: 先頭
+    // Lv5: 相手の脅威を読んで戦略的選択
+    // Lv4: 能力コスト合計が最大の政治家を選ぶ
+    // Lv1-3: 先頭
     let idx;
-    if (lv >= 4) {
+    const _attackEffectsPlace = ["ishiba_2", "shinba_2", "ogawa_1", "izumi_2", "takaichi_2",
+      "muto_2", "saito_t_2", "mineshima_2", "mogami_2", "baba_2"];
+    if (lv === 5) {
+      const playerFieldSize = gameState.player.field.length;
+      let bestIdx = -1, bestScore = -Infinity;
+      c.hand.forEach((card, i) => {
+        if (card.type !== "politician") return;
+        const totalCost = (card.abilities || []).reduce((s, a) => s + (a.cost || 0), 0);
+        let score = totalCost;
+        // 相手の場が充実しているなら妨害・封印能力持ちを優先
+        const hasAttack = (card.abilities || []).some(a => _attackEffectsPlace.includes(a.effect));
+        if (playerFieldSize >= 2 && hasAttack) score += 60;
+        if (score > bestScore) { bestScore = score; bestIdx = i; }
+      });
+      idx = bestIdx;
+    } else if (lv === 4) {
       let bestIdx = -1, bestCost = -1;
       c.hand.forEach((card, i) => {
         if (card.type !== "politician") return;
@@ -1375,12 +1486,13 @@ function cpuPhaseAbilities() {
     const afford0 = c.funds >= costs[0] && isUseful(card.abilities[0].effect);
     const afford1 = !card.sealedAbility2 && c.funds >= costs[1] && isUseful(card.abilities[1].effect);
 
-    // Lv1: 50%でスキップ
-    if (lv === 1 && Math.random() < 0.5) continue;
-    // Lv2: 25%でスキップ
-    if (lv === 2 && Math.random() < 0.25) continue;
+    // Lv1: 60%でスキップ
+    if (lv === 1 && Math.random() < 0.6) continue;
+    // Lv2: 30%でスキップ
+    if (lv === 2 && Math.random() < 0.3) continue;
 
     let chosen = -1;
+    let actionScore = 0;
     if (lv <= 2) {
       // Lv1-2: ランダム選択
       const options = [];
@@ -1392,36 +1504,67 @@ function cpuPhaseAbilities() {
       if (afford0 && afford1) chosen = costs[1] >= costs[0] ? 1 : 0;
       else if (afford1) chosen = 1;
       else if (afford0) chosen = 0;
-    } else {
-      // Lv4-5: 支持率変動効果が大きい方を優先
-      const getScore = (abilityIdx) => {
+    } else if (lv === 4) {
+      // Lv4: 妨害・支持率大変動を高スコアに
+      const getScore4 = (abilityIdx) => {
         const effect = card.abilities[abilityIdx].effect;
-        // 妨害系・支持率大変動を高スコアに
-        const highValueEffects = ["ishiba_2", "shinba_2", "ogawa_1", "izumi_2", "takaichi_2",
+        const attackEffects = ["ishiba_2", "shinba_2", "ogawa_1", "izumi_2", "takaichi_2",
           "muto_2", "saito_t_2", "mineshima_2", "mogami_2", "baba_2"];
-        if (highValueEffects.includes(effect)) return 100 + costs[abilityIdx];
+        if (attackEffects.includes(effect)) return 100 + costs[abilityIdx];
         return costs[abilityIdx];
       };
-      if (afford0 && afford1) {
-        chosen = getScore(1) >= getScore(0) ? 1 : 0;
-      } else if (afford1) chosen = 1;
+      if (afford0 && afford1) chosen = getScore4(1) >= getScore4(0) ? 1 : 0;
+      else if (afford1) chosen = 1;
       else if (afford0) chosen = 0;
+    } else {
+      // Lv5: 状況を読んだ高度スコアリング（常に最適行動）
+      const approvalDiff = c.approval - gameState.player.approval;
+      const remainingTurns = 25 - gameState.turn;
+      const playerNearWin = gameState.player.approval >= 55;
+      const cpuNearWin = c.approval >= 55;
+      const attackEffects5 = ["ishiba_2", "shinba_2", "ogawa_1", "izumi_2", "takaichi_2",
+        "muto_2", "saito_t_2", "mineshima_2", "mogami_2", "baba_2"];
 
-      // Lv5: 支持率差が大きくリードしている場合、資金温存（安い方を選ぶ）
-      if (lv === 5 && chosen >= 0) {
-        const approvalDiff = c.approval - gameState.player.approval;
-        const remainingTurns = 25 - gameState.turn;
-        if (approvalDiff > 20 && remainingTurns > 5) {
-          if (afford0 && afford1) chosen = costs[0] <= costs[1] ? 0 : 1;
+      const sealEffects5 = ["ishiba_2", "shinba_2", "ogawa_1"];
+      const playerCritical = gameState.player.approval >= 60; // 相手が勝利圏に入った
+      const playerSurge = cpuGetPlayerApprovalSurge();        // 直前ターンの相手支持率増加量
+
+      const getScore5 = (abilityIdx) => {
+        const effect = card.abilities[abilityIdx].effect;
+        const cost = costs[abilityIdx];
+        let score = cost * 3; // コスト ≈ 基本的な効果量
+
+        if (attackEffects5.includes(effect)) {
+          score += 120;
+          if (playerNearWin) score += 100;      // 相手が勝利に近い → 攻撃最優先
+          if (playerCritical && sealEffects5.includes(effect)) score += 150; // 相手60%超え → 封印が最重要
+          if (approvalDiff < -10) score += 60;  // 劣勢 → 攻撃的に
+          if (playerSurge >= 10) score += 80;   // 相手が急上昇 → 緊急阻止
+        } else {
+          if (cpuNearWin) score += 50;           // 自分が勝利に近い → 自己強化でプッシュ
+          if (approvalDiff < -15) score -= 20;   // 大差で負けている → 攻撃優先
+          if (playerSurge >= 10) score -= 40;    // 相手が急上昇中は自己強化より攻撃を優先
         }
-      }
+        if (remainingTurns <= 8) score += 100;   // ターン17〜 → 全力モード
+        return score;
+      };
+
+      if (afford0 && afford1) chosen = getScore5(1) >= getScore5(0) ? 1 : 0;
+      else if (afford1) chosen = 1;
+      else if (afford0) chosen = 0;
+      if (chosen >= 0) actionScore = getScore5(chosen);
     }
 
     if (chosen >= 0) {
-      abilityActions.push({ card, abilityIdx: chosen, cost: costs[chosen] });
+      abilityActions.push({ card, abilityIdx: chosen, cost: costs[chosen], score: actionScore });
     }
   }
-  abilityActions.sort((a, b) => a.cost - b.cost);
+  // Lv5: 高インパクト順（重要な能力を先に発動し資金を有効活用）/ その他: 安い順
+  if (lv === 5) {
+    abilityActions.sort((a, b) => b.score - a.score);
+  } else {
+    abilityActions.sort((a, b) => a.cost - b.cost);
+  }
   cpuExecuteNextAbility(abilityActions, 0);
 }
 
@@ -1541,19 +1684,24 @@ function cpuPhaseOption() {
   const c = gameState.cpu;
   const lv = gameState.cpuLevel;
 
-  // Lv1: 70%でスキップ / Lv2: 40%でスキップ
-  if (lv === 1 && Math.random() < 0.7) { cpuRunNextPhase(); return; }
-  if (lv === 2 && Math.random() < 0.4) { cpuRunNextPhase(); return; }
+  // Lv1: 80%でスキップ / Lv2: 50%でスキップ
+  if (lv === 1 && Math.random() < 0.8) { cpuRunNextPhase(); return; }
+  if (lv === 2 && Math.random() < 0.5) { cpuRunNextPhase(); return; }
 
   if (!c.usedOptionThisTurn) {
-    // Lv5: 支持率が大幅リードなら温存（オプションを使わない）
+    // Lv5: 圧倒的優勢かつ序盤〜中盤のみ温存。劣勢・終盤・急上昇時は必ず使う
     if (lv === 5) {
       const approvalDiff = c.approval - gameState.player.approval;
       const remainingTurns = 25 - gameState.turn;
-      if (approvalDiff > 25 && remainingTurns > 8) { cpuRunNextPhase(); return; }
+      const surge = cpuGetPlayerApprovalSurge();
+      // 相手が1ターンで10%以上急上昇した場合は緊急使用（温存しない）
+      if (surge < 10 && approvalDiff > 30 && remainingTurns > 10) { cpuRunNextPhase(); return; }
     }
 
-    const optionIdx = c.hand.findIndex(card => card.type === "option");
+    // Lv5: ゲーム状況に応じて最も効果的なオプションを選ぶ / それ以外: 先頭のオプション
+    const optionIdx = lv === 5
+      ? cpuSelectBestOption(c.hand)
+      : c.hand.findIndex(card => card.type === "option");
     if (optionIdx >= 0) {
       const card = c.hand.splice(optionIdx, 1)[0];
       c.discard.push(card);
@@ -1604,10 +1752,29 @@ function cpuCheckWinAndEnd() {
 
 function cpuEndPhase() {
   const c = gameState.cpu;
-  // 手札上限チェック（7枚超過分を自動で捨てる - オプション優先）
+  // 手札上限チェック（7枚超過分を自動で捨てる）
   while (c.hand.length > 7) {
-    const optionIdx = c.hand.findIndex(card => card.type === "option");
-    const discardIdx = optionIdx >= 0 ? optionIdx : c.hand.length - 1;
+    let discardIdx;
+    if (gameState.cpuLevel === 5) {
+      // Lv5: 最も弱い政治家（能力コスト合計が最小）を捨ててオプションを温存
+      let weakestIdx = -1, weakestCost = Infinity;
+      c.hand.forEach((card, i) => {
+        if (card.type !== "politician") return;
+        const totalCost = (card.abilities || []).reduce((s, a) => s + (a.cost || 0), 0);
+        if (totalCost < weakestCost) { weakestCost = totalCost; weakestIdx = i; }
+      });
+      if (weakestIdx >= 0) {
+        discardIdx = weakestIdx;
+      } else {
+        // 政治家がいなければオプションを捨てる
+        discardIdx = c.hand.findIndex(card => card.type === "option");
+        if (discardIdx < 0) discardIdx = c.hand.length - 1;
+      }
+    } else {
+      // Lv1-4: オプション優先で捨てる
+      const optionIdx = c.hand.findIndex(card => card.type === "option");
+      discardIdx = optionIdx >= 0 ? optionIdx : c.hand.length - 1;
+    }
     const discarded = c.hand.splice(discardIdx, 1)[0];
     c.discard.push(discarded);
     console.log(`  CPU手札超過: ${discarded.name}を捨てた`);
