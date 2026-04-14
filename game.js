@@ -1295,14 +1295,31 @@ function cpuPhasePlace() {
   const c = gameState.cpu;
   const lv = gameState.cpuLevel;
 
-  // Lv1: 50%でスキップ / Lv2: 25%でスキップ
-  if (lv === 1 && Math.random() < 0.5) { cpuRunNextPhase(); return; }
-  if (lv === 2 && Math.random() < 0.25) { cpuRunNextPhase(); return; }
+  // Lv1: 65%でスキップ / Lv2: 35%でスキップ
+  if (lv === 1 && Math.random() < 0.65) { cpuRunNextPhase(); return; }
+  if (lv === 2 && Math.random() < 0.35) { cpuRunNextPhase(); return; }
 
   if (!c.placedThisTurn && c.field.length < 3) {
-    // Lv4-5: 能力コスト合計が最大の政治家を選ぶ / Lv1-3: 先頭
+    // Lv5: 相手の脅威を読んで戦略的選択
+    // Lv4: 能力コスト合計が最大の政治家を選ぶ
+    // Lv1-3: 先頭
     let idx;
-    if (lv >= 4) {
+    const _attackEffectsPlace = ["ishiba_2", "shinba_2", "ogawa_1", "izumi_2", "takaichi_2",
+      "muto_2", "saito_t_2", "mineshima_2", "mogami_2", "baba_2"];
+    if (lv === 5) {
+      const playerFieldSize = gameState.player.field.length;
+      let bestIdx = -1, bestScore = -Infinity;
+      c.hand.forEach((card, i) => {
+        if (card.type !== "politician") return;
+        const totalCost = (card.abilities || []).reduce((s, a) => s + (a.cost || 0), 0);
+        let score = totalCost;
+        // 相手の場が充実しているなら妨害・封印能力持ちを優先
+        const hasAttack = (card.abilities || []).some(a => _attackEffectsPlace.includes(a.effect));
+        if (playerFieldSize >= 2 && hasAttack) score += 60;
+        if (score > bestScore) { bestScore = score; bestIdx = i; }
+      });
+      idx = bestIdx;
+    } else if (lv === 4) {
       let bestIdx = -1, bestCost = -1;
       c.hand.forEach((card, i) => {
         if (card.type !== "politician") return;
@@ -1375,12 +1392,13 @@ function cpuPhaseAbilities() {
     const afford0 = c.funds >= costs[0] && isUseful(card.abilities[0].effect);
     const afford1 = !card.sealedAbility2 && c.funds >= costs[1] && isUseful(card.abilities[1].effect);
 
-    // Lv1: 50%でスキップ
-    if (lv === 1 && Math.random() < 0.5) continue;
-    // Lv2: 25%でスキップ
-    if (lv === 2 && Math.random() < 0.25) continue;
+    // Lv1: 60%でスキップ
+    if (lv === 1 && Math.random() < 0.6) continue;
+    // Lv2: 30%でスキップ
+    if (lv === 2 && Math.random() < 0.3) continue;
 
     let chosen = -1;
+    let actionScore = 0;
     if (lv <= 2) {
       // Lv1-2: ランダム選択
       const options = [];
@@ -1392,36 +1410,64 @@ function cpuPhaseAbilities() {
       if (afford0 && afford1) chosen = costs[1] >= costs[0] ? 1 : 0;
       else if (afford1) chosen = 1;
       else if (afford0) chosen = 0;
-    } else {
-      // Lv4-5: 支持率変動効果が大きい方を優先
-      const getScore = (abilityIdx) => {
+    } else if (lv === 4) {
+      // Lv4: 妨害・支持率大変動を高スコアに
+      const getScore4 = (abilityIdx) => {
         const effect = card.abilities[abilityIdx].effect;
-        // 妨害系・支持率大変動を高スコアに
-        const highValueEffects = ["ishiba_2", "shinba_2", "ogawa_1", "izumi_2", "takaichi_2",
+        const attackEffects = ["ishiba_2", "shinba_2", "ogawa_1", "izumi_2", "takaichi_2",
           "muto_2", "saito_t_2", "mineshima_2", "mogami_2", "baba_2"];
-        if (highValueEffects.includes(effect)) return 100 + costs[abilityIdx];
+        if (attackEffects.includes(effect)) return 100 + costs[abilityIdx];
         return costs[abilityIdx];
       };
-      if (afford0 && afford1) {
-        chosen = getScore(1) >= getScore(0) ? 1 : 0;
-      } else if (afford1) chosen = 1;
+      if (afford0 && afford1) chosen = getScore4(1) >= getScore4(0) ? 1 : 0;
+      else if (afford1) chosen = 1;
       else if (afford0) chosen = 0;
+    } else {
+      // Lv5: 状況を読んだ高度スコアリング（常に最適行動）
+      const approvalDiff = c.approval - gameState.player.approval;
+      const remainingTurns = 25 - gameState.turn;
+      const playerNearWin = gameState.player.approval >= 55;
+      const cpuNearWin = c.approval >= 55;
+      const attackEffects5 = ["ishiba_2", "shinba_2", "ogawa_1", "izumi_2", "takaichi_2",
+        "muto_2", "saito_t_2", "mineshima_2", "mogami_2", "baba_2"];
 
-      // Lv5: 支持率差が大きくリードしている場合、資金温存（安い方を選ぶ）
-      if (lv === 5 && chosen >= 0) {
-        const approvalDiff = c.approval - gameState.player.approval;
-        const remainingTurns = 25 - gameState.turn;
-        if (approvalDiff > 20 && remainingTurns > 5) {
-          if (afford0 && afford1) chosen = costs[0] <= costs[1] ? 0 : 1;
+      const sealEffects5 = ["ishiba_2", "shinba_2", "ogawa_1"];
+      const playerCritical = gameState.player.approval >= 60; // 相手が勝利圏に入った
+
+      const getScore5 = (abilityIdx) => {
+        const effect = card.abilities[abilityIdx].effect;
+        const cost = costs[abilityIdx];
+        let score = cost * 3; // コスト ≈ 基本的な効果量
+
+        if (attackEffects5.includes(effect)) {
+          score += 120;
+          if (playerNearWin) score += 100;      // 相手が勝利に近い → 攻撃最優先
+          if (playerCritical && sealEffects5.includes(effect)) score += 150; // 相手60%超え → 封印が最重要
+          if (approvalDiff < -10) score += 60;  // 劣勢 → 攻撃的に
+        } else {
+          if (cpuNearWin) score += 50;           // 自分が勝利に近い → 自己強化でプッシュ
+          if (approvalDiff < -15) score -= 20;   // 大差で負けている → 攻撃優先
         }
-      }
+        if (remainingTurns <= 8) score += 100;   // ターン17〜 → 全力モード
+        return score;
+      };
+
+      if (afford0 && afford1) chosen = getScore5(1) >= getScore5(0) ? 1 : 0;
+      else if (afford1) chosen = 1;
+      else if (afford0) chosen = 0;
+      if (chosen >= 0) actionScore = getScore5(chosen);
     }
 
     if (chosen >= 0) {
-      abilityActions.push({ card, abilityIdx: chosen, cost: costs[chosen] });
+      abilityActions.push({ card, abilityIdx: chosen, cost: costs[chosen], score: actionScore });
     }
   }
-  abilityActions.sort((a, b) => a.cost - b.cost);
+  // Lv5: 高インパクト順（重要な能力を先に発動し資金を有効活用）/ その他: 安い順
+  if (lv === 5) {
+    abilityActions.sort((a, b) => b.score - a.score);
+  } else {
+    abilityActions.sort((a, b) => a.cost - b.cost);
+  }
   cpuExecuteNextAbility(abilityActions, 0);
 }
 
@@ -1541,16 +1587,16 @@ function cpuPhaseOption() {
   const c = gameState.cpu;
   const lv = gameState.cpuLevel;
 
-  // Lv1: 70%でスキップ / Lv2: 40%でスキップ
-  if (lv === 1 && Math.random() < 0.7) { cpuRunNextPhase(); return; }
-  if (lv === 2 && Math.random() < 0.4) { cpuRunNextPhase(); return; }
+  // Lv1: 80%でスキップ / Lv2: 50%でスキップ
+  if (lv === 1 && Math.random() < 0.8) { cpuRunNextPhase(); return; }
+  if (lv === 2 && Math.random() < 0.5) { cpuRunNextPhase(); return; }
 
   if (!c.usedOptionThisTurn) {
-    // Lv5: 支持率が大幅リードなら温存（オプションを使わない）
+    // Lv5: 圧倒的優勢かつ序盤〜中盤のみ温存。劣勢・終盤は必ず使う
     if (lv === 5) {
       const approvalDiff = c.approval - gameState.player.approval;
       const remainingTurns = 25 - gameState.turn;
-      if (approvalDiff > 25 && remainingTurns > 8) { cpuRunNextPhase(); return; }
+      if (approvalDiff > 30 && remainingTurns > 10) { cpuRunNextPhase(); return; }
     }
 
     const optionIdx = c.hand.findIndex(card => card.type === "option");
@@ -1604,10 +1650,29 @@ function cpuCheckWinAndEnd() {
 
 function cpuEndPhase() {
   const c = gameState.cpu;
-  // 手札上限チェック（7枚超過分を自動で捨てる - オプション優先）
+  // 手札上限チェック（7枚超過分を自動で捨てる）
   while (c.hand.length > 7) {
-    const optionIdx = c.hand.findIndex(card => card.type === "option");
-    const discardIdx = optionIdx >= 0 ? optionIdx : c.hand.length - 1;
+    let discardIdx;
+    if (gameState.cpuLevel === 5) {
+      // Lv5: 最も弱い政治家（能力コスト合計が最小）を捨ててオプションを温存
+      let weakestIdx = -1, weakestCost = Infinity;
+      c.hand.forEach((card, i) => {
+        if (card.type !== "politician") return;
+        const totalCost = (card.abilities || []).reduce((s, a) => s + (a.cost || 0), 0);
+        if (totalCost < weakestCost) { weakestCost = totalCost; weakestIdx = i; }
+      });
+      if (weakestIdx >= 0) {
+        discardIdx = weakestIdx;
+      } else {
+        // 政治家がいなければオプションを捨てる
+        discardIdx = c.hand.findIndex(card => card.type === "option");
+        if (discardIdx < 0) discardIdx = c.hand.length - 1;
+      }
+    } else {
+      // Lv1-4: オプション優先で捨てる
+      const optionIdx = c.hand.findIndex(card => card.type === "option");
+      discardIdx = optionIdx >= 0 ? optionIdx : c.hand.length - 1;
+    }
     const discarded = c.hand.splice(discardIdx, 1)[0];
     c.discard.push(discarded);
     console.log(`  CPU手札超過: ${discarded.name}を捨てた`);
