@@ -4474,6 +4474,35 @@ async function selectLevel(level) {
 // 初期化
 // ============================================================
 
+// ============================================================
+// Firebase 認証 UI 更新
+// ============================================================
+
+function updateAuthUI(user) {
+  const loggedIn  = document.getElementById("auth-logged-in");
+  const loggedOut = document.getElementById("auth-logged-out");
+  const avatar    = document.getElementById("auth-avatar");
+  const nameEl    = document.getElementById("auth-name");
+  const loginBtn  = document.getElementById("auth-login-btn");
+
+  if (!loggedIn || !loggedOut) return;
+
+  if (user) {
+    loggedIn.classList.remove("hidden");
+    loggedOut.classList.add("hidden");
+    avatar.src = user.photoURL || "";
+    avatar.style.display = user.photoURL ? "" : "none";
+    nameEl.textContent = user.displayName || user.email || "";
+  } else {
+    loggedIn.classList.add("hidden");
+    loggedOut.classList.remove("hidden");
+    if (loginBtn) {
+      loginBtn.disabled = false;
+      loginBtn.textContent = "Googleでログイン";
+    }
+  }
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   // カードデータを JSON から読み込む（並列）
   try {
@@ -4552,6 +4581,37 @@ document.addEventListener("DOMContentLoaded", async () => {
       endPlayerTurn();
     }
   });
+
+  // Firebase 認証 UI
+  if (typeof onAuthStateChanged === "function") {
+    onAuthStateChanged(updateAuthUI);
+  }
+
+  const loginBtn = document.getElementById("auth-login-btn");
+  if (loginBtn) {
+    loginBtn.addEventListener("click", async () => {
+      try {
+        loginBtn.disabled = true;
+        loginBtn.textContent = "ログイン中…";
+        await signInWithGoogle();
+      } catch (e) {
+        console.error("ログイン失敗:", e);
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Googleでログイン";
+      }
+    });
+  }
+
+  const logoutBtn = document.getElementById("auth-logout-btn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await signOutUser();
+      } catch (e) {
+        console.error("ログアウト失敗:", e);
+      }
+    });
+  }
 
   // URLパラメータ ?dev でカードギャラリーを表示（開発者専用）
   const urlParams = new URLSearchParams(window.location.search);

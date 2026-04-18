@@ -19,6 +19,16 @@
   <!-- 政党選択画面 -->
   <div id="party-select-screen" class="screen">
     <div id="app-version" class="app-version"></div>
+    <div id="auth-area">
+      <div id="auth-logged-in" class="hidden">
+        <img id="auth-avatar" src="" alt="" class="auth-avatar">
+        <span id="auth-name"></span>
+        <button id="auth-logout-btn">ログアウト</button>
+      </div>
+      <div id="auth-logged-out">
+        <button id="auth-login-btn" class="auth-login-btn">Googleでログイン</button>
+      </div>
+    </div>
     <h1>政党を選んでください</h1>
     <div class="party-buttons">
       <button class="party-btn" data-party="自民党">
@@ -185,6 +195,9 @@
     <div id="overlay-content" class="overlay-content"></div>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="firebase-auth.js"></script>
   <script src="game.js"></script>
 </body>
 </html>
