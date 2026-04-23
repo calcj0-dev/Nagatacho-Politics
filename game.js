@@ -4479,13 +4479,14 @@ async function selectLevel(level) {
 // ============================================================
 
 function updateAuthUI(user) {
+  console.log("[Auth] updateAuthUI called, user:", user ? user.email : null);
   const loggedIn  = document.getElementById("auth-logged-in");
   const loggedOut = document.getElementById("auth-logged-out");
   const avatar    = document.getElementById("auth-avatar");
   const nameEl    = document.getElementById("auth-name");
   const loginBtn  = document.getElementById("auth-login-btn");
 
-  if (!loggedIn || !loggedOut) return;
+  if (!loggedIn || !loggedOut) { console.warn("[Auth] DOM要素が見つからない"); return; }
 
   if (user) {
     loggedIn.classList.remove("hidden");
@@ -4590,11 +4591,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   // リダイレクトログイン結果を処理
   if (typeof firebase !== "undefined" && firebase.auth) {
     firebase.auth().getRedirectResult().then(result => {
+      console.log("[Auth] getRedirectResult:", result ? result.user?.email : "null");
       if (result && result.user) {
         updateAuthUI(result.user);
       }
     }).catch(e => {
-      console.error("リダイレクトログイン失敗:", e);
+      console.error("[Auth] リダイレクトログイン失敗:", e);
     });
   }
 
