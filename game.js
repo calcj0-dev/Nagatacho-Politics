@@ -4587,9 +4587,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     onAuthStateChanged(updateAuthUI);
   }
 
-  // モバイルのリダイレクトログイン結果を処理
+  // リダイレクトログイン結果を処理
   if (typeof firebase !== "undefined" && firebase.auth) {
-    firebase.auth().getRedirectResult().catch(e => {
+    firebase.auth().getRedirectResult().then(result => {
+      if (result && result.user) {
+        updateAuthUI(result.user);
+      }
+    }).catch(e => {
       console.error("リダイレクトログイン失敗:", e);
     });
   }
