@@ -3411,10 +3411,6 @@ function showCpuStatDelta(text, dir, isFunds) {
 }
 
 function renderGame() {
-  if (gameState.phase === "party_select") {
-    showScreen("party-select-screen");
-    return;
-  }
   showScreen("game-screen");
 
   // ターン情報
@@ -4537,14 +4533,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (verEl) verEl.textContent = `ver ${APP_VERSION}`;
 
   // ============================================================
-  // 画面遷移ヘルパー
-  // ============================================================
-  function showScreen(id) {
-    document.querySelectorAll(".screen").forEach(s => s.classList.add("hidden"));
-    document.getElementById(id).classList.remove("hidden");
-  }
-
-  // ============================================================
   // オープニング画面
   // ============================================================
   document.getElementById("opening-login-btn").addEventListener("click", async () => {
@@ -4671,8 +4659,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     showCardGallery();
     return;
   }
-
-  renderGame();
 });
 
 // ============================================================
