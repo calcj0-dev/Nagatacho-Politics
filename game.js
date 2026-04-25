@@ -4479,27 +4479,31 @@ async function selectLevel(level) {
 // ============================================================
 
 function updateAuthUI(user) {
-  const loggedIn  = document.getElementById("auth-logged-in");
-  const loggedOut = document.getElementById("auth-logged-out");
-  const avatar    = document.getElementById("auth-avatar");
-  const nameEl    = document.getElementById("auth-name");
-  const loginBtn  = document.getElementById("auth-login-btn");
-
-  if (!loggedIn || !loggedOut) return;
+  // オープニング画面
+  const openingLoggedOut = document.getElementById("opening-logged-out");
+  const openingLoggedIn  = document.getElementById("opening-logged-in");
+  const openingUserName  = document.getElementById("opening-user-name");
+  // ゲーム開始画面
+  const authLoggedIn = document.getElementById("auth-logged-in");
+  const avatar       = document.getElementById("auth-avatar");
+  const nameEl       = document.getElementById("auth-name");
+  const deckEditBtn  = document.getElementById("deck-edit-btn");
 
   if (user) {
-    loggedIn.classList.remove("hidden");
-    loggedOut.classList.add("hidden");
-    avatar.src = user.photoURL || "";
-    avatar.style.display = user.photoURL ? "" : "none";
-    nameEl.textContent = user.displayName || user.email || "";
+    if (openingLoggedOut) openingLoggedOut.classList.add("hidden");
+    if (openingLoggedIn)  openingLoggedIn.classList.remove("hidden");
+    if (openingUserName)  openingUserName.textContent = `${user.displayName || user.email} としてログイン中`;
+    if (authLoggedIn) authLoggedIn.classList.remove("hidden");
+    if (avatar) { avatar.src = user.photoURL || ""; avatar.style.display = user.photoURL ? "" : "none"; }
+    if (nameEl) nameEl.textContent = user.displayName || user.email || "";
+    if (deckEditBtn) deckEditBtn.classList.remove("hidden");
   } else {
-    loggedIn.classList.add("hidden");
-    loggedOut.classList.remove("hidden");
-    if (loginBtn) {
-      loginBtn.disabled = false;
-      loginBtn.textContent = "Googleでログイン";
-    }
+    if (openingLoggedOut) openingLoggedOut.classList.remove("hidden");
+    if (openingLoggedIn)  openingLoggedIn.classList.add("hidden");
+    if (authLoggedIn) authLoggedIn.classList.add("hidden");
+    if (deckEditBtn) deckEditBtn.classList.add("hidden");
+    const openingLoginBtn = document.getElementById("opening-login-btn");
+    if (openingLoginBtn) { openingLoginBtn.disabled = false; openingLoginBtn.textContent = "Googleでログイン"; }
   }
 }
 
@@ -4532,6 +4536,50 @@ document.addEventListener("DOMContentLoaded", async () => {
   const verEl = document.getElementById("app-version");
   if (verEl) verEl.textContent = `ver ${APP_VERSION}`;
 
+  // ============================================================
+  // 画面遷移ヘルパー
+  // ============================================================
+  function showScreen(id) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.add("hidden"));
+    document.getElementById(id).classList.remove("hidden");
+  }
+
+  // ============================================================
+  // オープニング画面
+  // ============================================================
+  document.getElementById("opening-login-btn").addEventListener("click", async () => {
+    const btn = document.getElementById("opening-login-btn");
+    try {
+      btn.disabled = true;
+      btn.textContent = "ログイン中…";
+      await signInWithGoogle();
+      showScreen("game-start-screen");
+    } catch (e) {
+      console.error("ログイン失敗:", e);
+      btn.disabled = false;
+      btn.textContent = "Googleでログイン";
+    }
+  });
+
+  document.getElementById("opening-guest-btn").addEventListener("click", () => {
+    showScreen("game-start-screen");
+  });
+
+  document.getElementById("opening-continue-btn").addEventListener("click", () => {
+    showScreen("game-start-screen");
+  });
+
+  // ============================================================
+  // ゲーム開始画面
+  // ============================================================
+  document.getElementById("game-start-btn").addEventListener("click", () => {
+    playSE("assets/audio/se/menu_start.mp3", 0.7);
+    showScreen("party-select-screen");
+  });
+
+  // ============================================================
+  // 政党選択画面
+  // ============================================================
   document.querySelectorAll(".party-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       playSE("assets/audio/se/menu_start.mp3", 0.7);
@@ -4539,6 +4587,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
+  document.getElementById("party-select-back-btn").addEventListener("click", () => {
+    showScreen("game-start-screen");
+  });
+
+  // ============================================================
+  // CPUレベル選択画面
+  // ============================================================
   document.querySelectorAll(".level-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       playSE("assets/audio/se/menu_start.mp3", 0.7);
@@ -4546,13 +4601,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
+  document.getElementById("level-back-btn").addEventListener("click", () => {
+    showScreen("party-select-screen");
+  });
+
+  // ============================================================
+  // ゲーム画面
+  // ============================================================
   document.getElementById("how-to-play-btn-menu").addEventListener("click", showHowToPlay);
   document.getElementById("how-to-play-btn-game").addEventListener("click", showHowToPlay);
-
-  document.getElementById("level-back-btn").addEventListener("click", () => {
-    document.getElementById("level-select-screen").classList.add("hidden");
-    document.getElementById("party-select-screen").classList.remove("hidden");
-  });
 
   document.getElementById("menu-back-btn").addEventListener("click", () => {
     document.getElementById("back-to-menu-dialog").classList.remove("hidden");
@@ -4564,12 +4621,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("back-to-menu-yes").addEventListener("click", () => {
     document.getElementById("back-to-menu-dialog").classList.add("hidden");
-    // BGM停止
     const bgm = document.getElementById("bgm");
     if (bgm) { bgm.pause(); bgm.currentTime = 0; }
-    // 画面切り替え
-    document.getElementById("game-screen").classList.add("hidden");
-    document.getElementById("party-select-screen").classList.remove("hidden");
+    showScreen("game-start-screen");
   });
 
   document.getElementById("end-turn-btn").addEventListener("click", () => {
@@ -4582,34 +4636,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // Firebase 認証 UI
+  // ============================================================
+  // Firebase 認証
+  // ============================================================
   if (typeof onAuthStateChanged === "function") {
     onAuthStateChanged(updateAuthUI);
   }
 
-  // リダイレクトログイン結果を処理
   if (typeof firebase !== "undefined" && firebase.auth) {
     firebase.auth().getRedirectResult().then(result => {
       if (result && result.user) {
         updateAuthUI(result.user);
+        showScreen("game-start-screen");
       }
     }).catch(e => {
       console.error("[Auth] リダイレクトログイン失敗:", e);
-    });
-  }
-
-  const loginBtn = document.getElementById("auth-login-btn");
-  if (loginBtn) {
-    loginBtn.addEventListener("click", async () => {
-      try {
-        loginBtn.disabled = true;
-        loginBtn.textContent = "ログイン中…";
-        await signInWithGoogle();
-      } catch (e) {
-        console.error("ログイン失敗:", e);
-        loginBtn.disabled = false;
-        loginBtn.textContent = "Googleでログイン";
-      }
     });
   }
 

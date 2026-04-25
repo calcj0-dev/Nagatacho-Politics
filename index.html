@@ -16,19 +16,42 @@
 <body>
   <audio id="bgm" src="assets/audio/main_bgm.mp3" loop preload="auto"></audio>
 
-  <!-- 政党選択画面 -->
-  <div id="party-select-screen" class="screen">
+  <!-- オープニング画面 -->
+  <div id="opening-screen" class="screen">
     <div id="app-version" class="app-version"></div>
+    <div class="opening-content">
+      <h1 class="opening-title">永田町ポリティクス</h1>
+      <p class="opening-subtitle">政治を、ゲームにする。</p>
+      <div id="opening-logged-out" class="opening-buttons">
+        <button id="opening-login-btn" class="auth-login-btn">Googleでログイン</button>
+        <button id="opening-guest-btn" class="guest-btn">ゲストとして続ける</button>
+      </div>
+      <div id="opening-logged-in" class="opening-buttons hidden">
+        <p id="opening-user-name" class="opening-user-name"></p>
+        <button id="opening-continue-btn" class="game-start-btn">続ける</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ゲーム開始画面 -->
+  <div id="game-start-screen" class="screen hidden">
     <div id="auth-area">
       <div id="auth-logged-in" class="hidden">
         <img id="auth-avatar" src="" alt="" class="auth-avatar">
         <span id="auth-name"></span>
         <button id="auth-logout-btn">ログアウト</button>
       </div>
-      <div id="auth-logged-out">
-        <button id="auth-login-btn" class="auth-login-btn">Googleでログイン</button>
-      </div>
     </div>
+    <h1 class="game-start-title">永田町ポリティクス</h1>
+    <div class="game-start-buttons">
+      <button id="game-start-btn" class="game-start-btn">ゲームを始める</button>
+      <button id="deck-edit-btn" class="deck-edit-btn hidden" disabled>デッキ編集（開発中）</button>
+      <button id="how-to-play-btn-menu" class="how-to-play-btn">遊び方</button>
+    </div>
+  </div>
+
+  <!-- 政党選択画面 -->
+  <div id="party-select-screen" class="screen hidden">
     <h1>政党を選んでください</h1>
     <div class="party-buttons">
       <button class="party-btn" data-party="自民党">
@@ -56,7 +79,7 @@
         <div class="party-btn-catch">バランスと改革、穏健な前進</div>
       </button>
     </div>
-    <button id="how-to-play-btn-menu" class="how-to-play-btn">遊び方</button>
+    <button id="party-select-back-btn" class="level-back-btn">← 戻る</button>
   </div>
 
   <!-- CPUレベル選択画面 -->
