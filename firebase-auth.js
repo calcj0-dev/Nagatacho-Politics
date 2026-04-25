@@ -17,11 +17,13 @@ const auth = firebase.auth();
 
 function signInWithGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  if (isMobile) {
-    return auth.signInWithRedirect(provider);
-  }
-  return auth.signInWithPopup(provider);
+  return auth.signInWithPopup(provider).catch(err => {
+    // ポップアップがブロックされた場合はリダイレクトにフォールバック
+    if (err.code === "auth/popup-blocked" || err.code === "auth/popup-closed-by-user") {
+      return auth.signInWithRedirect(provider);
+    }
+    throw err;
+  });
 }
 
 function signOutUser() {
