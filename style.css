@@ -353,19 +353,19 @@ h1 {
 }
 
 .guest-btn {
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.45);
+  background: rgba(22, 33, 62, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.85);
   font-size: 0.85rem;
   cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  padding: 4px 8px;
-  transition: color 0.2s;
+  border-radius: 6px;
+  padding: 8px 16px;
+  transition: color 0.2s, border-color 0.2s;
 }
 
 .guest-btn:hover {
-  color: rgba(255, 255, 255, 0.75);
+  color: #fff;
+  border-color: #fff;
 }
 
 .opening-user-name {
@@ -806,8 +806,8 @@ h1 {
 }
 
 .level-back-btn {
-  background: none;
-  border: 1px solid rgba(255, 215, 0, 0.6);
+  background: rgba(22, 33, 62, 0.8);
+  border: 1px solid #ffd700;
   color: #ffd700;
   padding: 8px 16px;
   border-radius: 6px;
