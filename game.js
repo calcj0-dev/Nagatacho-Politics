@@ -2920,7 +2920,9 @@ function showFinishOverlay(result) {
     gameState.phase = "party_select";
     gameState.player = createPlayerState();
     gameState.cpu = createPlayerState();
-    renderGame();
+    const bgm = document.getElementById("bgm");
+    if (bgm) { bgm.pause(); bgm.currentTime = 0; }
+    showScreen("party-select-screen");
   });
 }
 
