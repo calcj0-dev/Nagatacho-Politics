@@ -4482,11 +4482,14 @@ async function selectLevel(level) {
 
 async function checkAndShowProfile(user) {
   if (!user) return;
+  showScreen("loading-screen");
   try {
     let profile = await loadProfile(user.uid);
     if (!profile || !profile.name) {
       const name = generatePlayerName();
-      await saveProfile(user.uid, name);
+      try {
+        await saveProfile(user.uid, name);
+      } catch (_) {}
       profile = { name };
     }
     updateGameStartPlayerName(profile.name);
@@ -4567,12 +4570,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       btn.disabled = true;
       btn.textContent = "ログイン中…";
-      const result = await signInWithGoogle();
-      if (result && result.user) {
-        await checkAndShowProfile(result.user);
-      } else {
-        showScreen("game-start-screen");
-      }
+      await signInWithGoogle();
+      // onAuthStateChanged がプロフィール読込・画面遷移を処理する
     } catch (e) {
       console.error("ログイン失敗:", e);
       btn.disabled = false;
@@ -4585,8 +4584,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   document.getElementById("opening-continue-btn").addEventListener("click", async () => {
-    const user = getCurrentUser();
-    await checkAndShowProfile(user);
+    await checkAndShowProfile(_authUser);
   });
 
   // ============================================================
@@ -4659,10 +4657,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ============================================================
   // Firebase 認証
   // ============================================================
+  let _authUser = null;
   if (typeof onAuthStateChanged === "function") {
     onAuthStateChanged(async (user) => {
+      _authUser = user;
       updateAuthUI(user);
-      // ページ初期表示時、ログイン済みならプロフィールをロードしてゲーム開始画面へ
+      // ページ初期表示時 or ログイン直後、オープニング画面が見えていたらプロフィール→game-start
       const openingScreen = document.getElementById("opening-screen");
       if (user && openingScreen && !openingScreen.classList.contains("hidden")) {
         await checkAndShowProfile(user);
@@ -4671,10 +4671,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   if (typeof firebase !== "undefined" && firebase.auth) {
-    firebase.auth().getRedirectResult().then(result => {
+    firebase.auth().getRedirectResult().then(async result => {
       if (result && result.user) {
+        _authUser = result.user;
         updateAuthUI(result.user);
-        showScreen("game-start-screen");
+        await checkAndShowProfile(result.user);
       }
     }).catch(e => {
       console.error("[Auth] リダイレクトログイン失敗:", e);
