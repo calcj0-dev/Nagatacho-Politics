@@ -4709,7 +4709,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     profileEditSaveBtn.addEventListener("click", async () => {
       const newName = profileEditInput.value.trim();
       if (!newName) return;
-      const user = getCurrentUser();
+      const user = _authUser;
       if (!user) return;
       try {
         profileEditSaveBtn.disabled = true;
