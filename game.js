@@ -4476,6 +4476,31 @@ async function selectLevel(level) {
 // Firebase 認証 UI 更新
 // ============================================================
 
+// ============================================================
+// プロフィール処理
+// ============================================================
+
+async function checkAndShowProfile(user) {
+  if (!user) return;
+  try {
+    let profile = await loadProfile(user.uid);
+    if (!profile || !profile.name) {
+      const name = generatePlayerName();
+      await saveProfile(user.uid, name);
+      profile = { name };
+    }
+    updateGameStartPlayerName(profile.name);
+  } catch (e) {
+    console.error("プロフィール読込失敗:", e);
+  }
+  showScreen("game-start-screen");
+}
+
+function updateGameStartPlayerName(name) {
+  const el = document.getElementById("game-start-player-name");
+  if (el) el.textContent = name;
+}
+
 function updateAuthUI(user) {
   // オープニング画面
   const openingLoggedOut = document.getElementById("opening-logged-out");
@@ -4542,8 +4567,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       btn.disabled = true;
       btn.textContent = "ログイン中…";
-      await signInWithGoogle();
-      showScreen("game-start-screen");
+      const result = await signInWithGoogle();
+      if (result && result.user) {
+        await checkAndShowProfile(result.user);
+      } else {
+        showScreen("game-start-screen");
+      }
     } catch (e) {
       console.error("ログイン失敗:", e);
       btn.disabled = false;
@@ -4555,8 +4584,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     showScreen("game-start-screen");
   });
 
-  document.getElementById("opening-continue-btn").addEventListener("click", () => {
-    showScreen("game-start-screen");
+  document.getElementById("opening-continue-btn").addEventListener("click", async () => {
+    const user = getCurrentUser();
+    await checkAndShowProfile(user);
   });
 
   // ============================================================
@@ -4630,7 +4660,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Firebase 認証
   // ============================================================
   if (typeof onAuthStateChanged === "function") {
-    onAuthStateChanged(updateAuthUI);
+    onAuthStateChanged(async (user) => {
+      updateAuthUI(user);
+      // ページ初期表示時、ログイン済みならプロフィールをロードしてゲーム開始画面へ
+      const openingScreen = document.getElementById("opening-screen");
+      if (user && openingScreen && !openingScreen.classList.contains("hidden")) {
+        await checkAndShowProfile(user);
+      }
+    });
   }
 
   if (typeof firebase !== "undefined" && firebase.auth) {
@@ -4641,6 +4678,55 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }).catch(e => {
       console.error("[Auth] リダイレクトログイン失敗:", e);
+    });
+  }
+
+  // ============================================================
+  // プレイヤー名変更オーバーレイ
+  // ============================================================
+  const playerNameEditBtn = document.getElementById("player-name-edit-btn");
+  const profileEditOverlay = document.getElementById("profile-edit-overlay");
+  const profileEditInput = document.getElementById("profile-edit-input");
+  const profileEditSaveBtn = document.getElementById("profile-edit-save-btn");
+  const profileEditCancelBtn = document.getElementById("profile-edit-cancel-btn");
+
+  if (playerNameEditBtn) {
+    playerNameEditBtn.addEventListener("click", () => {
+      const currentName = document.getElementById("game-start-player-name").textContent;
+      if (profileEditInput) profileEditInput.value = currentName !== "---" ? currentName : "";
+      if (profileEditSaveBtn) { profileEditSaveBtn.disabled = true; profileEditSaveBtn.textContent = "保存"; }
+      if (profileEditOverlay) profileEditOverlay.classList.remove("hidden");
+      if (profileEditInput) profileEditInput.focus();
+    });
+  }
+
+  if (profileEditInput && profileEditSaveBtn) {
+    profileEditInput.addEventListener("input", () => {
+      profileEditSaveBtn.disabled = profileEditInput.value.trim().length === 0;
+    });
+
+    profileEditSaveBtn.addEventListener("click", async () => {
+      const newName = profileEditInput.value.trim();
+      if (!newName) return;
+      const user = getCurrentUser();
+      if (!user) return;
+      try {
+        profileEditSaveBtn.disabled = true;
+        profileEditSaveBtn.textContent = "保存中…";
+        await saveProfile(user.uid, newName);
+        updateGameStartPlayerName(newName);
+        if (profileEditOverlay) profileEditOverlay.classList.add("hidden");
+      } catch (e) {
+        console.error("プロフィール保存失敗:", e);
+        profileEditSaveBtn.disabled = false;
+        profileEditSaveBtn.textContent = "保存";
+      }
+    });
+  }
+
+  if (profileEditCancelBtn) {
+    profileEditCancelBtn.addEventListener("click", () => {
+      if (profileEditOverlay) profileEditOverlay.classList.add("hidden");
     });
   }
 

@@ -14,6 +14,29 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
+const db = firebase.firestore();
+
+// ============================================================
+// プロフィール
+// ============================================================
+
+function generatePlayerName() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let name = "";
+  for (let i = 0; i < 12; i++) {
+    name += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return name;
+}
+
+async function saveProfile(uid, name) {
+  await db.collection("users").doc(uid).set({ name }, { merge: true });
+}
+
+async function loadProfile(uid) {
+  const doc = await db.collection("users").doc(uid).get();
+  return doc.exists ? doc.data() : null;
+}
 
 function signInWithGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();

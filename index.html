@@ -38,7 +38,13 @@
     <div id="auth-area">
       <div id="auth-logged-in" class="hidden">
         <img id="auth-avatar" src="" alt="" class="auth-avatar">
-        <span id="auth-name"></span>
+        <div class="auth-user-info">
+          <div class="auth-player-name-row">
+            <span id="game-start-player-name" class="game-start-player-name">---</span>
+            <button id="player-name-edit-btn" class="player-name-edit-btn" title="プレイヤー名を変更">✏️</button>
+          </div>
+          <span id="auth-name" class="auth-google-name"></span>
+        </div>
         <button id="auth-logout-btn">ログアウト</button>
       </div>
     </div>
@@ -218,8 +224,21 @@
     <div id="overlay-content" class="overlay-content"></div>
   </div>
 
+  <!-- プレイヤー名変更オーバーレイ -->
+  <div id="profile-edit-overlay" class="profile-edit-overlay hidden">
+    <div class="profile-edit-box">
+      <h2 class="profile-edit-title">プレイヤー名を変更</h2>
+      <input id="profile-edit-input" type="text" class="profile-edit-input" maxlength="16" placeholder="プレイヤー名（最大16文字）">
+      <div class="profile-edit-btns">
+        <button id="profile-edit-save-btn" class="game-start-btn" disabled>保存</button>
+        <button id="profile-edit-cancel-btn" class="guest-btn">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="firebase-auth.js"></script>
   <script src="game.js"></script>
 </body>
