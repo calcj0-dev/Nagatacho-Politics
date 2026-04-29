@@ -77,6 +77,8 @@ const gameState = {
   _pendingParty: null,     // レベル選択前に一時保持する政党名
 };
 
+let _authUser = null;
+
 // カードインスタンスを生成（同じカード定義から複数インスタンスを作る）
 function createCardInstance(cardDef) {
   gameState.instanceIdCounter++;
@@ -2858,6 +2860,34 @@ function showSurveyOverlay(onClose, opts) {
   });
 }
 
+// ============================================================
+// X（Twitter）シェア
+// ============================================================
+
+const SHARE_URL  = "https://nagatacho-politics.vercel.app";
+const SHARE_TAGS = "#永田町ポリティクス #政治家カードゲーム";
+
+function openXShare(text) {
+  const url = `https://x.com/intent/tweet?text=${encodeURIComponent(text + "\n" + SHARE_URL)}`;
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+function buildFinishShareText(isWin, isDraw, stats) {
+  const party = gameState.player.party || "";
+  const lv    = gameState.cpuLevel || 1;
+  const resultWord = isWin ? `CPU Lv.${lv}を撃破！` : isDraw ? `CPU Lv.${lv}と引き分け` : `CPU Lv.${lv}に敗北…`;
+  const statsText  = stats ? ` 通算${stats.wins}勝${stats.losses}敗` : "";
+  return `【永田町ポリティクス】${party}で${resultWord}${statsText} ${SHARE_TAGS}`;
+}
+
+function buildStatsShareText(data) {
+  const wins   = data.wins   || 0;
+  const losses = data.losses || 0;
+  const streak = data.streak || 0;
+  const streakText = streak > 0 ? ` / 連勝中${streak}！` : "";
+  return `【永田町ポリティクス】通算${wins}勝${losses}敗${streakText} ${SHARE_TAGS}`;
+}
+
 // 終了画面オーバーレイ
 function showFinishOverlay(result) {
   if (result.startsWith("プレイヤーの勝利")) {
@@ -2893,6 +2923,16 @@ function showFinishOverlay(result) {
   // 全画面フラッシュ（勝利:金、敗北:赤、引き分け:灰）
   const isWin  = result.startsWith("プレイヤーの勝利");
   const isDraw = result.startsWith("引き分け");
+
+  // 戦績をFirestoreに保存してゲーム開始画面の表示を更新
+  let _finishStats = null;
+  if (typeof saveResult === "function" && _authUser) {
+    saveResult(_authUser.uid, isWin, isDraw).then(updated => {
+      _finishStats = updated;
+      updateGameStartStats(updated);
+    }).catch(() => {});
+  }
+
   const flashColor = isWin ? "rgba(255,215,0,0.28)" : isDraw ? "rgba(180,180,180,0.22)" : "rgba(233,69,96,0.28)";
   const flash = document.createElement("div");
   flash.style.cssText = `position:fixed;inset:0;background:${flashColor};z-index:999;pointer-events:none;animation:finish-flash 0.75s ease-out forwards;`;
@@ -2904,6 +2944,7 @@ function showFinishOverlay(result) {
     <p>${subtitle}</p>
     <p>あなた: ${pa}% / CPU: ${ca}%</p>
     <div class="overlay-buttons">
+      <button id="finish-share" class="overlay-btn btn-share">𝕏 結果をシェア</button>
       <button id="finish-graph" class="overlay-btn btn-secondary">📈 支持率の推移を見る</button>
       <button id="finish-retry" class="overlay-btn btn-confirm">もう一度遊ぶ</button>
     </div>
@@ -2914,6 +2955,9 @@ function showFinishOverlay(result) {
   void content.offsetWidth;
   content.classList.add("finish-overlay-enter");
 
+  document.getElementById("finish-share").addEventListener("click", () => {
+    openXShare(buildFinishShareText(isWin, isDraw, _finishStats));
+  });
   document.getElementById("finish-graph").addEventListener("click", showApprovalHistoryOverlay);
   document.getElementById("finish-retry").addEventListener("click", () => {
     hideOverlay();
@@ -4493,6 +4537,7 @@ async function checkAndShowProfile(user) {
       profile = { name };
     }
     updateGameStartPlayerName(profile.name);
+    updateGameStartStats(profile);
   } catch (e) {
     console.error("プロフィール読込失敗:", e);
   }
@@ -4502,6 +4547,22 @@ async function checkAndShowProfile(user) {
 function updateGameStartPlayerName(name) {
   const el = document.getElementById("game-start-player-name");
   if (el) el.textContent = name;
+}
+
+function updateGameStartStats(data) {
+  const wrap = document.getElementById("game-start-stats");
+  const text = document.getElementById("game-start-stats-text");
+  if (!wrap || !text || !data) return;
+  const wins   = data.wins   || 0;
+  const losses = data.losses || 0;
+  const streak = data.streak || 0;
+  text.textContent = streak > 0
+    ? `通算 ${wins}勝 ${losses}敗 / 連勝中 ${streak}`
+    : `通算 ${wins}勝 ${losses}敗`;
+  wrap.dataset.wins   = wins;
+  wrap.dataset.losses = losses;
+  wrap.dataset.streak = streak;
+  wrap.classList.remove("hidden");
 }
 
 function updateAuthUI(user) {
@@ -4654,10 +4715,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  // ゲーム開始画面シェアボタン
+  const gameStartShareBtn = document.getElementById("game-start-share-btn");
+  if (gameStartShareBtn) {
+    gameStartShareBtn.addEventListener("click", () => {
+      const statsEl = document.getElementById("game-start-stats");
+      if (!statsEl || statsEl.classList.contains("hidden")) return;
+      const wins   = parseInt(statsEl.dataset.wins   || "0");
+      const losses = parseInt(statsEl.dataset.losses || "0");
+      const streak = parseInt(statsEl.dataset.streak || "0");
+      openXShare(buildStatsShareText({ wins, losses, streak }));
+    });
+  }
+
   // ============================================================
   // Firebase 認証
   // ============================================================
-  let _authUser = null;
   if (typeof onAuthStateChanged === "function") {
     onAuthStateChanged(async (user) => {
       _authUser = user;
