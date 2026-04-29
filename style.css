@@ -220,6 +220,12 @@ h1 {
    政党選択画面
    ============================================================ */
 
+#party-select-screen,
+#level-select-screen {
+  background: rgba(10, 14, 35, 0.78);
+  backdrop-filter: blur(4px);
+}
+
 .party-buttons {
   display: flex;
   flex-direction: column;
@@ -293,6 +299,10 @@ h1 {
   align-items: center;
   gap: 12px;
   text-align: center;
+  background: rgba(10, 14, 35, 0.78);
+  border-radius: 16px;
+  padding: 40px 32px;
+  backdrop-filter: blur(4px);
 }
 
 .opening-title {
@@ -348,6 +358,8 @@ h1 {
 #game-start-screen {
   justify-content: center;
   gap: 0;
+  background: rgba(10, 14, 35, 0.78);
+  backdrop-filter: blur(4px);
 }
 
 #game-start-screen #auth-area {
@@ -2343,6 +2355,10 @@ h1 {
   align-items: center;
   gap: 12px;
   text-align: center;
+  background: rgba(10, 14, 35, 0.78);
+  border-radius: 16px;
+  padding: 40px 32px;
+  backdrop-filter: blur(4px);
 }
 
 .opening-title {
