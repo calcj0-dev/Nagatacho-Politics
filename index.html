@@ -47,94 +47,100 @@
 
   <!-- ゲーム開始画面 -->
   <div id="game-start-screen" class="screen hidden">
-    <div id="auth-area">
-      <div id="auth-logged-in" class="hidden">
-        <img id="auth-avatar" src="" alt="" class="auth-avatar">
-        <div class="auth-user-info">
-          <div class="auth-player-name-row">
-            <span id="game-start-player-name" class="game-start-player-name">---</span>
-            <button id="player-name-edit-btn" class="player-name-edit-btn" title="プレイヤー名を変更">✏️</button>
+    <div class="screen-panel">
+      <div id="auth-area">
+        <div id="auth-logged-in" class="hidden">
+          <img id="auth-avatar" src="" alt="" class="auth-avatar">
+          <div class="auth-user-info">
+            <div class="auth-player-name-row">
+              <span id="game-start-player-name" class="game-start-player-name">---</span>
+              <button id="player-name-edit-btn" class="player-name-edit-btn" title="プレイヤー名を変更">✏️</button>
+            </div>
+            <span id="auth-name" class="auth-google-name"></span>
           </div>
-          <span id="auth-name" class="auth-google-name"></span>
+          <button id="auth-logout-btn">ログアウト</button>
         </div>
-        <button id="auth-logout-btn">ログアウト</button>
       </div>
-    </div>
-    <h1 class="game-start-title">永田町ポリティクス</h1>
-    <div id="game-start-stats" class="game-start-stats hidden">
-      <span id="game-start-stats-text"></span>
-      <button id="game-start-share-btn" class="game-start-share-btn" title="戦績をシェア">𝕏</button>
-    </div>
-    <div class="game-start-buttons">
-      <button id="game-start-btn" class="game-start-btn">ゲームを始める</button>
-      <button id="deck-edit-btn" class="deck-edit-btn hidden" disabled>デッキ編集（開発中）</button>
-      <button id="how-to-play-btn-menu" class="how-to-play-btn">遊び方</button>
+      <h1 class="game-start-title">永田町ポリティクス</h1>
+      <div id="game-start-stats" class="game-start-stats hidden">
+        <span id="game-start-stats-text"></span>
+        <button id="game-start-share-btn" class="game-start-share-btn" title="戦績をシェア">𝕏</button>
+      </div>
+      <div class="game-start-buttons">
+        <button id="game-start-btn" class="game-start-btn">ゲームを始める</button>
+        <button id="deck-edit-btn" class="deck-edit-btn hidden" disabled>デッキ編集（開発中）</button>
+        <button id="how-to-play-btn-menu" class="how-to-play-btn">遊び方</button>
+      </div>
     </div>
   </div>
 
   <!-- 政党選択画面 -->
   <div id="party-select-screen" class="screen hidden">
-    <h1>政党を選んでください</h1>
-    <div class="party-buttons">
-      <button class="party-btn" data-party="自民党">
-        <div class="party-btn-name">自民党</div>
-        <div class="party-btn-catch">王道の安定感、豊富な資金力</div>
-      </button>
-      <button class="party-btn" data-party="国民民主党">
-        <div class="party-btn-name">国民民主党</div>
-        <div class="party-btn-catch">民意に直結、攻守バランス型</div>
-      </button>
-      <button class="party-btn" data-party="チームみらい">
-        <div class="party-btn-name">チームみらい</div>
-        <div class="party-btn-catch">新勢力の挑戦、スピード重視</div>
-      </button>
-      <button class="party-btn" data-party="維新の会">
-        <div class="party-btn-name">維新の会</div>
-        <div class="party-btn-catch">改革一本勝負、身を切る覚悟</div>
-      </button>
-      <button class="party-btn" data-party="参政党">
-        <div class="party-btn-name">参政党</div>
-        <div class="party-btn-catch">草の根から日本を守る</div>
-      </button>
-      <button class="party-btn" data-party="中道改革連合">
-        <div class="party-btn-name">中道改革連合</div>
-        <div class="party-btn-catch">バランスと改革、穏健な前進</div>
-      </button>
+    <div class="screen-panel">
+      <h1>政党を選んでください</h1>
+      <div class="party-buttons">
+        <button class="party-btn" data-party="自民党">
+          <div class="party-btn-name">自民党</div>
+          <div class="party-btn-catch">王道の安定感、豊富な資金力</div>
+        </button>
+        <button class="party-btn" data-party="国民民主党">
+          <div class="party-btn-name">国民民主党</div>
+          <div class="party-btn-catch">民意に直結、攻守バランス型</div>
+        </button>
+        <button class="party-btn" data-party="チームみらい">
+          <div class="party-btn-name">チームみらい</div>
+          <div class="party-btn-catch">新勢力の挑戦、スピード重視</div>
+        </button>
+        <button class="party-btn" data-party="維新の会">
+          <div class="party-btn-name">維新の会</div>
+          <div class="party-btn-catch">改革一本勝負、身を切る覚悟</div>
+        </button>
+        <button class="party-btn" data-party="参政党">
+          <div class="party-btn-name">参政党</div>
+          <div class="party-btn-catch">草の根から日本を守る</div>
+        </button>
+        <button class="party-btn" data-party="中道改革連合">
+          <div class="party-btn-name">中道改革連合</div>
+          <div class="party-btn-catch">バランスと改革、穏健な前進</div>
+        </button>
+      </div>
+      <button id="party-select-back-btn" class="level-back-btn">← 戻る</button>
     </div>
-    <button id="party-select-back-btn" class="level-back-btn">← 戻る</button>
   </div>
 
   <!-- CPUレベル選択画面 -->
   <div id="level-select-screen" class="screen hidden">
-    <h1>CPUの強さを選んでください</h1>
-    <div class="level-buttons">
-      <button class="level-btn" data-level="1">
-        <div class="level-btn-rank">Lv.1</div>
-        <div class="level-btn-name">新人議員</div>
-        <div class="level-btn-desc">ほぼ何もしない</div>
-      </button>
-      <button class="level-btn" data-level="2">
-        <div class="level-btn-rank">Lv.2</div>
-        <div class="level-btn-name">地方議員</div>
-        <div class="level-btn-desc">気まぐれに動く</div>
-      </button>
-      <button class="level-btn" data-level="3">
-        <div class="level-btn-rank">Lv.3</div>
-        <div class="level-btn-name">国会議員</div>
-        <div class="level-btn-desc">標準的な強さ</div>
-      </button>
-      <button class="level-btn" data-level="4">
-        <div class="level-btn-rank">Lv.4</div>
-        <div class="level-btn-name">大臣</div>
-        <div class="level-btn-desc">効果的な行動を選ぶ</div>
-      </button>
-      <button class="level-btn" data-level="5">
-        <div class="level-btn-rank">Lv.5</div>
-        <div class="level-btn-name">永田町の猛者</div>
-        <div class="level-btn-desc">状況を読んで最適行動</div>
-      </button>
+    <div class="screen-panel">
+      <h1>CPUの強さを選んでください</h1>
+      <div class="level-buttons">
+        <button class="level-btn" data-level="1">
+          <div class="level-btn-rank">Lv.1</div>
+          <div class="level-btn-name">新人議員</div>
+          <div class="level-btn-desc">ほぼ何もしない</div>
+        </button>
+        <button class="level-btn" data-level="2">
+          <div class="level-btn-rank">Lv.2</div>
+          <div class="level-btn-name">地方議員</div>
+          <div class="level-btn-desc">気まぐれに動く</div>
+        </button>
+        <button class="level-btn" data-level="3">
+          <div class="level-btn-rank">Lv.3</div>
+          <div class="level-btn-name">国会議員</div>
+          <div class="level-btn-desc">標準的な強さ</div>
+        </button>
+        <button class="level-btn" data-level="4">
+          <div class="level-btn-rank">Lv.4</div>
+          <div class="level-btn-name">大臣</div>
+          <div class="level-btn-desc">効果的な行動を選ぶ</div>
+        </button>
+        <button class="level-btn" data-level="5">
+          <div class="level-btn-rank">Lv.5</div>
+          <div class="level-btn-name">永田町の猛者</div>
+          <div class="level-btn-desc">状況を読んで最適行動</div>
+        </button>
+      </div>
+      <button class="level-back-btn" id="level-back-btn">← 政党選択に戻る</button>
     </div>
-    <button class="level-back-btn" id="level-back-btn">← 政党選択に戻る</button>
   </div>
 
   <!-- 読込中画面 -->
