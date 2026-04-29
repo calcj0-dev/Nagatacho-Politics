@@ -305,7 +305,7 @@ h1 {
 
 .opening-subtitle {
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.75);
   letter-spacing: 0.1em;
   margin-bottom: 32px;
 }
@@ -455,14 +455,14 @@ h1 {
 }
 
 .party-btn-name {
-  font-size: 0.8rem;
+  font-size: 1rem;
   font-weight: bold;
   margin-bottom: 6px;
 }
 
 .party-btn-catch {
-  font-size: 0.5rem;
-  color: #ccc;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
   margin-bottom: 4px;
 }
 
@@ -781,14 +781,14 @@ h1 {
 }
 
 .level-btn-name {
-  font-size: 0.85rem;
+  font-size: 1rem;
   font-weight: bold;
   flex: 1;
 }
 
 .level-btn-desc {
-  font-size: 0.55rem;
-  color: #aaa;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .level-btn[data-level="5"] {
@@ -2355,7 +2355,7 @@ h1 {
 
 .opening-subtitle {
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.75);
   letter-spacing: 0.1em;
   margin-bottom: 32px;
 }
