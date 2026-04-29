@@ -2873,11 +2873,11 @@ function openXShare(text) {
 }
 
 function buildFinishShareText(isWin, isDraw, stats) {
-  const party = gameState.player.party || "";
-  const lv    = gameState.cpuLevel || 1;
-  const resultWord = isWin ? `CPU Lv.${lv}を撃破！` : isDraw ? `CPU Lv.${lv}と引き分け` : `CPU Lv.${lv}に敗北…`;
-  const statsText  = stats ? ` 通算${stats.wins}勝${stats.losses}敗` : "";
-  return `【永田町ポリティクス】${party}で${resultWord}${statsText} ${SHARE_TAGS}`;
+  const wins   = stats ? stats.wins   : 0;
+  const losses = stats ? stats.losses : 0;
+  const streak = stats ? stats.streak : 0;
+  const streakText = streak > 0 ? ` / 連勝中${streak}！` : "";
+  return `【永田町ポリティクス】政治を、ゲームにする。\n通算${wins}勝${losses}敗${streakText}\n${SHARE_TAGS}`;
 }
 
 function buildStatsShareText(data) {
@@ -2885,7 +2885,7 @@ function buildStatsShareText(data) {
   const losses = data.losses || 0;
   const streak = data.streak || 0;
   const streakText = streak > 0 ? ` / 連勝中${streak}！` : "";
-  return `【永田町ポリティクス】通算${wins}勝${losses}敗${streakText} ${SHARE_TAGS}`;
+  return `【永田町ポリティクス】政治を、ゲームにする。\n通算${wins}勝${losses}敗${streakText}\n${SHARE_TAGS}`;
 }
 
 // 終了画面オーバーレイ
