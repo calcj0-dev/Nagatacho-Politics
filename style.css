@@ -2717,9 +2717,9 @@ h1 {
 
   /* 山札・捨て札スロット */
   .deck-card-back {
-    height: 14vh;
-    width: calc(14vh * 0.714);
-    font-size: 1.2rem;
+    height: 7vh;
+    width: calc(7vh * 0.714);
+    font-size: 0.9rem;
   }
 
   .discard-slot-empty {
