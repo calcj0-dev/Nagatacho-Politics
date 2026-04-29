@@ -38,6 +38,19 @@ async function loadProfile(uid) {
   return doc.exists ? doc.data() : null;
 }
 
+async function saveResult(uid, isWin, isDraw) {
+  const ref = db.collection("users").doc(uid);
+  const doc = await ref.get();
+  const data = doc.exists ? doc.data() : {};
+  const update = {
+    wins:   (data.wins   || 0) + (isWin             ? 1 : 0),
+    losses: (data.losses || 0) + (!isWin && !isDraw ? 1 : 0),
+    streak: isWin ? (data.streak || 0) + 1 : 0,
+  };
+  await ref.set(update, { merge: true });
+  return update;
+}
+
 function signInWithGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
   return auth.signInWithPopup(provider).catch(err => {

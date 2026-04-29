@@ -4,6 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>永田町ポリティクス</title>
+
+  <!-- SNSシェア時の表示 -->
+  <meta property="og:title"       content="永田町ポリティクス｜政治家カードゲーム">
+  <meta property="og:description" content="6つの政党から選んでCPUと対戦する政治家カードゲーム。支持率100%達成で勝利！">
+  <meta property="og:image"       content="https://nagatacho-politics.vercel.app/assets/item/game_screen.png">
+  <meta property="og:url"         content="https://nagatacho-politics.vercel.app">
+  <meta property="og:type"        content="website">
+  <meta name="twitter:card"       content="summary_large_image">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@900&display=swap" rel="stylesheet">
@@ -49,6 +58,10 @@
       </div>
     </div>
     <h1 class="game-start-title">永田町ポリティクス</h1>
+    <div id="game-start-stats" class="game-start-stats hidden">
+      <span id="game-start-stats-text"></span>
+      <button id="game-start-share-btn" class="game-start-share-btn" title="戦績をシェア">𝕏</button>
+    </div>
     <div class="game-start-buttons">
       <button id="game-start-btn" class="game-start-btn">ゲームを始める</button>
       <button id="deck-edit-btn" class="deck-edit-btn hidden" disabled>デッキ編集（開発中）</button>
