@@ -328,11 +328,12 @@ h1 {
 }
 
 .opening-title {
-  font-size: 2.4rem;
+  font-size: clamp(1.4rem, 6vw, 2.4rem);
   color: #ffd700;
   letter-spacing: 0.08em;
   margin-bottom: 4px;
   text-shadow: 0 2px 12px rgba(255, 215, 0, 0.4);
+  white-space: nowrap;
 }
 
 .opening-subtitle {
@@ -2387,11 +2388,12 @@ h1 {
 }
 
 .opening-title {
-  font-size: 2.4rem;
+  font-size: clamp(1.4rem, 6vw, 2.4rem);
   color: #ffd700;
   letter-spacing: 0.08em;
   margin-bottom: 4px;
   text-shadow: 0 2px 12px rgba(255, 215, 0, 0.4);
+  white-space: nowrap;
 }
 
 .opening-subtitle {
