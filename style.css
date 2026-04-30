@@ -249,8 +249,9 @@ h1 {
   top: 8px;
   right: 12px;
   font-size: 0.7rem;
-  color: rgba(255, 215, 0, 0.5);
+  color: #ffffff;
   letter-spacing: 0.05em;
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 }
 
 /* ============================================================
@@ -372,6 +373,15 @@ h1 {
   font-size: 0.9rem;
   color: rgba(255, 255, 255, 0.7);
   margin-bottom: 4px;
+}
+
+.opening-disclaimer {
+  font-size: 0.65rem;
+  color: #ffffff;
+  text-align: center;
+  margin-top: 16px;
+  line-height: 1.5;
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 }
 
 /* ============================================================
