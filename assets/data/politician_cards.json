@@ -13,7 +13,7 @@
             "name": "一口でおにぎり",
             "effectText": "支持率-3%、政治資金+5億",
             "description": "おにぎりの産地が注目され、地方団体からの献金を得る",
-            "cost": 1,
+            "cost": 2,
             "effect": "ishiba_1",
             "tags": ["fund_gain"]
           },
@@ -89,15 +89,15 @@
         "abilities": [
           {
             "name": "Xブロック祭り",
-            "effectText": "次の相手ターンによる支持率低下を無効化",
+            "effectText": "支持率+3%、次の相手ターンによる支持率低下を無効化",
             "description": "批判コメントを片っ端からブロック、タイムラインを完璧に最適化",
             "cost": 2,
             "effect": "kono_1",
-            "tags": ["shield"]
+            "tags": ["shield", "self_boost"]
           },
           {
             "name": "ハンコ廃止！",
-            "effectText": "支持率+6%、山札から1枚ドロー",
+            "effectText": "支持率+8%、山札から1枚ドロー",
             "description": "日本のハンコ文化に終止符、デジタル行政の扉を開く",
             "cost": 2,
             "effect": "kono_2",
@@ -122,7 +122,7 @@
           },
           {
             "name": "ガースーです",
-            "effectText": "支持率+8%（場が1枚なら追加+4%）",
+            "effectText": "支持率+12%（場が1枚なら追加+8%）",
             "description": "まさかの自己紹介で場が和む",
             "cost": 3,
             "effect": "suga_2",
@@ -279,7 +279,7 @@
             "name": "未来への投資",
             "effectText": "5ターン後に政治資金+5億を取得",
             "description": "スタートアップ精神で政界に風穴",
-            "cost": 1,
+            "cost": 2,
             "effect": "anno_1",
             "tags": ["fund_gain"]
           },
@@ -602,7 +602,7 @@
             "name": "女性の力",
             "effectText": "支持率+7%（場に女性カードが2枚以上なら追加+13）",
             "description": "女性議員の結束で政策を前進させる",
-            "cost": 4,
+            "cost": 3,
             "effect": "toyota_2",
             "tags": ["self_boost", "field_scale"]
           }

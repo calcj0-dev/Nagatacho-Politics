@@ -273,13 +273,15 @@ const ABILITY_EFFECTS = {
   },
   kono_1(self, _opponent) {
     const msgs = [];
+    const m1 = changeApproval(self, 3);
+    if (m1) msgs.push(m1);
     self.shields.push("block_approval_down");
     msgs.push("次の相手ターンに受ける支持率低下を無効化！");
     return msgs;
   },
   kono_2(self, opponent, executor = "player") {
     const msgs = [];
-    const m1 = changeApproval(self, 6);
+    const m1 = changeApproval(self, 8);
     if (m1) msgs.push(m1);
     if (self.deck.length > 0) {
       const drawn = self.deck.shift();
@@ -299,10 +301,10 @@ const ABILITY_EFFECTS = {
   suga_2(self, _opponent) {
     const msgs = [];
     let bonus = 0;
-    if (self.field.length === 1) bonus = 4;
-    const m1 = changeApproval(self, 8 + bonus);
+    if (self.field.length === 1) bonus = 8;
+    const m1 = changeApproval(self, 12 + bonus);
     if (m1) msgs.push(m1);
-    if (bonus > 0) msgs.push("場が1枚で追加+4%！");
+    if (bonus > 0) msgs.push("場が1枚で追加+8%！");
     return msgs;
   },
 
