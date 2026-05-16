@@ -323,8 +323,8 @@ const ABILITY_EFFECTS = {
   },
   tamaki_2(self, _opponent) {
     const msgs = [];
-    changeFunds(self, 5);
-    msgs.push("政治資金+5億円を獲得！");
+    changeFunds(self, 4);
+    msgs.push("政治資金+4億円を獲得！");
     return msgs;
   },
   mori_1(self, _opponent) {
@@ -532,8 +532,8 @@ const ABILITY_EFFECTS = {
   },
   nakatsuka_2(self, _opponent) {
     const msgs = [];
-    self.funds += 6;
-    msgs.push("政治資金+6億");
+    self.funds += 5;
+    msgs.push("政治資金+5億");
     return msgs;
   },
   baba_1(self, _opponent) {
