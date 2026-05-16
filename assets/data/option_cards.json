@@ -7,7 +7,10 @@
     "image": "assets/options/trump_tariff.webp",
     "type": "option",
     "effect": "trump_tariff",
-    "count": 1
+    "count": 1,
+    "tags": ["attack", "fund_drain"],
+    "aiTiming": "last",
+    "aiBaseScore": 30
   },
   {
     "id": "kioku_ni_gozaimasen",
@@ -17,7 +20,10 @@
     "image": "assets/options/kioku_ni_gozaimasen.webp",
     "type": "option",
     "effect": "kioku_ni_gozaimasen",
-    "count": 1
+    "count": 1,
+    "tags": ["cost_reduce"],
+    "aiTiming": "before_ability",
+    "aiBaseScore": 60
   },
   {
     "id": "kenkin_party",
@@ -27,7 +33,10 @@
     "image": "assets/options/kenkin_party.webp",
     "type": "option",
     "effect": "kenkin_party",
-    "count": 2
+    "count": 2,
+    "tags": ["fund_gain"],
+    "aiTiming": "before_ability",
+    "aiBaseScore": 60
   },
   {
     "id": "gaitou_enzetsu",
@@ -37,7 +46,10 @@
     "image": "assets/options/gaitou_enzetsu.webp",
     "type": "option",
     "effect": "gaitou_enzetsu",
-    "count": 1
+    "count": 1,
+    "tags": ["self_boost", "field_scale"],
+    "aiTiming": "last",
+    "aiBaseScore": 75
   },
   {
     "id": "drill_hakai",
@@ -47,7 +59,10 @@
     "image": "assets/options/drill_hakai.webp",
     "type": "option",
     "effect": "drill_hakai",
-    "count": 1
+    "count": 1,
+    "tags": ["shield"],
+    "aiTiming": "last",
+    "aiBaseScore": 40
   },
   {
     "id": "tounai_kaikaku",
@@ -57,7 +72,10 @@
     "image": "assets/options/tounai_kaikaku.webp",
     "type": "option",
     "effect": "tounai_kaikaku",
-    "count": 1
+    "count": 1,
+    "tags": ["field_swap"],
+    "aiTiming": "first",
+    "aiBaseScore": 35
   },
   {
     "id": "toushu_touron",
@@ -67,7 +85,10 @@
     "image": "assets/options/toushu_touron.webp",
     "type": "option",
     "effect": "toushu_touron",
-    "count": 1
+    "count": 1,
+    "tags": ["self_boost", "risky"],
+    "aiTiming": "last",
+    "aiBaseScore": 65
   },
   {
     "id": "yukiguni_yukikaki",
@@ -77,7 +98,10 @@
     "image": "assets/options/yukiguni_yukikaki.webp",
     "type": "option",
     "effect": "yukiguni_yukikaki",
-    "count": 1
+    "count": 1,
+    "tags": ["attack"],
+    "aiTiming": "last",
+    "aiBaseScore": 75
   },
   {
     "id": "kono_hage",
@@ -87,7 +111,10 @@
     "image": "assets/options/kono_hage.webp",
     "type": "option",
     "effect": "kono_hage",
-    "count": 1
+    "count": 1,
+    "tags": ["attack"],
+    "aiTiming": "last",
+    "aiBaseScore": 85
   },
   {
     "id": "netenai_jiman",
@@ -97,7 +124,10 @@
     "image": "assets/options/netenai_jiman.webp",
     "type": "option",
     "effect": "netenai_jiman",
-    "count": 1
+    "count": 1,
+    "tags": ["self_boost"],
+    "aiTiming": "last",
+    "aiBaseScore": 30
   },
   {
     "id": "masukomi_taisaku",
@@ -107,7 +137,10 @@
     "image": "assets/options/masukomi_taisaku.webp",
     "type": "option",
     "effect": "masukomi_taisaku",
-    "count": 1
+    "count": 1,
+    "tags": ["attack", "block_boost"],
+    "aiTiming": "last",
+    "aiBaseScore": 75
   },
   {
     "id": "ouen_enzetsu",
@@ -117,7 +150,10 @@
     "image": "assets/options/ouen_enzetsu.webp",
     "type": "option",
     "effect": "ouen_enzetsu",
-    "count": 2
+    "count": 2,
+    "tags": ["draw", "politician_draw"],
+    "aiTiming": "first",
+    "aiBaseScore": 65
   },
   {
     "id": "kinkyuu_yoron",
@@ -127,7 +163,10 @@
     "image": "assets/options/kinkyuu_yoron.webp",
     "type": "option",
     "effect": "kinkyuu_yoron",
-    "count": 1
+    "count": 1,
+    "tags": ["info"],
+    "aiTiming": "last",
+    "aiBaseScore": 5
   },
   {
     "id": "giinkaikan_furin",
@@ -137,7 +176,10 @@
     "image": "assets/options/giinkaikan_furin.webp",
     "type": "option",
     "effect": "giinkaikan_furin",
-    "count": 1
+    "count": 1,
+    "tags": ["attack"],
+    "aiTiming": "last",
+    "aiBaseScore": 110
   },
   {
     "id": "yaji_gassen",
@@ -147,7 +189,10 @@
     "image": "assets/options/yaji_gassen.webp",
     "type": "option",
     "effect": "yaji_gassen",
-    "count": 2
+    "count": 2,
+    "tags": ["attack", "seal_all"],
+    "aiTiming": "last",
+    "aiBaseScore": 160
   },
   {
     "id": "gyuuho_senjutsu",
@@ -157,7 +202,10 @@
     "image": "assets/options/gyuuho_senjutsu.webp",
     "type": "option",
     "effect": "gyuuho_senjutsu",
-    "count": 2
+    "count": 2,
+    "tags": ["attack", "draw_block"],
+    "aiTiming": "last",
+    "aiBaseScore": 80
   },
   {
     "id": "kokkai_inemuri",
@@ -167,7 +215,10 @@
     "image": "assets/options/kokkai_inemuri.webp",
     "type": "option",
     "effect": "kokkai_inemuri",
-    "count": 2
+    "count": 2,
+    "tags": ["draw"],
+    "aiTiming": "first",
+    "aiBaseScore": 60
   },
   {
     "id": "zouzei_megane",
@@ -177,6 +228,9 @@
     "image": "assets/options/zouzei_megane.webp",
     "type": "option",
     "effect": "zouzei_megane",
-    "count": 2
+    "count": 2,
+    "tags": ["attack", "fund_drain"],
+    "aiTiming": "before_ability",
+    "aiBaseScore": 45
   }
 ]
