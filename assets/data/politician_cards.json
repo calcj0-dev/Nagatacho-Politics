@@ -153,7 +153,7 @@
           },
           {
             "name": "手取りを増やす！",
-            "effectText": "政治資金+5億",
+            "effectText": "政治資金+4億",
             "description": "シンプルな一言が有権者の心に刺さる",
             "cost": 3,
             "effect": "tamaki_2",
@@ -469,7 +469,7 @@
           },
           {
             "name": "行政スリム化",
-            "effectText": "政治資金+6億",
+            "effectText": "政治資金+5億",
             "description": "無駄を削り、効率的な行政を実現する",
             "cost": 4,
             "effect": "nakatsuka_2",
@@ -600,7 +600,7 @@
           },
           {
             "name": "女性の力",
-            "effectText": "支持率+7%（場に女性カードが2枚以上なら追加+13）",
+            "effectText": "支持率+7%（場に女性カードが2枚以上なら追加+13%）",
             "description": "女性議員の結束で政策を前進させる",
             "cost": 3,
             "effect": "toyota_2",
