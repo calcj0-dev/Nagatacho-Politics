@@ -211,12 +211,12 @@ function getSelfAndOpponent(executor) {
 // 能力効果マップ
 const ABILITY_EFFECTS = {
   // --- 自民党 ---
-  ishiba_1(self, _opponent) {
+  ishiba_1(self, opponent) {
     const msgs = [];
-    const m1 = changeApproval(self, -3);
+    const m1 = changeApproval(self, 5);
     if (m1) msgs.push(m1);
-    changeFunds(self, 5);
-    msgs.push("政治資金+5億円を獲得！");
+    const m2 = changeApproval(opponent, -5);
+    if (m2) msgs.push(m2);
     return msgs;
   },
   ishiba_2(self, opponent, executor = "player") {
@@ -239,7 +239,7 @@ const ABILITY_EFFECTS = {
   },
   takaichi_1(self, _opponent) {
     const msgs = [];
-    const m1 = changeApproval(self, 8);
+    const m1 = changeApproval(self, 9);
     if (m1) msgs.push(m1);
     return msgs;
   },
@@ -247,7 +247,7 @@ const ABILITY_EFFECTS = {
     const msgs = [];
     const m1 = changeApproval(self, 12);
     if (m1) msgs.push(m1);
-    const m2 = changeApproval(opponent, -4);
+    const m2 = changeApproval(opponent, -5);
     if (m2) msgs.push(m2);
     return msgs;
   },
@@ -259,16 +259,12 @@ const ABILITY_EFFECTS = {
     if (m1) msgs.push(m1);
     return msgs;
   },
-  koizumi_2(_self, opponent) {
+  koizumi_2(self, _opponent) {
     const msgs = [];
-    if (opponent.hand.length > 0) {
-      const idx = Math.floor(Math.random() * opponent.hand.length);
-      const discarded = opponent.hand.splice(idx, 1)[0];
-      opponent.discard.push(discarded);
-      msgs.push("相手の手札から1枚を捨て札にした！");
-    } else {
-      msgs.push("相手の手札がなく空振り…");
-    }
+    const m1 = changeApproval(self, -3);
+    if (m1) msgs.push(m1);
+    changeFunds(self, 5);
+    msgs.push("政治資金+5億円を獲得！");
     return msgs;
   },
   kono_1(self, _opponent) {
