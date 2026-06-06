@@ -211,12 +211,12 @@ function getSelfAndOpponent(executor) {
 // 能力効果マップ
 const ABILITY_EFFECTS = {
   // --- 自民党 ---
-  ishiba_1(self, _opponent) {
+  ishiba_1(self, opponent) {
     const msgs = [];
-    const m1 = changeApproval(self, -3);
+    const m1 = changeApproval(self, 5);
     if (m1) msgs.push(m1);
-    changeFunds(self, 5);
-    msgs.push("政治資金+5億円を獲得！");
+    const m2 = changeApproval(opponent, -5);
+    if (m2) msgs.push(m2);
     return msgs;
   },
   ishiba_2(self, opponent, executor = "player") {
@@ -239,7 +239,7 @@ const ABILITY_EFFECTS = {
   },
   takaichi_1(self, _opponent) {
     const msgs = [];
-    const m1 = changeApproval(self, 8);
+    const m1 = changeApproval(self, 9);
     if (m1) msgs.push(m1);
     return msgs;
   },
@@ -247,7 +247,7 @@ const ABILITY_EFFECTS = {
     const msgs = [];
     const m1 = changeApproval(self, 12);
     if (m1) msgs.push(m1);
-    const m2 = changeApproval(opponent, -4);
+    const m2 = changeApproval(opponent, -5);
     if (m2) msgs.push(m2);
     return msgs;
   },
@@ -259,16 +259,12 @@ const ABILITY_EFFECTS = {
     if (m1) msgs.push(m1);
     return msgs;
   },
-  koizumi_2(_self, opponent) {
+  koizumi_2(self, _opponent) {
     const msgs = [];
-    if (opponent.hand.length > 0) {
-      const idx = Math.floor(Math.random() * opponent.hand.length);
-      const discarded = opponent.hand.splice(idx, 1)[0];
-      opponent.discard.push(discarded);
-      msgs.push("相手の手札から1枚を捨て札にした！");
-    } else {
-      msgs.push("相手の手札がなく空振り…");
-    }
+    const m1 = changeApproval(self, -3);
+    if (m1) msgs.push(m1);
+    changeFunds(self, 5);
+    msgs.push("政治資金+5億円を獲得！");
     return msgs;
   },
   kono_1(self, _opponent) {
@@ -526,7 +522,7 @@ const ABILITY_EFFECTS = {
   },
   nakatsuka_1(self, _opponent) {
     const msgs = [];
-    const m = changeApproval(self, 10);
+    const m = changeApproval(self, 7);
     if (m) msgs.push(m);
     return msgs;
   },
@@ -1682,6 +1678,18 @@ function cpuExecuteNextAbility(abilityActions, idx) {
         { label: "+10%", value: 10, color: "#22cc77" },
         { label: "-3%",  value: -3,  color: "#ee4444" },
       ],
+      baba_2: [
+        { label: "+5%",  value: 5,  color: "#88cc88" },
+        { label: "+15%", value: 15, color: "#22cc77" },
+      ],
+      kamiya_1: [
+        { label: "+0%",  value: 0,  color: "#888888" },
+        { label: "+2%",  value: 2,  color: "#aaccaa" },
+        { label: "+4%",  value: 4,  color: "#88cc88" },
+        { label: "+6%",  value: 6,  color: "#55bb55" },
+        { label: "+8%",  value: 8,  color: "#33aa44" },
+        { label: "+10%", value: 10, color: "#22cc77" },
+      ],
     };
     if (cpuSlotEffects[ability.effect]) {
       playAbilityAnimation(cpuFieldIndex, abilityIdx, "cpu", () => {
@@ -2205,6 +2213,18 @@ function useAbility(fieldIndex, abilityIndex) {
         { label: "+10%", value: 10, color: "#22cc77" },
         { label: "-3%",  value: -3,  color: "#ee4444" },
       ],
+      baba_2: [
+        { label: "+5%",  value: 5,  color: "#88cc88" },
+        { label: "+15%", value: 15, color: "#22cc77" },
+      ],
+      kamiya_1: [
+        { label: "+0%",  value: 0,  color: "#888888" },
+        { label: "+2%",  value: 2,  color: "#aaccaa" },
+        { label: "+4%",  value: 4,  color: "#88cc88" },
+        { label: "+6%",  value: 6,  color: "#55bb55" },
+        { label: "+8%",  value: 8,  color: "#33aa44" },
+        { label: "+10%", value: 10, color: "#22cc77" },
+      ],
     };
     if (slotEffects[ability.effect]) {
       playAbilityAnimation(fieldIndex, abilityIndex, "player", () => {
@@ -2615,7 +2635,7 @@ function _showFieldCardPickerImpl(fieldCards, titleText, callback) {
   });
 
   const title = document.createElement("div");
-  Object.assign(title.style, { color: "#fff", fontSize: "1rem", fontWeight: "bold", marginBottom: "4px" });
+  Object.assign(title.style, { color: "#fff", fontSize: "1rem", fontWeight: "bold" });
   title.textContent = titleText;
   wrap.appendChild(title);
 
@@ -2629,34 +2649,34 @@ function _showFieldCardPickerImpl(fieldCards, titleText, callback) {
     return;
   }
 
+
   const list = document.createElement("div");
   Object.assign(list.style, { display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" });
 
-  fieldCards.forEach((fc) => {
-    const btn = document.createElement("div");
-    Object.assign(btn.style, {
-      background: "rgba(255,255,255,0.12)", border: "2px solid rgba(255,255,255,0.4)",
-      borderRadius: "8px", padding: "10px 16px", color: "#fff",
-      cursor: "pointer", textAlign: "center", minWidth: "80px",
+  fieldCards.forEach((fc, idx) => {
+    const cardEl = createCardElement(fc);
+    cardEl.style.cursor = "pointer";
+    cardEl.style.transition = "transform 0.15s, box-shadow 0.15s";
+    cardEl.addEventListener("pointerover", () => {
+      cardEl.style.transform = "translateY(-4px)";
+      cardEl.style.boxShadow = "0 6px 20px rgba(255,215,0,0.4)";
     });
-    if (fc.image) {
-      const img = document.createElement("div");
-      Object.assign(img.style, {
-        width: "60px", height: "80px", backgroundImage: `url(${fc.image})`,
-        backgroundSize: "cover", backgroundPosition: "center",
-        borderRadius: "4px", marginBottom: "6px",
+    cardEl.addEventListener("pointerout", () => {
+      cardEl.style.transform = "";
+      cardEl.style.boxShadow = "";
+    });
+    cardEl.addEventListener("click", () => {
+      showCardZoom(fc, "action", idx, (selectedIdx) => {
+        wrap.remove();
+        callback(fieldCards[selectedIdx]);
+      }, {
+        label: "選択する",
+        btnClass: "zoom-fieldpick-btn",
+        contextLabel: titleText,
+        zIndex: 3001,
       });
-      btn.appendChild(img);
-    }
-    const name = document.createElement("div");
-    name.style.fontSize = "0.75rem";
-    name.textContent = fc.name;
-    btn.appendChild(name);
-
-    btn.addEventListener("click", () => { wrap.remove(); callback(fc); });
-    btn.addEventListener("pointerover", () => { btn.style.borderColor = "rgba(255,220,50,0.9)"; });
-    btn.addEventListener("pointerout", () => { btn.style.borderColor = "rgba(255,255,255,0.4)"; });
-    list.appendChild(btn);
+    });
+    list.appendChild(cardEl);
   });
 
   wrap.appendChild(list);
@@ -3127,12 +3147,13 @@ function showApprovalHistoryOverlay() {
 }
 
 // カード拡大表示
-function showCardZoom(card, context, index) {
+function showCardZoom(card, context, index, onDiscard = null, actionOptions = null) {
   const existing = document.querySelector(".card-zoom-overlay");
   if (existing) existing.remove();
 
   const overlay = document.createElement("div");
   overlay.className = "card-zoom-overlay";
+  if (actionOptions?.zIndex) overlay.style.zIndex = String(actionOptions.zIndex);
 
   const container = document.createElement("div");
   container.className = "card-zoom-container";
@@ -3156,19 +3177,20 @@ function showCardZoom(card, context, index) {
   if (card.type === "politician" && card.abilities) {
     const isFieldPlayer = context === "field";
     const isCpuView = context === "view";
+    const isActionView = context === "action";
     const p = gameState.player;
     const costReduction = isFieldPlayer ? (p.currentTurnCostReduction || 0) : 0;
     const abilities = card.abilities;
 
-    // 相手カード閲覧時: 能力詳細パネルを用意
-    if (isCpuView) {
+    // 閲覧系コンテキスト: 能力詳細パネルを用意
+    if (isCpuView || isActionView) {
       infoPanel = document.createElement("div");
       infoPanel.className = "card-zoom-info";
       infoPanel.innerHTML = `<div class="card-zoom-hint">能力エリアをタップで詳細表示</div>`;
     }
 
     // imageDiv クリックで能力判定（Canvas白枠の下40%が能力エリア）
-    if (isFieldPlayer || isCpuView) {
+    if (isFieldPlayer || isCpuView || isActionView) {
       imageDiv.style.cursor = "pointer";
       imageDiv.addEventListener("click", (e) => {
         const rect = imageDiv.getBoundingClientRect();
@@ -3201,7 +3223,7 @@ function showCardZoom(card, context, index) {
 
           overlay.remove();
           useAbility(index, abilityIdx);
-        } else if (isCpuView && infoPanel) {
+        } else if ((isCpuView || isActionView) && infoPanel) {
           infoPanel.innerHTML = [
             `<div class="card-zoom-name">${ability.name}</div>`,
             ability.effectText   ? `<div class="card-zoom-effect">${ability.effectText}</div>`   : "",
@@ -3240,6 +3262,21 @@ function showCardZoom(card, context, index) {
       } else {
         playCardToField(index);
       }
+    });
+    actions.appendChild(btn);
+  } else if (context === "action" && actionOptions) {
+    if (actionOptions.contextLabel) {
+      const ctxLabel = document.createElement("div");
+      ctxLabel.className = "card-zoom-context-label";
+      ctxLabel.textContent = actionOptions.contextLabel;
+      actions.appendChild(ctxLabel);
+    }
+    const btn = document.createElement("button");
+    btn.className = `zoom-action-btn ${actionOptions.btnClass || ""}`;
+    btn.textContent = actionOptions.label || "選択する";
+    btn.addEventListener("click", () => {
+      overlay.remove();
+      if (onDiscard) onDiscard(index);
     });
     actions.appendChild(btn);
   } else if (context === "hand-option") {
@@ -3292,38 +3329,95 @@ function showCardZoom(card, context, index) {
 function showDiscardUI(count, onComplete) {
   let remaining = count;
 
+  function doDiscard(idx) {
+    const discarded = gameState.player.hand.splice(idx, 1)[0];
+    gameState.player.discard.push(discarded);
+    console.log(`  手札超過: ${discarded.name}を捨てた`);
+    remaining--;
+    document.getElementById("discard-select-overlay")?.remove();
+    if (remaining <= 0) {
+      renderGame();
+      onComplete();
+    } else {
+      renderDiscardOverlay();
+    }
+  }
+
   function renderDiscardOverlay() {
-    const cards = gameState.player.hand;
-    const cardsHtml = cards.map((card, idx) => {
-      const typeClass = card.type === "politician" ? "card-politician" : "card-option";
-      return `<div class="discard-card ${typeClass}" data-idx="${idx}">
-        <div class="card-name">${card.name}</div>
-      </div>`;
-    }).join("");
+    document.getElementById("discard-select-overlay")?.remove();
 
-    showOverlay(`
-      <h2>手札が8枚以上あります</h2>
-      <p>7枚になるまで捨てるカードを選んでください（あと${remaining}枚）</p>
-      <div class="discard-list">${cardsHtml}</div>
-    `);
+    const overlay = document.createElement("div");
+    overlay.id = "discard-select-overlay";
+    overlay.className = "discard-select-overlay";
 
-    document.querySelectorAll(".discard-card").forEach(el => {
-      el.addEventListener("click", () => {
-        const idx = parseInt(el.dataset.idx);
-        const discarded = gameState.player.hand.splice(idx, 1)[0];
-        gameState.player.discard.push(discarded);
-        console.log(`  手札超過: ${discarded.name}を捨てた`);
-        remaining--;
+    const box = document.createElement("div");
+    box.className = "discard-select-box";
 
-        if (remaining <= 0) {
-          hideOverlay();
-          renderGame();
-          onComplete();
-        } else {
-          renderDiscardOverlay();
+    const heading = document.createElement("h2");
+    heading.className = "discard-select-heading";
+    heading.textContent = "手札が多すぎます";
+    box.appendChild(heading);
+
+    const sub = document.createElement("p");
+    sub.className = "discard-select-sub";
+    sub.textContent = `あと${remaining}枚捨ててください`;
+    box.appendChild(sub);
+
+    const grid = document.createElement("div");
+    grid.className = "discard-select-grid";
+
+    gameState.player.hand.forEach((card, idx) => {
+      const cardEl = createCardElement(card);
+
+      let swipeStartY = null;
+      let didSwipe = false;
+      cardEl.addEventListener("touchstart", (e) => {
+        swipeStartY = e.touches[0].clientY;
+        didSwipe = false;
+      }, { passive: true });
+      cardEl.addEventListener("touchmove", (e) => {
+        if (swipeStartY === null) return;
+        if (swipeStartY - e.touches[0].clientY > 10) e.preventDefault();
+      }, { passive: false });
+      cardEl.addEventListener("touchend", (e) => {
+        if (swipeStartY === null) return;
+        const dy = swipeStartY - e.changedTouches[0].clientY;
+        swipeStartY = null;
+        if (dy > 30) {
+          didSwipe = true;
+          showCardZoom(card, "action", idx, doDiscard, {
+            label: "このカードを捨てる",
+            btnClass: "zoom-discard-btn",
+            contextLabel: "手札を捨てる",
+          });
         }
       });
+      cardEl.addEventListener("touchcancel", () => { swipeStartY = null; });
+
+      cardEl.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        showCardZoom(card, "action", idx, doDiscard, {
+          label: "このカードを捨てる",
+          btnClass: "zoom-discard-btn",
+          contextLabel: "手札を捨てる",
+        });
+      });
+
+      cardEl.addEventListener("click", () => {
+        if (didSwipe) { didSwipe = false; return; }
+        showCardZoom(card, "action", idx, doDiscard, {
+          label: "このカードを捨てる",
+          btnClass: "zoom-discard-btn",
+          contextLabel: "手札を捨てる",
+        });
+      });
+
+      grid.appendChild(cardEl);
     });
+
+    box.appendChild(grid);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
   }
 
   renderDiscardOverlay();
