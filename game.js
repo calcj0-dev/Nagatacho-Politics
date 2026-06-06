@@ -522,7 +522,7 @@ const ABILITY_EFFECTS = {
   },
   nakatsuka_1(self, _opponent) {
     const msgs = [];
-    const m = changeApproval(self, 10);
+    const m = changeApproval(self, 7);
     if (m) msgs.push(m);
     return msgs;
   },

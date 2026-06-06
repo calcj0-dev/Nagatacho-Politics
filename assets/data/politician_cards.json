@@ -12,7 +12,7 @@
           {
             "name": "一口でおにぎり",
             "effectText": "支持率+5%、相手の支持率-5%",
-            "description": "おにぎりの産地が注目され、地方団体からの献金を得る",
+            "description": "一口でほおばる豪快な食べっぷりが波紋を呼び、相手の支持を奪う",
             "cost": 2,
             "effect": "ishiba_1",
             "tags": ["attack", "self_boost"]
@@ -460,7 +460,7 @@
         "abilities": [
           {
             "name": "大阪改革モデル",
-            "effectText": "支持率+10%",
+            "effectText": "支持率+7%",
             "description": "大阪で実証した改革を全国に広める",
             "cost": 2,
             "effect": "nakatsuka_1",
