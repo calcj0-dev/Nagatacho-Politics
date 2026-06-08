@@ -3036,6 +3036,13 @@ h1 {
    ステータスボタン・オーバーレイ
    ============================================================ */
 
+.discard-status-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+}
+
 .status-btn {
   font-size: 0.65rem;
   padding: 2px 5px;

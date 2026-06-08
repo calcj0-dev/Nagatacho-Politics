@@ -50,7 +50,9 @@ function createPlayerState() {
     usedAbilities: {},       // { cardInstanceId: true }
     usedOptionThisTurn: false,
     skipNextDraw: false,
+    drawSkippedThisTurn: false,
     sealAllNextTurn: false,  // ヤジ合戦：次の自分ターン開始後に全カード封印
+    sealedAllThisTurn: false,
     shields: [],             // 無効化系効果
     drillShieldTurns: 0,    // ドリル破壊シールドの残りターン数
     currentTurnCostReduction: 0, // このターンのみ有効なコスト軽減（ターン開始時にnextTurnBonusesから転写）
@@ -957,6 +959,8 @@ function startPlayerTurn() {
   p.usedOptionThisTurn = p.blockOptionNextTurn ?? false;
   p.optionBlockReason = p.blockOptionNextTurn ? "takayama" : null;
   p.blockOptionNextTurn = false;
+  p.drawSkippedThisTurn = false;
+  p.sealedAllThisTurn = false;
 
   // 1ターン限定シールドを失効
   p.shields = p.shields.filter(s => s !== "block_approval_down" && s !== "block_approval_up_masukomi");
@@ -975,6 +979,7 @@ function startPlayerTurn() {
   if (p.sealAllNextTurn) {
     p.field.forEach(c => { c.disabled = true; });
     p.sealAllNextTurn = false;
+    p.sealedAllThisTurn = true;
   }
 
   // ishiba_2等: 個別カード封印フラグ適用
@@ -1007,6 +1012,7 @@ function startPlayerTurn() {
   if (p.skipNextDraw) {
     console.log("  ドロースキップ");
     p.skipNextDraw = false;
+    p.drawSkippedThisTurn = true;
   } else if (p.deck.length > 0) {
     drawnCard = p.deck.shift();
     console.log(`  ドロー: ${drawnCard.name}`);
@@ -1275,6 +1281,8 @@ function startCpuTurn() {
   c.usedOptionThisTurn = c.blockOptionNextTurn ?? false;
   c.optionBlockReason = c.blockOptionNextTurn ? "takayama" : null;
   c.blockOptionNextTurn = false;
+  c.drawSkippedThisTurn = false;
+  c.sealedAllThisTurn = false;
 
   // 1ターン限定シールドを失効
   c.shields = c.shields.filter(s => s !== "block_approval_down" && s !== "block_approval_up_masukomi");
@@ -1292,6 +1300,7 @@ function startCpuTurn() {
   if (c.sealAllNextTurn) {
     c.field.forEach(card => { card.disabled = true; });
     c.sealAllNextTurn = false;
+    c.sealedAllThisTurn = true;
   }
 
   // ishiba_2等: 個別カード封印フラグ適用
@@ -1317,6 +1326,7 @@ function startCpuTurn() {
   let cpuDrew = false;
   if (c.skipNextDraw) {
     c.skipNextDraw = false;
+    c.drawSkippedThisTurn = true;
   } else if (c.deck.length > 0) {
     const drawn = c.deck.shift();
     c.hand.push(drawn);
@@ -3466,9 +3476,13 @@ function showStatusOverlay(playerKey) {
   }
   if (p.sealAllNextTurn) {
     effects.push({ turnsLeft: 1, text: "全カードの能力が封じられる" });
+  } else if (p.sealedAllThisTurn) {
+    effects.push({ turnsLeft: 0, text: "全カードの能力が封印中" });
   }
   if (p.skipNextDraw) {
     effects.push({ turnsLeft: 1, text: "ドローをスキップ" });
+  } else if (p.drawSkippedThisTurn) {
+    effects.push({ turnsLeft: 0, text: "ドローをスキップされた（このターン）" });
   }
   if (p.blockOptionNextTurn) {
     effects.push({ turnsLeft: 1, text: "オプションカード使用不可" });
