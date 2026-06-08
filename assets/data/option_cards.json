@@ -55,7 +55,7 @@
     "id": "drill_hakai",
     "name": "ドリル破壊",
     "description": "物理的に証拠を消し去る強硬手段。",
-    "effectDescription": "次に受ける支持率低下を1回無効化",
+    "effectDescription": "3ターンの間、次に受ける支持率低下を1回無効化",
     "image": "assets/options/drill_hakai.webp",
     "type": "option",
     "effect": "drill_hakai",

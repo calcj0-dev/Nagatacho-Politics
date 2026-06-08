@@ -52,6 +52,7 @@ function createPlayerState() {
     skipNextDraw: false,
     sealAllNextTurn: false,  // ヤジ合戦：次の自分ターン開始後に全カード封印
     shields: [],             // 無効化系効果
+    drillShieldTurns: 0,    // ドリル破壊シールドの残りターン数
     currentTurnCostReduction: 0, // このターンのみ有効なコスト軽減（ターン開始時にnextTurnBonusesから転写）
     zeroCostCardId: null,        // このターンのみコスト0にする政治家カードのinstanceId
     nextTurnBonuses: {
@@ -739,7 +740,8 @@ const OPTION_EFFECTS = {
   drill_hakai(self, _opponent) {
     const msgs = [];
     self.shields.push("block_approval_down_drill");
-    msgs.push("次の支持率低下を一度だけ無効化！");
+    self.drillShieldTurns = 3;
+    msgs.push("3ターンの間、次の支持率低下を一度無効化！");
     return msgs;
   },
   tounai_kaikaku(self, opponent) {
@@ -871,6 +873,7 @@ function applyDefenses(target, amount) {
   const drillIdx = target.shields.indexOf("block_approval_down_drill");
   if (drillIdx >= 0) {
     target.shields.splice(drillIdx, 1);
+    target.drillShieldTurns = 0;
     console.log("  シールド発動: ドリル破壊");
     return { amount: 0, shieldMsg: "🛡 ドリル破壊発動！支持率低下を無効化！", showBanner: true };
   }
@@ -955,8 +958,15 @@ function startPlayerTurn() {
   p.optionBlockReason = p.blockOptionNextTurn ? "takayama" : null;
   p.blockOptionNextTurn = false;
 
-  // 1ターン限定シールドを失効（前の自分ターンに積んだ未使用分を消去）
-  p.shields = p.shields.filter(s => s !== "block_approval_down" && s !== "block_approval_down_drill");
+  // 1ターン限定シールドを失効
+  p.shields = p.shields.filter(s => s !== "block_approval_down" && s !== "block_approval_up_masukomi");
+  // ドリル破壊シールド：3ターン経過で失効
+  if (p.drillShieldTurns > 0) {
+    p.drillShieldTurns--;
+    if (p.drillShieldTurns === 0) {
+      p.shields = p.shields.filter(s => s !== "block_approval_down_drill");
+    }
+  }
 
   // disabled解除・sealedAbility2解除（前ターンで封印されたカードを復帰）
   p.field.forEach(c => { c.disabled = false; c.sealedAbility2 = false; });
@@ -1266,7 +1276,14 @@ function startCpuTurn() {
   c.blockOptionNextTurn = false;
 
   // 1ターン限定シールドを失効
-  c.shields = c.shields.filter(s => s !== "block_approval_down" && s !== "block_approval_down_drill");
+  c.shields = c.shields.filter(s => s !== "block_approval_down" && s !== "block_approval_up_masukomi");
+  // ドリル破壊シールド：3ターン経過で失効
+  if (c.drillShieldTurns > 0) {
+    c.drillShieldTurns--;
+    if (c.drillShieldTurns === 0) {
+      c.shields = c.shields.filter(s => s !== "block_approval_down_drill");
+    }
+  }
   c.zeroCostCardId = null;
   c.field.forEach(card => { card.disabled = false; card.sealedAbility2 = false; });
 
@@ -3432,6 +3449,157 @@ function showScreen(screenId) {
   document.getElementById(screenId).classList.remove("hidden");
 }
 
+function showStatusOverlay(playerKey) {
+  const p = playerKey === "player" ? gameState.player : gameState.cpu;
+  const label = playerKey === "player" ? "あなた" : "CPU";
+  const effects = [];
+
+  if (p.shields.includes("block_approval_down")) {
+    effects.push({ turnsLeft: 1, text: "支持率低下シールド（1回限り）" });
+  }
+  if (p.shields.includes("block_approval_down_drill") && p.drillShieldTurns > 0) {
+    effects.push({ turnsLeft: p.drillShieldTurns, text: "ドリル防御シールド（1回限り）" });
+  }
+  if (p.shields.includes("block_approval_up_masukomi")) {
+    effects.push({ turnsLeft: 1, text: "相手の支持率上昇を無効化" });
+  }
+  if (p.sealAllNextTurn) {
+    effects.push({ turnsLeft: 1, text: "全カードの能力が封じられる" });
+  }
+  if (p.skipNextDraw) {
+    effects.push({ turnsLeft: 1, text: "ドローをスキップ" });
+  }
+  if (p.blockOptionNextTurn) {
+    effects.push({ turnsLeft: 1, text: "オプションカード使用不可" });
+  }
+  if (p.nextTurnBonuses && p.nextTurnBonuses.fundBonus > 0) {
+    effects.push({ turnsLeft: 1, text: `資金+${p.nextTurnBonuses.fundBonus}億ボーナス` });
+  }
+  if (p.nextTurnBonuses && p.nextTurnBonuses.costReduction > 0) {
+    effects.push({ turnsLeft: 1, text: `能力コスト-${p.nextTurnBonuses.costReduction}億` });
+  }
+  if (p.nextTurnBonuses && p.nextTurnBonuses.approvalBonus > 0) {
+    effects.push({ turnsLeft: 1, text: `支持率+${p.nextTurnBonuses.approvalBonus}%ボーナス` });
+  }
+  if (p.nextTurnBonuses && p.nextTurnBonuses.defenseBonus > 0) {
+    effects.push({ turnsLeft: 1, text: `次の攻撃ダメージ${p.nextTurnBonuses.defenseBonus}%軽減` });
+  }
+  if (p.nextTurnBonuses && p.nextTurnBonuses.attackReduction > 0) {
+    effects.push({ turnsLeft: 1, text: `次の攻撃${p.nextTurnBonuses.attackReduction}%軽減` });
+  }
+
+  gameState.pendingEffects
+    .filter(e => e.player === playerKey)
+    .forEach(e => {
+      const remaining = e.returnTurn - gameState.turn;
+      if (remaining > 0) {
+        effects.push({ turnsLeft: remaining, text: `資金+${e.amount}億（投資返却）` });
+      }
+    });
+
+  const overlay = document.createElement("div");
+  overlay.className = "status-overlay";
+
+  const box = document.createElement("div");
+  box.className = "status-box";
+
+  const title = document.createElement("div");
+  title.className = "status-title";
+  title.textContent = `【${label}】の持続効果`;
+  box.appendChild(title);
+
+  const body = document.createElement("div");
+  body.className = "status-body";
+
+  if (effects.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "status-empty";
+    empty.textContent = "現在、持続中の効果はありません";
+    body.appendChild(empty);
+  } else {
+    const groups = {};
+    effects.forEach(e => {
+      if (!groups[e.turnsLeft]) groups[e.turnsLeft] = [];
+      groups[e.turnsLeft].push(e.text);
+    });
+    const sortedTurns = Object.keys(groups).map(Number).sort((a, b) => a - b);
+    sortedTurns.forEach(turns => {
+      const header = document.createElement("div");
+      header.className = "status-group-header";
+      header.textContent = `■残り${turns}ターン`;
+      body.appendChild(header);
+      groups[turns].forEach(text => {
+        const item = document.createElement("div");
+        item.className = "status-item";
+        item.textContent = text;
+        body.appendChild(item);
+      });
+    });
+  }
+
+  box.appendChild(body);
+
+  const closeBtn = document.createElement("button");
+  closeBtn.className = "status-close-btn";
+  closeBtn.textContent = "閉じる";
+  closeBtn.addEventListener("click", () => overlay.remove());
+  box.appendChild(closeBtn);
+
+  overlay.addEventListener("click", e => { if (e.target === overlay) overlay.remove(); });
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+async function showRankingScreen() {
+  showScreen("ranking-screen");
+  const list = document.getElementById("ranking-list");
+  list.innerHTML = '<div class="ranking-loading">読込中…</div>';
+
+  try {
+    const ranking = await loadRanking();
+    const currentUid = getCurrentUser()?.uid;
+
+    if (ranking.length === 0) {
+      list.innerHTML = '<div class="ranking-empty">まだデータがありません</div>';
+      return;
+    }
+
+    list.innerHTML = "";
+    ranking.forEach((user, idx) => {
+      const row = document.createElement("div");
+      row.className = "ranking-row" + (user.uid === currentUid ? " ranking-row-me" : "");
+
+      const rank = document.createElement("div");
+      rank.className = "ranking-rank";
+      if      (idx === 0) rank.textContent = "1位";
+      else if (idx === 1) rank.textContent = "2位";
+      else if (idx === 2) rank.textContent = "3位";
+      else                rank.textContent = `${idx + 1}位`;
+
+      const name = document.createElement("div");
+      name.className = "ranking-name";
+      name.textContent = user.name || "---";
+
+      const streak = document.createElement("div");
+      streak.className = "ranking-streak";
+      streak.textContent = `${user.maxStreak || 0}連勝`;
+
+      const wins = document.createElement("div");
+      wins.className = "ranking-wins";
+      wins.textContent = `${user.wins || 0}勝`;
+
+      row.appendChild(rank);
+      row.appendChild(name);
+      row.appendChild(streak);
+      row.appendChild(wins);
+      list.appendChild(row);
+    });
+  } catch (e) {
+    list.innerHTML = '<div class="ranking-empty">読み込みに失敗しました</div>';
+    console.error("[Ranking]", e);
+  }
+}
+
 // 政治資金をコイン画像で表現するヘルパー
 // 10億ごとに大きなコイン(内側に"10")、1億ごとに通常コイン
 const COIN_IMG = '<img class="coin-icon" src="assets/icons/coin.webp" alt="億">';
@@ -4812,6 +4980,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     showScreen("party-select-screen");
   });
 
+  document.getElementById("ranking-btn").addEventListener("click", () => {
+    showRankingScreen();
+  });
+
+  document.getElementById("ranking-back-btn").addEventListener("click", () => {
+    showScreen("game-start-screen");
+  });
+
   // ============================================================
   // 政党選択画面
   // ============================================================
@@ -4859,6 +5035,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const bgm = document.getElementById("bgm");
     if (bgm) { bgm.pause(); bgm.currentTime = 0; }
     showScreen("game-start-screen");
+  });
+
+  document.getElementById("player-status-btn").addEventListener("click", () => {
+    showStatusOverlay("player");
+  });
+
+  document.getElementById("cpu-status-btn").addEventListener("click", () => {
+    showStatusOverlay("cpu");
   });
 
   document.getElementById("end-turn-btn").addEventListener("click", () => {

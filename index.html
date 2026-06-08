@@ -72,6 +72,7 @@
       <div class="game-start-buttons">
         <button id="game-start-btn" class="game-start-btn">ゲームを始める</button>
         <button id="deck-edit-btn" class="deck-edit-btn hidden" disabled>デッキ編集（開発中）</button>
+        <button id="ranking-btn" class="how-to-play-btn">連勝ランキング</button>
         <button id="how-to-play-btn-menu" class="how-to-play-btn">遊び方</button>
       </div>
     </div>
@@ -136,6 +137,15 @@
     </div>
   </div>
 
+  <!-- ランキング画面 -->
+  <div id="ranking-screen" class="screen hidden">
+    <div class="screen-panel ranking-panel">
+      <h1 class="game-start-title">連勝ランキング</h1>
+      <div id="ranking-list" class="ranking-list"></div>
+      <button id="ranking-back-btn" class="level-back-btn">← 戻る</button>
+    </div>
+  </div>
+
   <!-- 読込中画面 -->
   <div id="loading-screen" class="screen hidden">
     <div class="loading-inner">
@@ -181,7 +191,10 @@
           <div id="cpu-deck" class="deck-slot"></div>
           <span id="cpu-deck-count" class="deck-count">0</span>
         </div>
-        <div id="cpu-discard" class="deck-slot discard-slot"></div>
+        <div class="deck-slot-wrap">
+          <div id="cpu-discard" class="deck-slot discard-slot"></div>
+          <button id="cpu-status-btn" class="status-btn">状態</button>
+        </div>
       </div>
     </div>
 
@@ -210,7 +223,10 @@
           <div id="player-deck" class="deck-slot"></div>
           <span id="player-deck-count" class="deck-count">0</span>
         </div>
-        <div id="player-discard" class="deck-slot discard-slot"></div>
+        <div class="deck-slot-wrap">
+          <div id="player-discard" class="deck-slot discard-slot"></div>
+          <button id="player-status-btn" class="status-btn">状態</button>
+        </div>
       </div>
       <div class="player-info">
         <div class="player-info-row1">
