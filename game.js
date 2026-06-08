@@ -4738,7 +4738,7 @@ function updateAuthUI(user) {
     if (openingUserName)  openingUserName.textContent = `${user.displayName || user.email} としてログイン中`;
     if (authLoggedIn) authLoggedIn.classList.remove("hidden");
     if (avatar) { avatar.src = user.photoURL || ""; avatar.style.display = user.photoURL ? "" : "none"; }
-    if (nameEl) nameEl.textContent = user.displayName || user.email || "";
+    if (nameEl) nameEl.textContent = "";
     if (deckEditBtn) deckEditBtn.classList.remove("hidden");
   } else {
     if (openingLoggedOut) openingLoggedOut.classList.remove("hidden");
