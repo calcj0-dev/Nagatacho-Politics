@@ -42,13 +42,23 @@ async function saveResult(uid, isWin, isDraw) {
   const ref = db.collection("users").doc(uid);
   const doc = await ref.get();
   const data = doc.exists ? doc.data() : {};
+  const newStreak = isWin ? (data.streak || 0) + 1 : 0;
   const update = {
-    wins:   (data.wins   || 0) + (isWin             ? 1 : 0),
-    losses: (data.losses || 0) + (!isWin && !isDraw ? 1 : 0),
-    streak: isWin ? (data.streak || 0) + 1 : 0,
+    wins:      (data.wins   || 0) + (isWin             ? 1 : 0),
+    losses:    (data.losses || 0) + (!isWin && !isDraw ? 1 : 0),
+    streak:    newStreak,
+    maxStreak: Math.max(data.maxStreak || 0, newStreak),
   };
   await ref.set(update, { merge: true });
   return update;
+}
+
+async function loadRanking() {
+  const snapshot = await db.collection("users")
+    .orderBy("maxStreak", "desc")
+    .limit(20)
+    .get();
+  return snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
 }
 
 function signInWithGoogle() {
