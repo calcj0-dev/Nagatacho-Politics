@@ -1273,6 +1273,7 @@ function startCpuTurn() {
   c.placedThisTurn = false;
   c.usedAbilities = {};
   c.usedOptionThisTurn = c.blockOptionNextTurn ?? false;
+  c.optionBlockReason = c.blockOptionNextTurn ? "takayama" : null;
   c.blockOptionNextTurn = false;
 
   // 1ターン限定シールドを失効
@@ -3471,6 +3472,8 @@ function showStatusOverlay(playerKey) {
   }
   if (p.blockOptionNextTurn) {
     effects.push({ turnsLeft: 1, text: "オプションカード使用不可" });
+  } else if (p.usedOptionThisTurn && p.optionBlockReason) {
+    effects.push({ turnsLeft: 0, text: "オプションカード使用不可（このターン発動中）" });
   }
   if (p.nextTurnBonuses && p.nextTurnBonuses.fundBonus > 0) {
     effects.push({ turnsLeft: 1, text: `資金+${p.nextTurnBonuses.fundBonus}億ボーナス` });
@@ -3526,7 +3529,7 @@ function showStatusOverlay(playerKey) {
     sortedTurns.forEach(turns => {
       const header = document.createElement("div");
       header.className = "status-group-header";
-      header.textContent = `■残り${turns}ターン`;
+      header.textContent = turns === 0 ? "■このターンのみ" : `■残り${turns}ターン`;
       body.appendChild(header);
       groups[turns].forEach(text => {
         const item = document.createElement("div");
