@@ -3595,8 +3595,12 @@ async function showRankingScreen() {
       list.appendChild(row);
     });
   } catch (e) {
-    list.innerHTML = '<div class="ranking-empty">読み込みに失敗しました</div>';
     console.error("[Ranking]", e);
+    const code = e.code || "";
+    const msg = code === "permission-denied"
+      ? "読み込みに失敗しました（Firestoreのルールでコレクション全体の読み取りが許可されていません）"
+      : `読み込みに失敗しました（${code || e.message || "不明"}）`;
+    list.innerHTML = `<div class="ranking-empty">${msg}</div>`;
   }
 }
 
